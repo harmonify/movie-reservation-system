@@ -1,0 +1,294 @@
+services:
+  postgres:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - ${POSTGRES_EXTERNAL_PORT}:5432
+    volumes:
+      - ./config/postgresql:/docker-entrypoint-initdb.d
+      - ../../../.data/postgres:/data
+    networks:
+      - core
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/api/prom/push"
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+    ports:
+      - "9187:9187"
+    depends_on:
+      - postgres
+    networks:
+      - core
+      - monitoring
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/api/prom/push"
+
+  redis:
+    image: redis:latest
+    command: ["redis-server", "--requirepass", "${REDIS_PASS}"]
+    ports:
+      - "${REDIS_EXTERNAL_PORT}:6379"
+    networks:
+      - core
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/api/prom/push"
+
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    environment:
+      REDIS_PASSWORD: "${REDIS_PASS}"
+    ports:
+      - "9121:9121"
+    depends_on:
+      - redis
+    networks:
+      - core
+      - monitoring
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/api/prom/push"
+
+  kafka:
+    image: apache/kafka:latest
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://localhost:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_LOG_DIRS: /data
+    volumes:
+      - ../../../.data/kafka:/data
+    networks:
+      - core
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/api/prom/push"
+
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:latest
+    environment:
+      KAFKA_BROKERS: "kafka:9092"
+    ports:
+      - "9308:9308"
+    depends_on:
+      - kafka
+    networks:
+      - core
+      - monitoring
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/api/prom/push"
+
+  jaeger-collector:
+    image: jaegertracing/jaeger-collector:latest
+    command:
+      - "--cassandra.keyspace=jaeger_v1_dc1"
+      - "--cassandra.servers=cassandra"
+      - "--collector.zipkin.host-port=9411"
+      - "--sampling.initial-sampling-probability=.5"
+      - "--sampling.target-samples-per-second=.01"
+    environment:
+      - SPAN_STORAGE_TYPE=cassandra
+      - SAMPLING_CONFIG_TYPE=adaptive
+    ports:
+      - "14269:14269"
+      - "14268:14268"
+      - "14250:14250"
+      - "9411:9411"
+      - "4317:4317"
+    restart: on-failure
+    depends_on:
+      - cassandra-schema
+    networks:
+      - monitoring
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/api/prom/push"
+
+  jaeger-query:
+    image: jaegertracing/jaeger-query:latest
+    command:
+      ["--cassandra.keyspace=jaeger_v1_dc1", "--cassandra.servers=cassandra"]
+    ports:
+      - "16686:16686"
+      - "16687"
+    restart: on-failure
+    depends_on:
+      - cassandra-schema
+    networks:
+      - monitoring
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/api/prom/push"
+
+  jaeger-agent:
+    image: jaegertracing/jaeger-agent:latest
+    command: ["--reporter.grpc.host-port=jaeger-collector:14250"]
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+    restart: on-failure
+    depends_on:
+      - jaeger-collector
+    networks:
+      - monitoring
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/api/prom/push"
+
+  cassandra:
+    image: cassandra:latest
+    networks:
+      - monitoring
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/api/prom/push"
+
+  cassandra-schema:
+    image: jaegertracing/jaeger-cassandra-schema:latest
+    depends_on:
+      - cassandra
+    networks:
+      - monitoring
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/api/prom/push"
+
+  loki:
+    image: grafana/loki:latest
+    volumes:
+      - ./config/monitoring:/etc/loki:ro
+    ports:
+      - 3100:3100
+    command: -config.file=/etc/loki/loki.yaml
+    depends_on:
+      - minio
+    networks:
+      - monitoring
+    # send Loki traces to Jaeger
+    environment:
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6831
+      - JAEGER_SAMPLER_TYPE=const
+      - JAEGER_SAMPLER_PARAM=1
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/api/prom/push"
+        # Prevent container from being stuck when shutting down
+        # https://github.com/grafana/loki/issues/2361#issuecomment-718024318
+        loki-timeout: 1s
+        loki-max-backoff: 1s
+        loki-retries: 1
+
+  promtail:
+    image: grafana/promtail:latest
+    volumes:
+      - /var/log:/var/log
+      - ./config/monitoring:/etc/promtail:ro
+    command: -config.file=/etc/promtail/promtail.yaml
+    depends_on:
+      - loki
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - 3111:3000
+    restart: unless-stopped
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_INSTALL_PLUGINS=
+    volumes:
+      - ./config/monitoring/grafana.yaml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+    depends_on:
+      - minio
+      - promtail
+      - loki
+    networks:
+      - monitoring
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/api/prom/push"
+
+  minio:
+    image: minio/minio:latest
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        mkdir -p /data/loki-data && \
+        mkdir -p /data/loki-ruler &&
+        minio server /data
+    environment:
+      - MINIO_ROOT_USER=loki
+      - MINIO_ROOT_PASSWORD=supersecret
+      - MINIO_PROMETHEUS_AUTH_TYPE=public
+      - MINIO_UPDATE=off
+    ports:
+      - "9000:9000"
+    volumes:
+      - ../../../.data/minio:/data
+    networks:
+      - monitoring
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/api/prom/push"
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ../../../.data/prometheus:/prometheus # Persistent storage
+      - ./config/monitoring/:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - "--storage.tsdb.retention.time=30d" # Retain data for 30 days
+      - "--storage.tsdb.path=/prometheus" # Ensure correct path
+    networks:
+      - monitoring
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/api/prom/push"
+
+networks:
+  core:
+  monitoring:
