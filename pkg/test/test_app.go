@@ -34,7 +34,5 @@ func NewTestApp(invoker interface{}, overrideConstructors ...any) *fx.App {
 		}
 	}
 
-	services := fx.New(options...)
-
-	return services
+	return fx.New(options...)
 }
