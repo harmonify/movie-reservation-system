@@ -1,14 +1,15 @@
-package validation
+package validator
 
 import (
 	"errors"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	validator "github.com/go-playground/validator/v10"
+	"github.com/go-playground/validator/v10"
 	"github.com/gobeam/stringy"
-	"github.com/harmonify/movie-reservation-system/pkg/constant"
+	http_constant "github.com/harmonify/movie-reservation-system/pkg/http/constant"
 	"github.com/harmonify/movie-reservation-system/pkg/http/response"
+	"github.com/harmonify/movie-reservation-system/pkg/util/validation"
 )
 
 type errorMsg struct {
@@ -16,27 +17,27 @@ type errorMsg struct {
 	Message string `json:"message"`
 }
 
-type Validator interface {
+type HttpValidator interface {
 	ValidateBody(c *gin.Context, schema interface{}) error
 	ValidateQueryParams(c *gin.Context, schema interface{}) error
 }
 
-type ValidatorImpl struct {
-	response       response.Response
-	validationUtil ValidationUtil
+type HttpValidatorImpl struct {
+	response       response.HttpResponse
+	validationUtil validation.ValidationUtil
 }
 
-func NewValidator(response response.Response, validationUtil ValidationUtil) Validator {
-	return &ValidatorImpl{
+func NewHttpValidator(response response.HttpResponse, validationUtil validation.ValidationUtil) HttpValidator {
+	return &HttpValidatorImpl{
 		response:       response,
 		validationUtil: validationUtil,
 	}
 }
 
-func (v *ValidatorImpl) ValidateBody(c *gin.Context, schema interface{}) error {
+func (v *HttpValidatorImpl) ValidateBody(c *gin.Context, schema interface{}) error {
 	if err := c.ShouldBind(schema); err != nil {
 		errMsg := constructValidationField(err)
-		return v.response.BuildValidationError(constant.InvalidRequestBody, err, errMsg)
+		return v.response.BuildValidationError(http_constant.InvalidRequestBody, err, errMsg)
 	}
 
 	validate := validator.New()
@@ -47,17 +48,17 @@ func (v *ValidatorImpl) ValidateBody(c *gin.Context, schema interface{}) error {
 
 	if err := validate.Struct(schema); err != nil {
 		errMsg := constructValidationField(err)
-		return v.response.BuildValidationError(constant.InvalidRequestBody, err, errMsg)
+		return v.response.BuildValidationError(http_constant.InvalidRequestBody, err, errMsg)
 	}
 
 	return nil
 }
 
-func (v *ValidatorImpl) ValidateQueryParams(c *gin.Context, schema interface{}) error {
+func (v *HttpValidatorImpl) ValidateQueryParams(c *gin.Context, schema interface{}) error {
 	err := c.ShouldBindQuery(schema)
 	if err != nil {
 		errMsg := constructValidationField(err)
-		return v.response.BuildValidationError(constant.InvalidRequestBody, err, errMsg)
+		return v.response.BuildValidationError(http_constant.InvalidRequestBody, err, errMsg)
 	}
 
 	validate := validator.New()
@@ -68,20 +69,20 @@ func (v *ValidatorImpl) ValidateQueryParams(c *gin.Context, schema interface{}) 
 
 	if err := validate.Struct(schema); err != nil {
 		errMsg := constructValidationField(err)
-		return v.response.BuildValidationError(constant.InvalidRequestBody, err, errMsg)
+		return v.response.BuildValidationError(http_constant.InvalidRequestBody, err, errMsg)
 	}
 
 	return nil
 }
 
-func (v *ValidatorImpl) phoneNumberValidation(fl validator.FieldLevel) bool {
+func (v *HttpValidatorImpl) phoneNumberValidation(fl validator.FieldLevel) bool {
 	return v.validationUtil.ValidatePhoneNumber(fl.Field().String())
 }
 
-func (v *ValidatorImpl) registerCustomValidation(validate *validator.Validate) error {
+func (v *HttpValidatorImpl) registerCustomValidation(validate *validator.Validate) error {
 	invalid_validation_err := errors.New("INVALID_VALIDATION")
 
-	err := validate.RegisterValidation(string(constant.PhoneNumberKey), v.phoneNumberValidation)
+	err := validate.RegisterValidation(string(http_constant.PhoneNumberKey), v.phoneNumberValidation)
 	if err != nil {
 		return invalid_validation_err
 	}

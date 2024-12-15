@@ -1,4 +1,4 @@
-package constant
+package grpc_constant
 
 const (
 	GrpcOK                 = 0

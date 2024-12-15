@@ -1,4 +1,4 @@
-package logger_shared
+package logger_interface
 
 import (
 	"context"

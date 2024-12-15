@@ -8,11 +8,11 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/harmonify/movie-reservation-system/pkg/constant"
+	constant "github.com/harmonify/movie-reservation-system/pkg/http/constant"
 	"github.com/harmonify/movie-reservation-system/pkg/http/response"
-	logger_shared "github.com/harmonify/movie-reservation-system/pkg/logger/shared"
+	logger_interface "github.com/harmonify/movie-reservation-system/pkg/logger/interface"
 	"github.com/harmonify/movie-reservation-system/pkg/mocks"
-	"github.com/harmonify/movie-reservation-system/pkg/test"
+	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	struct_util "github.com/harmonify/movie-reservation-system/pkg/util/struct"
 	"github.com/stretchr/testify/assert"
@@ -32,10 +32,10 @@ func TestResponse(t *testing.T) {
 
 type ResponseTestSuite struct {
 	suite.Suite
-	logger     logger_shared.Logger
+	logger     logger_interface.Logger
 	tracer     tracer.Tracer
 	structUtil struct_util.StructUtil
-	response   response.Response
+	response   response.HttpResponse
 }
 
 type testConfig struct {
@@ -48,18 +48,18 @@ type testExpectation struct {
 	Success  bool
 	HttpCode int
 	Result   string
-	Error    *response.ErrorHandler
+	Error    *response.HttpErrorHandler
 }
 
 func (s *ResponseTestSuite) SetupSuite() {
 	s.logger = mocks.NewLogger(s.T())
 	s.tracer = mocks.NewTracer(s.T())
 	s.structUtil = mocks.NewStructUtil(s.T())
-	s.response = response.NewResponse(s.logger, s.tracer, s.structUtil, &constant.DefaultCustomHttpErrorMap)
+	s.response = response.NewHttpResponse(s.logger, s.tracer, s.structUtil, &constant.DefaultCustomHttpErrorMap)
 }
 
 func (s *ResponseTestSuite) TestBuild() {
-	testCases := []test.TestCase[testConfig, testExpectation]{
+	testCases := []test_interface.TestCase[testConfig, testExpectation]{
 		{
 			Description: "Should build success response",
 			Config: testConfig{
@@ -110,7 +110,7 @@ func (s *ResponseTestSuite) TestBuild() {
 }
 
 func (s *ResponseTestSuite) TestBuildWithResponseCode(t *testing.T) {
-	testCases := []test.TestCase[testConfig, testExpectation]{}
+	testCases := []test_interface.TestCase[testConfig, testExpectation]{}
 
 	for _, testCase := range testCases {
 		config := testCase.Config.(testConfig)
@@ -156,8 +156,7 @@ func (s *ResponseTestSuite) TestSend(t *testing.T) {
 		c.Request = req
 
 		// Act
-		httpCode, response, responseError := s.response.Build(ctx, http.StatusOK, nil, nil)
-		s.response.Send(c, httpCode, response, responseError)
+		s.response.Send(c, nil, nil)
 
 		// Assert
 		assert.Equal(t, http.StatusOK, w.Code)
@@ -185,8 +184,8 @@ func (s *ResponseTestSuite) TestSend(t *testing.T) {
 		c.Request = req
 
 		// Act
-		httpCode, response, responseError := s.response.Build(ctx, http.StatusInternalServerError, nil, errors.New("test error"))
-		s.response.Send(c, httpCode, response, responseError)
+		err := s.response.BuildError(constant.InternalServerError, errors.New("test error"))
+		s.response.Send(c, nil, err)
 
 		// Assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
@@ -199,7 +198,7 @@ func (s *ResponseTestSuite) TestBuildError(t *testing.T) {
 		err := errors.New("test error")
 		handler := s.response.BuildError("test_code", err)
 
-		if handlerImpl, ok := handler.(*response.ErrorHandlerImpl); ok {
+		if handlerImpl, ok := handler.(*response.HttpErrorHandlerImpl); ok {
 			if handlerImpl.Code != "test_code" {
 				t.Errorf("Expected code 'test_code', got '%s'", handlerImpl.Code)
 			}
@@ -215,7 +214,7 @@ func (s *ResponseTestSuite) TestBuildErrorValidation(t *testing.T) {
 		errorFields := map[string]string{"field": "error"}
 		handler := s.response.BuildValidationError("test_code", err, errorFields)
 
-		if handlerImpl, ok := handler.(*response.ErrorHandlerImpl); ok {
+		if handlerImpl, ok := handler.(*response.HttpErrorHandlerImpl); ok {
 			if handlerImpl.Code != "test_code" {
 				t.Errorf("Expected code 'test_code', got '%s'", handlerImpl.Code)
 			}

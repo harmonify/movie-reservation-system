@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/harmonify/movie-reservation-system/pkg/test"
+	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
 	"github.com/harmonify/movie-reservation-system/pkg/util/struct"
 	"github.com/stretchr/testify/suite"
 )
@@ -37,7 +37,7 @@ func (s *StructUtilTestSuite) SetupSuite() {
 func (s *StructUtilTestSuite) TestSetValueIfNotEmpty() {
 	var data interface{}
 
-	testCases := []test.TestCase[testConfig, testExpectation]{
+	testCases := []test_interface.TestCase[testConfig, testExpectation]{
 		{
 			Description: "Should send correct response",
 			Config: testConfig{

@@ -1,12 +1,16 @@
 package util
 
 import (
+	"github.com/harmonify/movie-reservation-system/pkg/util/encryption"
+	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
 	struct_util "github.com/harmonify/movie-reservation-system/pkg/util/struct"
 	"github.com/harmonify/movie-reservation-system/pkg/util/validation"
 	"go.uber.org/fx"
 )
 
 type Util struct {
+	EncryptionUtil encryption.Encryption
+	JWTUtil        jwt_util.JWTUtil
 	StructUtil     struct_util.StructUtil
 	ValidationUtil validation.ValidationUtil
 }

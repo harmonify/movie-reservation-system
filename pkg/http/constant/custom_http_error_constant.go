@@ -1,4 +1,4 @@
-package constant
+package http_constant
 
 import (
 	"errors"
@@ -10,6 +10,7 @@ var (
 	Unauthorized            = "UNAUTHORIZED"
 	InvalidJwtSigningMethod = "INVALID_JWT_SIGNING_METHOD"
 	InvalidJwtFormat        = "INVALID_JWT_FORMAT"
+	InvalidJwt              = "INVALID_JWT"
 	Forbidden               = "FORBIDDEN"
 	NotFound                = "NOT_FOUND"
 	UnprocessableEntity     = "UNPROCESSABLE_ENTITY"
@@ -24,6 +25,7 @@ var (
 	ErrUnauthorized            = errors.New(Unauthorized)
 	ErrInvalidJwtFormat        = errors.New(InvalidJwtFormat)
 	ErrInvalidJwtSigningMethod = errors.New(InvalidJwtSigningMethod)
+	ErrInvalidJwt              = errors.New(InvalidJwt)
 	ErrForbidden               = errors.New(Forbidden)
 	ErrNotFound                = errors.New(NotFound)
 	ErrUnprocessableEntity     = errors.New(UnprocessableEntity)

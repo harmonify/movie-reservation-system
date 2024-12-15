@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"runtime"
 
-	logger_shared "github.com/harmonify/movie-reservation-system/pkg/logger/shared"
+	logger_interface "github.com/harmonify/movie-reservation-system/pkg/logger/interface"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -17,7 +17,7 @@ type LokiLoggerImpl struct {
 	span trace.Span
 }
 
-func NewLokiLogger(zapConfig zap.Config, lokiConfig logger_shared.LokiConfig) (logger_shared.Logger, error) {
+func NewLokiLogger(zapConfig zap.Config, lokiConfig logger_interface.LokiConfig) (logger_interface.Logger, error) {
 	loki := NewZapLoki(context.Background(), lokiConfig)
 	zapLogger, err := loki.WithCreateLogger(zapConfig)
 	return &LokiLoggerImpl{zapLogger, nil}, err
@@ -27,7 +27,7 @@ func (c *LokiLoggerImpl) GetZapLogger() *zap.Logger {
 	return c.Logger
 }
 
-func (w *LokiLoggerImpl) WithCtx(ctx context.Context) logger_shared.Logger {
+func (w *LokiLoggerImpl) WithCtx(ctx context.Context) logger_interface.Logger {
 	var log *zap.Logger = w.Logger
 	span := trace.SpanFromContext(ctx)
 

@@ -91,19 +91,19 @@ func (_c *Response_Build_Call) RunAndReturn(run func(context.Context, int, inter
 }
 
 // BuildError provides a mock function with given fields: code, err
-func (_m *Response) BuildError(code string, err error) response.ErrorHandler {
+func (_m *Response) BuildError(code string, err error) response.HttpErrorHandler {
 	ret := _m.Called(code, err)
 
 	if len(ret) == 0 {
 		panic("no return value specified for BuildError")
 	}
 
-	var r0 response.ErrorHandler
-	if rf, ok := ret.Get(0).(func(string, error) response.ErrorHandler); ok {
+	var r0 response.HttpErrorHandler
+	if rf, ok := ret.Get(0).(func(string, error) response.HttpErrorHandler); ok {
 		r0 = rf(code, err)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(response.ErrorHandler)
+			r0 = ret.Get(0).(response.HttpErrorHandler)
 		}
 	}
 
@@ -129,30 +129,30 @@ func (_c *Response_BuildError_Call) Run(run func(code string, err error)) *Respo
 	return _c
 }
 
-func (_c *Response_BuildError_Call) Return(_a0 response.ErrorHandler) *Response_BuildError_Call {
+func (_c *Response_BuildError_Call) Return(_a0 response.HttpErrorHandler) *Response_BuildError_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *Response_BuildError_Call) RunAndReturn(run func(string, error) response.ErrorHandler) *Response_BuildError_Call {
+func (_c *Response_BuildError_Call) RunAndReturn(run func(string, error) response.HttpErrorHandler) *Response_BuildError_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // BuildValidationError provides a mock function with given fields: code, err, errorFields
-func (_m *Response) BuildValidationError(code string, err error, errorFields interface{}) response.ErrorHandler {
+func (_m *Response) BuildValidationError(code string, err error, errorFields interface{}) response.HttpErrorHandler {
 	ret := _m.Called(code, err, errorFields)
 
 	if len(ret) == 0 {
 		panic("no return value specified for BuildValidationError")
 	}
 
-	var r0 response.ErrorHandler
-	if rf, ok := ret.Get(0).(func(string, error, interface{}) response.ErrorHandler); ok {
+	var r0 response.HttpErrorHandler
+	if rf, ok := ret.Get(0).(func(string, error, interface{}) response.HttpErrorHandler); ok {
 		r0 = rf(code, err, errorFields)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(response.ErrorHandler)
+			r0 = ret.Get(0).(response.HttpErrorHandler)
 		}
 	}
 
@@ -179,12 +179,12 @@ func (_c *Response_BuildValidationError_Call) Run(run func(code string, err erro
 	return _c
 }
 
-func (_c *Response_BuildValidationError_Call) Return(_a0 response.ErrorHandler) *Response_BuildValidationError_Call {
+func (_c *Response_BuildValidationError_Call) Return(_a0 response.HttpErrorHandler) *Response_BuildValidationError_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *Response_BuildValidationError_Call) RunAndReturn(run func(string, error, interface{}) response.ErrorHandler) *Response_BuildValidationError_Call {
+func (_c *Response_BuildValidationError_Call) RunAndReturn(run func(string, error, interface{}) response.HttpErrorHandler) *Response_BuildValidationError_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -1,4 +1,4 @@
-package constant
+package config_constant
 
 var (
 	EnvironmentDevelopment = "dev"

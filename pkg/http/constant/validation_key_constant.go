@@ -1,4 +1,4 @@
-package constant
+package http_constant
 
 type ValidationKey string
 
