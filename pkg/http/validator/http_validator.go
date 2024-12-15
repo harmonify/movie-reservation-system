@@ -18,7 +18,7 @@ type errorMsg struct {
 }
 
 type HttpValidator interface {
-	ValidateBody(c *gin.Context, schema interface{}) error
+	Validate(c *gin.Context, schema interface{}) error
 	ValidateQueryParams(c *gin.Context, schema interface{}) error
 }
 
@@ -34,7 +34,7 @@ func NewHttpValidator(response response.HttpResponse, validationUtil validation.
 	}
 }
 
-func (v *HttpValidatorImpl) ValidateBody(c *gin.Context, schema interface{}) error {
+func (v *HttpValidatorImpl) Validate(c *gin.Context, schema interface{}) error {
 	if err := c.ShouldBind(schema); err != nil {
 		errMsg := constructValidationField(err)
 		return v.response.BuildValidationError(http_constant.InvalidRequestBody, err, errMsg)
