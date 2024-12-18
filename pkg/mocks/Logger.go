@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	logger_interface "github.com/harmonify/movie-reservation-system/pkg/logger/interface"
+	logger "github.com/harmonify/movie-reservation-system/pkg/logger"
 	mock "github.com/stretchr/testify/mock"
 
 	zap "go.uber.org/zap"
@@ -315,19 +315,19 @@ func (_c *Logger_Warn_Call) RunAndReturn(run func(string, ...zapcore.Field)) *Lo
 }
 
 // WithCtx provides a mock function with given fields: ctx
-func (_m *Logger) WithCtx(ctx context.Context) logger_interface.Logger {
+func (_m *Logger) WithCtx(ctx context.Context) logger.Logger {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for WithCtx")
 	}
 
-	var r0 logger_interface.Logger
-	if rf, ok := ret.Get(0).(func(context.Context) logger_interface.Logger); ok {
+	var r0 logger.Logger
+	if rf, ok := ret.Get(0).(func(context.Context) logger.Logger); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(logger_interface.Logger)
+			r0 = ret.Get(0).(logger.Logger)
 		}
 	}
 
@@ -352,12 +352,12 @@ func (_c *Logger_WithCtx_Call) Run(run func(ctx context.Context)) *Logger_WithCt
 	return _c
 }
 
-func (_c *Logger_WithCtx_Call) Return(_a0 logger_interface.Logger) *Logger_WithCtx_Call {
+func (_c *Logger_WithCtx_Call) Return(_a0 logger.Logger) *Logger_WithCtx_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *Logger_WithCtx_Call) RunAndReturn(run func(context.Context) logger_interface.Logger) *Logger_WithCtx_Call {
+func (_c *Logger_WithCtx_Call) RunAndReturn(run func(context.Context) logger.Logger) *Logger_WithCtx_Call {
 	_c.Call.Return(run)
 	return _c
 }

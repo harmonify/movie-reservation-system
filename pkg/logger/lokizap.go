@@ -1,4 +1,4 @@
-package loki_logger
+package logger
 
 import (
 	"bytes"
@@ -16,7 +16,6 @@ import (
 	"sync"
 	"time"
 
-	logger_interface "github.com/harmonify/movie-reservation-system/pkg/logger/interface"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -29,7 +28,7 @@ type ZapLoki interface {
 }
 
 type lokiPusher struct {
-	config    *logger_interface.LokiConfig
+	config    *LokiConfig
 	ctx       context.Context
 	client    *http.Client
 	quit      chan struct{}
@@ -57,7 +56,7 @@ type logEntry struct {
 
 var sinkRegistered bool
 
-func NewZapLoki(ctx context.Context, cfg logger_interface.LokiConfig) ZapLoki {
+func NewZapLoki(ctx context.Context, cfg LokiConfig) ZapLoki {
 	c := &http.Client{}
 	cfg.Url = strings.TrimSuffix(cfg.Url, "/")
 	cfg.Url = fmt.Sprintf("%s/loki/api/v1/push", cfg.Url)

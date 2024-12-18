@@ -1,18 +1,28 @@
 package logger
 
 import (
+	"context"
+
 	"fmt"
 	"time"
 
 	"github.com/harmonify/movie-reservation-system/pkg/config"
-	console_logger "github.com/harmonify/movie-reservation-system/pkg/logger/console"
-	logger_interface "github.com/harmonify/movie-reservation-system/pkg/logger/interface"
-	loki_logger "github.com/harmonify/movie-reservation-system/pkg/logger/loki"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
-func NewLogger(cfg config.Config) logger_interface.Logger {
+type Logger interface {
+	GetZapLogger() *zap.Logger
+	WithCtx(ctx context.Context) Logger
+	Error(msg string, fields ...zap.Field)
+	Warn(msg string, fields ...zap.Field)
+	Info(msg string, fields ...zap.Field)
+	Debug(msg string, fields ...zap.Field)
+	Log(debugLevel zapcore.Level, msg string, fields ...zap.Field)
+}
+
+func NewLogger(cfg config.Config) Logger {
 	zapConfig := zap.NewProductionConfig()
 	// zapConfig.EncoderConfig.CallerKey = zapcore.OmitKey
 
@@ -26,15 +36,15 @@ func NewLogger(cfg config.Config) logger_interface.Logger {
 	switch cfg.LogType {
 	case "console":
 		{
-			return console_logger.NewConsoleLogger()
+			return NewConsoleLogger()
 		}
 	default:
 		{
-			logger, err := loki_logger.NewLokiLogger(zapConfig, logger_interface.LokiConfig{
+			logger, err := NewLokiLogger(zapConfig, LokiConfig{
 				Url:          cfg.LokiUrl,
 				BatchMaxSize: 1000,
 				BatchMaxWait: 10 * time.Second,
-				Labels:       map[string]string{"app": cfg.ServiceName, "env": cfg.Env},
+				Labels:       map[string]string{"app": cfg.AppName, "env": cfg.Env},
 			})
 
 			if err != nil {

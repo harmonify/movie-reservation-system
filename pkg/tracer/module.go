@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"runtime"
-	"strings"
 
 	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"go.opentelemetry.io/otel"
@@ -50,7 +49,7 @@ func InitTracer(cfg *config.Config) Tracer {
 	resources, err := resource.New(
 		context.Background(),
 		resource.WithAttributes(
-			attribute.String("service.name", cfg.ServiceName),
+			attribute.String("service.name", cfg.AppName),
 			attribute.String("service.environment", cfg.Env),
 		),
 	)
@@ -79,17 +78,17 @@ func InitTracer(cfg *config.Config) Tracer {
 }
 
 func (t *TracerImpl) Start(ctx context.Context, spanName string) (context.Context, trace.Span) {
-	return otel.GetTracerProvider().Tracer(t.Config.ServiceName).Start(ctx, spanName)
+	return otel.GetTracerProvider().Tracer(t.Config.AppName).Start(ctx, spanName)
 }
 
 func (s *TracerImpl) StartSpanWithCaller(ctx context.Context) (context.Context, trace.Span) {
 	pc, _, _, _ := runtime.Caller(1)
 	callerName := runtime.FuncForPC(pc).Name()
 
-	segments := strings.Split(callerName, ".")
-	spanName := segments[len(segments)-1]
+	// segments := strings.Split(callerName, ".")
+	// spanName := segments[len(segments)-1]
 
-	ctx, span := s.Start(ctx, spanName)
+	ctx, span := s.Start(ctx, callerName)
 	return ctx, span
 }
 

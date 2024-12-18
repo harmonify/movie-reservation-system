@@ -13,6 +13,13 @@ import (
 // It accepts a generic type of invoker, so you can specify some modules to be mocked in the test file
 func NewTestApp(invoker interface{}, overrideConstructors ...any) *fx.App {
 	options := []fx.Option{
+		fx.Provide(
+			func() *config.ConfigFile {
+				return &config.ConfigFile{
+					Path: ".env",
+				}
+			},
+		),
 		config.ConfigModule,
 		logger.LoggerModule,
 		tracer.TracerModule,
@@ -21,7 +28,6 @@ func NewTestApp(invoker interface{}, overrideConstructors ...any) *fx.App {
 		util.UtilModule,
 
 		// Invoke the function
-		fx.Invoke(config.LoadConfig),
 		fx.Invoke(logger.NewLogger),
 		fx.Invoke(tracer.InitTracer),
 		fx.Invoke(invoker),

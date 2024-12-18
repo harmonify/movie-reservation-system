@@ -1,4 +1,4 @@
-package loki_logger
+package logger
 
 import (
 	"encoding/json"

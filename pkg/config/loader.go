@@ -2,47 +2,33 @@ package config
 
 import (
 	"fmt"
-	"os"
-	"path"
-	"runtime"
-	"strings"
 
 	"github.com/spf13/viper"
 )
 
-func LoadConfig() *Config {
-	cfg := &Config{}
-	_, filename, _, _ := runtime.Caller(0)
-	dir := path.Join(path.Dir(filename), "..", "..", ".env")
-
-	viper.SetConfigFile(dir)
-	readConfig(cfg)
-
-	return cfg
+type ConfigFile struct {
+	Path string
 }
 
-func readConfig(config *Config) {
+func NewConfig(configFile ConfigFile) *Config {
+	// Bind environment variables to Viper
+	viper.AutomaticEnv()
+
+	if configFile.Path != "" {
+		fmt.Println(fmt.Sprintf(">> Config: Using %s as the configuration file", configFile.Path))
+		viper.SetConfigFile(configFile.Path)
+	}
+
 	err := viper.ReadInConfig()
 	if err != nil {
-		fmt.Println("Cannot read configuration", err)
+		fmt.Println(fmt.Sprintf(">> Config: Cannot read config. Erorr: %s", err))
 	}
 
-	setDefaultEnv()
-
-	err = viper.Unmarshal(&config)
+	cfg := &Config{}
+	err = viper.Unmarshal(&cfg)
 	if err != nil {
-		fmt.Println("Cannot read configuration: ", err, ". will use default env")
+		fmt.Println(fmt.Sprintf(">> Config: Cannot parse config. Erorr: %s", err))
 	}
-}
 
-func setDefaultEnv() map[string]string {
-	m := make(map[string]string)
-	for _, s := range os.Environ() {
-		a := strings.Split(s, "=")
-		if viper.Get("TEMPLATE") == "true" {
-			viper.Set(a[0], a[1])
-		}
-		m[a[0]] = a[1]
-	}
-	return m
+	return cfg
 }

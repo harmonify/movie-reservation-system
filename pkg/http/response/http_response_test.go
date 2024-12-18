@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	constant "github.com/harmonify/movie-reservation-system/pkg/http/constant"
 	"github.com/harmonify/movie-reservation-system/pkg/http/response"
-	logger_interface "github.com/harmonify/movie-reservation-system/pkg/logger/interface"
+	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/mocks"
 	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
@@ -32,7 +32,7 @@ func TestResponse(t *testing.T) {
 
 type ResponseTestSuite struct {
 	suite.Suite
-	logger     logger_interface.Logger
+	logger     logger.Logger
 	tracer     tracer.Tracer
 	structUtil struct_util.StructUtil
 	response   response.HttpResponse

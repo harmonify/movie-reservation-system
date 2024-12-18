@@ -11,7 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	constant "github.com/harmonify/movie-reservation-system/pkg/http/constant"
-	logger_interface "github.com/harmonify/movie-reservation-system/pkg/logger/interface"
+	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	struct_util "github.com/harmonify/movie-reservation-system/pkg/util/struct"
 	"go.opentelemetry.io/otel/codes"
@@ -28,13 +28,13 @@ type HttpResponse interface {
 }
 
 type httpResponseImpl struct {
-	logger             logger_interface.Logger
+	logger             logger.Logger
 	tracer             tracer.Tracer
 	structUtil         struct_util.StructUtil
 	customHttpErrorMap *constant.CustomHttpErrorMap
 }
 
-func NewHttpResponse(logger logger_interface.Logger, tracer tracer.Tracer, structUtil struct_util.StructUtil, customHttpErrorMap *constant.CustomHttpErrorMap) HttpResponse {
+func NewHttpResponse(logger logger.Logger, tracer tracer.Tracer, structUtil struct_util.StructUtil, customHttpErrorMap *constant.CustomHttpErrorMap) HttpResponse {
 	return &httpResponseImpl{
 		logger:             logger,
 		tracer:             tracer,

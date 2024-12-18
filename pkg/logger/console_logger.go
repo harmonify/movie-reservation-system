@@ -1,4 +1,4 @@
-package console_logger
+package logger
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"os"
 	"runtime"
 
-	logger_interface "github.com/harmonify/movie-reservation-system/pkg/logger/interface"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -14,12 +13,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-type ConsoleLoggerImpl struct {
-	*zap.Logger
-	span trace.Span
-}
-
-func NewConsoleLogger() logger_interface.Logger {
+func NewConsoleLogger() Logger {
 	// The bundled Config struct only supports the most common configuration
 	// options. More complex needs, like splitting logs between multiple files
 	// or writing to non-file outputs, require use of the zapcore package.
@@ -63,7 +57,7 @@ func (c *ConsoleLoggerImpl) GetZapLogger() *zap.Logger {
 	return c.Logger
 }
 
-func (w *ConsoleLoggerImpl) WithCtx(ctx context.Context) logger_interface.Logger {
+func (w *ConsoleLoggerImpl) WithCtx(ctx context.Context) Logger {
 	var log *zap.Logger = w.Logger
 	span := trace.SpanFromContext(ctx)
 
