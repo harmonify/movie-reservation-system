@@ -1,7 +1,14 @@
 package main
 
-import "github.com/harmonify/movie-reservation-system/user-service/cmd"
+import (
+	"os"
+
+	"github.com/harmonify/movie-reservation-system/user-service/internal"
+)
 
 func main() {
-	cmd.Execute()
+	err := internal.StartApp()
+	if err != nil {
+		os.Exit(1)
+	}
 }

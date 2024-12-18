@@ -4,19 +4,20 @@ Build minimal codebase template on user service that will serve as a template fo
 
 ## Technical Requirements
 
-- [ ] Initial structure of `user-service`
-- [ ] Add `docker-compose.yml`
+- [x] Initial structure of `user-service`
+- [x] Add `docker-compose.yml`
   - [x] Add dependencies
     - [x] PostgreSQL
     - [x] Redis
     - [x] Kafka
-  - [ ] Add observability
-    - [ ] Logging: Loki + Promtail + MinIO
-    - [ ] Tracing: Jaeger (Agent + Collector + Query) + Cassandra
+  - [x] Add observability
+    - [x] Logging: Loki + Promtail + MinIO
+    - [x] Tracing: Jaeger (Agent + Collector + Query) + Cassandra
     - [ ] Metric: Prometheus
-    - [ ] Dashboard: Grafana
+    - [x] Dashboard: Grafana
 
 ## Implementation
 
 ### Changes
+
 
