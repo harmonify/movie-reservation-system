@@ -3,11 +3,11 @@ services:
     image: postgres:latest
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: mvs-user-service
     ports:
-      - ${POSTGRES_EXTERNAL_PORT}:5432
+      - 5432:5432
     volumes:
       - ./config/postgresql:/docker-entrypoint-initdb.d
       - ../../../.data/postgres:/data
@@ -21,7 +21,7 @@ services:
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:latest
     environment:
-      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+      DATA_SOURCE_NAME: "postgresql://root:root@postgres:5432/mvs-user-service?sslmode=disable"
     ports:
       - "9187:9187"
     depends_on:
@@ -36,9 +36,9 @@ services:
 
   redis:
     image: redis:latest
-    command: ["redis-server", "--requirepass", "${REDIS_PASS}"]
+    command: ["redis-server", "--requirepass", "secret"]
     ports:
-      - "${REDIS_EXTERNAL_PORT}:6379"
+      - "6379:6379"
     networks:
       - core
     logging:
@@ -49,7 +49,7 @@ services:
   redis-exporter:
     image: oliver006/redis_exporter:latest
     environment:
-      REDIS_PASSWORD: "${REDIS_PASS}"
+      REDIS_PASSWORD: "secret"
     ports:
       - "9121:9121"
     depends_on:
@@ -188,7 +188,7 @@ services:
   loki:
     image: grafana/loki:latest
     volumes:
-      - ./config/monitoring:/etc/loki:ro
+      - ./config/loki.yaml:/etc/loki/loki.yaml:ro
     ports:
       - 3100:3100
     command: -config.file=/etc/loki/loki.yaml
@@ -216,7 +216,7 @@ services:
     image: grafana/promtail:latest
     volumes:
       - /var/log:/var/log
-      - ./config/monitoring:/etc/promtail:ro
+      - ./config/promtail.yaml:/etc/promtail/promtail.yaml:ro
     command: -config.file=/etc/promtail/promtail.yaml
     depends_on:
       - loki
@@ -234,7 +234,7 @@ services:
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_INSTALL_PLUGINS=
     volumes:
-      - ./config/monitoring/grafana.yaml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - ./config/grafana.yaml:/etc/grafana/provisioning/datasources/datasources.yml:ro
     depends_on:
       - minio
       - promtail
@@ -275,7 +275,7 @@ services:
     image: prom/prometheus:latest
     volumes:
       - ../../../.data/prometheus:/prometheus # Persistent storage
-      - ./config/monitoring/:/etc/prometheus/prometheus.yml:ro
+      - ./config/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
     ports:
       - "9090:9090"
     command:

@@ -1,1 +1,15 @@
+.data/*
+!.data/.gitkeep
+
+.output/*
+!.output/.gitkeep
+
+.test/*
+!.test/.gitkeep
+
 .env
+.env.*
+!.env.example
+
+.vscode
+**/*.DS_Store
