@@ -4,19 +4,46 @@ import "go.uber.org/fx"
 
 type Encryption struct {
 	AESEncryption AESEncryption
-	BcryptHash    BcryptHash
+	Argon2Hasher  Argon2Hasher
+	BcryptHasher  BcryptHasher
+	RSAEncryption RSAEncryption
+	SHA256Hasher  SHA256Hasher
 }
 
 func NewEncryption(
 	aesEncryption AESEncryption,
-	bcryptHash BcryptHash,
+	argon2Hasher Argon2Hasher,
+	bcryptHash BcryptHasher,
+	rsaEncryption RSAEncryption,
+	sha256Hasher SHA256Hasher,
 ) *Encryption {
 	return &Encryption{
 		AESEncryption: aesEncryption,
-		BcryptHash:    bcryptHash,
+		Argon2Hasher:  argon2Hasher,
+		BcryptHasher:  bcryptHash,
+		RSAEncryption: rsaEncryption,
+		SHA256Hasher:  sha256Hasher,
 	}
 }
 
 var (
-	EncryptionModule = fx.Provide(NewAESEncryption, NewBcryptHash, NewEncryption)
+	EncryptionModule = fx.Module(
+		"encryption",
+		fx.Provide(
+			NewAESEncryption,
+
+			func() Argon2HasherConfig {
+				return *Argon2HasherDefaultConfig
+			},
+			NewArgon2Hasher,
+
+			NewBcryptHasher,
+
+			NewRSAEncryption,
+
+			NewSHA256Hasher,
+
+			NewEncryption,
+		),
+	)
 )

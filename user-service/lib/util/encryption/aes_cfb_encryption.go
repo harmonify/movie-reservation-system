@@ -9,23 +9,15 @@ import (
 	"fmt"
 )
 
-type AESEncryption interface {
-	Encrypt(payload *AESPayload) (string, error)
-	Decrypt(payload *AESPayload) (string, error)
+func NewAesCfbEncryption() *aesCFBEncryptionImpl {
+	return &aesCFBEncryptionImpl{}
 }
 
-type AESEncryptionImpl struct{}
+// Deprecated: Use AES-GCM with PBKDF2 instead.
+type aesCFBEncryptionImpl struct{}
 
-type AESPayload struct {
-	Secret  string
-	Payload string
-}
-
-func NewAESEncryption() AESEncryption {
-	return &AESEncryptionImpl{}
-}
-
-func (i *AESEncryptionImpl) Encrypt(payload *AESPayload) (string, error) {
+// Deprecated: Use AES-GCM with PBKDF2 instead.
+func (i *aesCFBEncryptionImpl) Encrypt(payload *AESPayload) (string, error) {
 	key, err := hex.DecodeString(payload.Secret)
 	if err != nil {
 		fmt.Println("Invalid AES key:", err)
@@ -45,7 +37,8 @@ func (i *AESEncryptionImpl) Encrypt(payload *AESPayload) (string, error) {
 	return base64.StdEncoding.EncodeToString(cipherText), nil
 }
 
-func (i *AESEncryptionImpl) Decrypt(payload *AESPayload) (string, error) {
+// Deprecated: Use AES-GCM with PBKDF2 instead.
+func (i *aesCFBEncryptionImpl) Decrypt(payload *AESPayload) (string, error) {
 	key, err := hex.DecodeString(payload.Secret)
 	if err != nil {
 		fmt.Println("Invalid AES key:", err)

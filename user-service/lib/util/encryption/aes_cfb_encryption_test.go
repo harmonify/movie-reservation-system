@@ -6,7 +6,7 @@ import (
 
 func TestEncrypt(t *testing.T) {
 	t.Run("Should encrypt valid payload", func(t *testing.T) {
-		encryption := NewAESEncryption()
+		encryption := NewAesCfbEncryption()
 		payload := &AESPayload{
 			Secret:  "00112233445566778899aabbccddeeff", // valid 16-byte key
 			Payload: "Hello, World!",
@@ -25,7 +25,7 @@ func TestEncrypt(t *testing.T) {
 
 func TestDecrypt(t *testing.T) {
 	t.Run("Should decrypt valid payload", func(t *testing.T) {
-		encryption := NewAESEncryption()
+		encryption := NewAesCfbEncryption()
 		payload := &AESPayload{
 			Secret:  "00112233445566778899aabbccddeeff", // valid 16-byte key
 			Payload: "",                                 // We will fill this in with the encrypted version of "Hello, World!"

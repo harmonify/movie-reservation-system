@@ -9,7 +9,7 @@ import (
 )
 
 func TestBcrypt(t *testing.T) {
-	newBcryptHash := encryption.NewBcryptHash()
+	newBcryptHash := encryption.NewBcryptHasher()
 
 	githubCI := os.Getenv("CI")
 	if githubCI == "true" && os.Getenv("INTEGRATION_TEST") == "true" {
@@ -27,9 +27,8 @@ func TestBcrypt(t *testing.T) {
 		hashed, err := newBcryptHash.Hash("password")
 		assert.NoError(t, err)
 
-		res, err := newBcryptHash.Compare(hashed, "password")
+		match, err := newBcryptHash.Compare(hashed, "password")
+		assert.True(t, match)
 		assert.NoError(t, err)
-
-		assert.Equal(t, res, res)
 	})
 }
