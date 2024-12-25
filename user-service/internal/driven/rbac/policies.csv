@@ -1,0 +1,17 @@
+p, admin, movie-service, /movies, GET
+p, admin, movie-service, /movies, POST
+p, admin, movie-service, /movies, PUT
+p, admin, movie-service, /movies, DELETE
+p, admin, movie-service, /showtimes, GET
+p, admin, movie-service, /showtimes, POST
+p, admin, movie-service, /showtimes, PUT
+p, admin, movie-service, /showtimes, DELETE
+
+p, admin, reservation-service, /reservations, GET
+p, admin, reservation-service, /reservations/report, GET
+
+p, user, /movies, GET
+p, user, /showtimes, GET
+p, user, /reservations, GET
+p, user, /reservations, POST
+p, user, /reservations, DELETE
