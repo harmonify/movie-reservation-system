@@ -1,0 +1,35 @@
+@startuml register
+!theme plain
+skinparam style strictuml
+hide footbox
+actor User
+User -> AuthRest ++ : POST /auth/register
+AuthRest -> AuthService ++ : Register()
+
+AuthService -> EncryptionUtil ++ : Hash user password with Argon2id
+return hashed password
+
+AuthService -> EncryptionUtil ++ : Generate RSA key pair
+return RSA key pair
+
+AuthService -> EncryptionUtil ++ : Generate random salt
+return random salt
+
+AuthService -> EncryptionUtil ++ : Encrypt RSA key pair with AES algorithm\nand salted with (random salt + app secret)
+return AES encrypted RSA key pair
+
+AuthService -> Storage ++ : Start transaction
+Storage -> Storage : Save user record
+Storage -> Storage : Save default user role record
+Storage -> Storage : Save user key record\n(encrypted RSA key pair & salt)
+Storage -> Storage : Commit transaction
+return Error (if exist)
+
+AuthService -> Mailer ++ : Send verification link to user email
+return Error (if exist)
+
+return Error (if exist)
+
+return HTTP response
+
+@enduml
