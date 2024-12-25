@@ -91,19 +91,19 @@ func (_c *HttpResponse_Build_Call) RunAndReturn(run func(context.Context, int, i
 }
 
 // BuildError provides a mock function with given fields: code, err
-func (_m *HttpResponse) BuildError(code string, err error) response.HttpErrorHandler {
+func (_m *HttpResponse) BuildError(code string, err error) *response.HttpErrorHandlerImpl {
 	ret := _m.Called(code, err)
 
 	if len(ret) == 0 {
 		panic("no return value specified for BuildError")
 	}
 
-	var r0 response.HttpErrorHandler
-	if rf, ok := ret.Get(0).(func(string, error) response.HttpErrorHandler); ok {
+	var r0 *response.HttpErrorHandlerImpl
+	if rf, ok := ret.Get(0).(func(string, error) *response.HttpErrorHandlerImpl); ok {
 		r0 = rf(code, err)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(response.HttpErrorHandler)
+			r0 = ret.Get(0).(*response.HttpErrorHandlerImpl)
 		}
 	}
 
@@ -129,30 +129,30 @@ func (_c *HttpResponse_BuildError_Call) Run(run func(code string, err error)) *H
 	return _c
 }
 
-func (_c *HttpResponse_BuildError_Call) Return(_a0 response.HttpErrorHandler) *HttpResponse_BuildError_Call {
+func (_c *HttpResponse_BuildError_Call) Return(_a0 *response.HttpErrorHandlerImpl) *HttpResponse_BuildError_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *HttpResponse_BuildError_Call) RunAndReturn(run func(string, error) response.HttpErrorHandler) *HttpResponse_BuildError_Call {
+func (_c *HttpResponse_BuildError_Call) RunAndReturn(run func(string, error) *response.HttpErrorHandlerImpl) *HttpResponse_BuildError_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // BuildValidationError provides a mock function with given fields: code, err, errorFields
-func (_m *HttpResponse) BuildValidationError(code string, err error, errorFields interface{}) response.HttpErrorHandler {
+func (_m *HttpResponse) BuildValidationError(code string, err error, errorFields []response.BaseErrorValidationSchema) *response.HttpErrorHandlerImpl {
 	ret := _m.Called(code, err, errorFields)
 
 	if len(ret) == 0 {
 		panic("no return value specified for BuildValidationError")
 	}
 
-	var r0 response.HttpErrorHandler
-	if rf, ok := ret.Get(0).(func(string, error, interface{}) response.HttpErrorHandler); ok {
+	var r0 *response.HttpErrorHandlerImpl
+	if rf, ok := ret.Get(0).(func(string, error, []response.BaseErrorValidationSchema) *response.HttpErrorHandlerImpl); ok {
 		r0 = rf(code, err, errorFields)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(response.HttpErrorHandler)
+			r0 = ret.Get(0).(*response.HttpErrorHandlerImpl)
 		}
 	}
 
@@ -167,54 +167,31 @@ type HttpResponse_BuildValidationError_Call struct {
 // BuildValidationError is a helper method to define mock.On call
 //   - code string
 //   - err error
-//   - errorFields interface{}
+//   - errorFields []response.BaseErrorValidationSchema
 func (_e *HttpResponse_Expecter) BuildValidationError(code interface{}, err interface{}, errorFields interface{}) *HttpResponse_BuildValidationError_Call {
 	return &HttpResponse_BuildValidationError_Call{Call: _e.mock.On("BuildValidationError", code, err, errorFields)}
 }
 
-func (_c *HttpResponse_BuildValidationError_Call) Run(run func(code string, err error, errorFields interface{})) *HttpResponse_BuildValidationError_Call {
+func (_c *HttpResponse_BuildValidationError_Call) Run(run func(code string, err error, errorFields []response.BaseErrorValidationSchema)) *HttpResponse_BuildValidationError_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string), args[1].(error), args[2].(interface{}))
+		run(args[0].(string), args[1].(error), args[2].([]response.BaseErrorValidationSchema))
 	})
 	return _c
 }
 
-func (_c *HttpResponse_BuildValidationError_Call) Return(_a0 response.HttpErrorHandler) *HttpResponse_BuildValidationError_Call {
+func (_c *HttpResponse_BuildValidationError_Call) Return(_a0 *response.HttpErrorHandlerImpl) *HttpResponse_BuildValidationError_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *HttpResponse_BuildValidationError_Call) RunAndReturn(run func(string, error, interface{}) response.HttpErrorHandler) *HttpResponse_BuildValidationError_Call {
+func (_c *HttpResponse_BuildValidationError_Call) RunAndReturn(run func(string, error, []response.BaseErrorValidationSchema) *response.HttpErrorHandlerImpl) *HttpResponse_BuildValidationError_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Send provides a mock function with given fields: c, data, err
-func (_m *HttpResponse) Send(c *gin.Context, data interface{}, err error) (int, response.BaseResponseSchema) {
-	ret := _m.Called(c, data, err)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Send")
-	}
-
-	var r0 int
-	var r1 response.BaseResponseSchema
-	if rf, ok := ret.Get(0).(func(*gin.Context, interface{}, error) (int, response.BaseResponseSchema)); ok {
-		return rf(c, data, err)
-	}
-	if rf, ok := ret.Get(0).(func(*gin.Context, interface{}, error) int); ok {
-		r0 = rf(c, data, err)
-	} else {
-		r0 = ret.Get(0).(int)
-	}
-
-	if rf, ok := ret.Get(1).(func(*gin.Context, interface{}, error) response.BaseResponseSchema); ok {
-		r1 = rf(c, data, err)
-	} else {
-		r1 = ret.Get(1).(response.BaseResponseSchema)
-	}
-
-	return r0, r1
+func (_m *HttpResponse) Send(c *gin.Context, data interface{}, err error) {
+	_m.Called(c, data, err)
 }
 
 // HttpResponse_Send_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Send'
@@ -237,42 +214,19 @@ func (_c *HttpResponse_Send_Call) Run(run func(c *gin.Context, data interface{},
 	return _c
 }
 
-func (_c *HttpResponse_Send_Call) Return(_a0 int, _a1 response.BaseResponseSchema) *HttpResponse_Send_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *HttpResponse_Send_Call) Return() *HttpResponse_Send_Call {
+	_c.Call.Return()
 	return _c
 }
 
-func (_c *HttpResponse_Send_Call) RunAndReturn(run func(*gin.Context, interface{}, error) (int, response.BaseResponseSchema)) *HttpResponse_Send_Call {
+func (_c *HttpResponse_Send_Call) RunAndReturn(run func(*gin.Context, interface{}, error)) *HttpResponse_Send_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SendWithResponseCode provides a mock function with given fields: c, httpCode, data, err
-func (_m *HttpResponse) SendWithResponseCode(c *gin.Context, httpCode int, data interface{}, err error) (int, response.BaseResponseSchema) {
-	ret := _m.Called(c, httpCode, data, err)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SendWithResponseCode")
-	}
-
-	var r0 int
-	var r1 response.BaseResponseSchema
-	if rf, ok := ret.Get(0).(func(*gin.Context, int, interface{}, error) (int, response.BaseResponseSchema)); ok {
-		return rf(c, httpCode, data, err)
-	}
-	if rf, ok := ret.Get(0).(func(*gin.Context, int, interface{}, error) int); ok {
-		r0 = rf(c, httpCode, data, err)
-	} else {
-		r0 = ret.Get(0).(int)
-	}
-
-	if rf, ok := ret.Get(1).(func(*gin.Context, int, interface{}, error) response.BaseResponseSchema); ok {
-		r1 = rf(c, httpCode, data, err)
-	} else {
-		r1 = ret.Get(1).(response.BaseResponseSchema)
-	}
-
-	return r0, r1
+func (_m *HttpResponse) SendWithResponseCode(c *gin.Context, httpCode int, data interface{}, err error) {
+	_m.Called(c, httpCode, data, err)
 }
 
 // HttpResponse_SendWithResponseCode_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SendWithResponseCode'
@@ -296,12 +250,12 @@ func (_c *HttpResponse_SendWithResponseCode_Call) Run(run func(c *gin.Context, h
 	return _c
 }
 
-func (_c *HttpResponse_SendWithResponseCode_Call) Return(_a0 int, _a1 response.BaseResponseSchema) *HttpResponse_SendWithResponseCode_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *HttpResponse_SendWithResponseCode_Call) Return() *HttpResponse_SendWithResponseCode_Call {
+	_c.Call.Return()
 	return _c
 }
 
-func (_c *HttpResponse_SendWithResponseCode_Call) RunAndReturn(run func(*gin.Context, int, interface{}, error) (int, response.BaseResponseSchema)) *HttpResponse_SendWithResponseCode_Call {
+func (_c *HttpResponse_SendWithResponseCode_Call) RunAndReturn(run func(*gin.Context, int, interface{}, error)) *HttpResponse_SendWithResponseCode_Call {
 	_c.Call.Return(run)
 	return _c
 }

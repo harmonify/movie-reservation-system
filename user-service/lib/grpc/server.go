@@ -18,8 +18,8 @@ import (
 type GrpcServerParam struct {
 	fx.In
 
-	cfg    *config.Config
-	logger logger.Logger
+	Config *config.Config
+	Logger logger.Logger
 }
 
 type GrpcServerResult struct {
@@ -45,8 +45,8 @@ func NewGrpcServer(
 
 	g := &GrpcServer{
 		Server: server,
-		cfg:    p.cfg,
-		logger: p.logger,
+		cfg:    p.Config,
+		logger: p.Logger,
 	}
 
 	result := GrpcServerResult{

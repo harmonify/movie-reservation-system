@@ -1,23 +1,26 @@
 package config
 
 type Config struct {
+	Env string `mapstructure:"ENV"`
+
 	AppName     string `mapstructure:"APP_NAME"`
 	AppSecret   string `mapstructure:"APP_SECRET"`
 	AppPort     string `mapstructure:"APP_PORT"`
-	Env         string `mapstructure:"ENV"`
-	BaseUrl     string `mapstructure:"BASE_URL"`
-	BasePath    string `mapstructure:"BASE_PATH"`
 	FrontEndUrl string `mapstructure:"FRONTEND_URL"`
-	EnableCors  bool   `mapstructure:"ENABLE_CORS"`
+
+	ServiceIdentifier string `mapstructure:"SERVICE_IDENTIFIER"` // any identifier, used in RBAC
+	BaseUrl           string `mapstructure:"BASE_URL"`
+	BasePath          string `mapstructure:"BASE_PATH"`
+	EnableCors        bool   `mapstructure:"ENABLE_CORS"`
 
 	HttpReadTimeOut  string `mapstructure:"HTTP_READ_TIMEOUT"`
 	HttpWriteTimeOut string `mapstructure:"HTTP_WRITE_TIMEOUT"`
 
-	DbHostMaster          string `mapstructure:"PG_HOST_MASTER"`
-	DbPortMaster          int    `mapstructure:"PG_PORT_MASTER"`
-	DbUserMaster          string `mapstructure:"PG_USER_MASTER"`
-	DbPasswordMaster      string `mapstructure:"PG_PASSWORD_MASTER"`
-	DbName                string `mapstructure:"PG_DB"`
+	DbHost                string `mapstructure:"PG_HOST"`
+	DbPort                int    `mapstructure:"PG_PORT"`
+	DbUser                string `mapstructure:"PG_USER"`
+	DbPassword            string `mapstructure:"PG_PASSWORD"`
+	DbName                string `mapstructure:"PG_DATABASE"`
 	DbMigration           bool   `mapstructure:"PG_AUTO_MIGRATION"`
 	DbMaxIdleConn         int    `mapstructure:"PG_MAX_IDLE_CONN"`
 	DbMaxOpenConn         int    `mapstructure:"PG_MAX_OPEN_CONN"`
@@ -42,4 +45,8 @@ type Config struct {
 
 	OtelHost     string `mapstructure:"OTEL_ENDPOINT"`
 	OtelInsecure bool   `mapstructure:"OTEL_INSECURE"`
+
+	MailgunDefaultSender string `mapstructure:"MAILGUN_DEFAULT_SENDER"`
+	MailgunDomain        string `mapstructure:"MAILGUN_DOMAIN"`
+	MailgunApiKey        string `mapstructure:"MAILGUN_API_KEY"`
 }

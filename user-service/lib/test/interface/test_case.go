@@ -6,9 +6,9 @@ import (
 )
 
 type (
-	TestCase[Config any, Expectation any] struct {
+	TestCase[Config, Expectation any] struct {
 		Description string
-		Config      any
+		Config      Config
 		Expectation Expectation
 		BeforeCall  func(config Config)
 		AfterCall   func()

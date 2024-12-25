@@ -1,6 +1,9 @@
 package test
 
 import (
+	"path"
+	"runtime"
+
 	"github.com/harmonify/movie-reservation-system/user-service/lib/config"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/http"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
@@ -15,8 +18,9 @@ func NewTestApp(invoker interface{}, overrideConstructors ...any) *fx.App {
 	options := []fx.Option{
 		fx.Provide(
 			func() *config.ConfigFile {
+				_, filename, _, _ := runtime.Caller(0)
 				return &config.ConfigFile{
-					Path: ".env",
+					Path: path.Join(filename, "..", "..", "..", ".env.test"),
 				}
 			},
 		),

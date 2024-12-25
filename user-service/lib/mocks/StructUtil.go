@@ -17,6 +17,64 @@ func (_m *StructUtil) EXPECT() *StructUtil_Expecter {
 	return &StructUtil_Expecter{mock: &_m.Mock}
 }
 
+// ConvertSqlStructToMap provides a mock function with given fields: input
+func (_m *StructUtil) ConvertSqlStructToMap(input interface{}) (map[string]interface{}, error) {
+	ret := _m.Called(input)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ConvertSqlStructToMap")
+	}
+
+	var r0 map[string]interface{}
+	var r1 error
+	if rf, ok := ret.Get(0).(func(interface{}) (map[string]interface{}, error)); ok {
+		return rf(input)
+	}
+	if rf, ok := ret.Get(0).(func(interface{}) map[string]interface{}); ok {
+		r0 = rf(input)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]interface{})
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(interface{}) error); ok {
+		r1 = rf(input)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// StructUtil_ConvertSqlStructToMap_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ConvertSqlStructToMap'
+type StructUtil_ConvertSqlStructToMap_Call struct {
+	*mock.Call
+}
+
+// ConvertSqlStructToMap is a helper method to define mock.On call
+//   - input interface{}
+func (_e *StructUtil_Expecter) ConvertSqlStructToMap(input interface{}) *StructUtil_ConvertSqlStructToMap_Call {
+	return &StructUtil_ConvertSqlStructToMap_Call{Call: _e.mock.On("ConvertSqlStructToMap", input)}
+}
+
+func (_c *StructUtil_ConvertSqlStructToMap_Call) Run(run func(input interface{})) *StructUtil_ConvertSqlStructToMap_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(interface{}))
+	})
+	return _c
+}
+
+func (_c *StructUtil_ConvertSqlStructToMap_Call) Return(_a0 map[string]interface{}, _a1 error) *StructUtil_ConvertSqlStructToMap_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *StructUtil_ConvertSqlStructToMap_Call) RunAndReturn(run func(interface{}) (map[string]interface{}, error)) *StructUtil_ConvertSqlStructToMap_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SetValueIfNotEmpty provides a mock function with given fields: data
 func (_m *StructUtil) SetValueIfNotEmpty(data interface{}) interface{} {
 	ret := _m.Called(data)

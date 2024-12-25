@@ -22,7 +22,7 @@ type Logger interface {
 	Log(debugLevel zapcore.Level, msg string, fields ...zap.Field)
 }
 
-func NewLogger(cfg config.Config) Logger {
+func NewLogger(cfg *config.Config) Logger {
 	zapConfig := zap.NewProductionConfig()
 	// zapConfig.EncoderConfig.CallerKey = zapcore.OmitKey
 
