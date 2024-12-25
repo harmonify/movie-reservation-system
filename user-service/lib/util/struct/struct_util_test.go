@@ -4,9 +4,11 @@ import (
 	"os"
 	"testing"
 
+	"github.com/harmonify/movie-reservation-system/user-service/internal"
 	test_interface "github.com/harmonify/movie-reservation-system/user-service/lib/test/interface"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/util/struct"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/fx"
 )
 
 func TestStructUtil(t *testing.T) {
@@ -19,6 +21,7 @@ func TestStructUtil(t *testing.T) {
 
 type StructUtilTestSuite struct {
 	suite.Suite
+	app        *fx.App
 	structUtil struct_util.StructUtil
 }
 
@@ -31,7 +34,20 @@ type testExpectation struct {
 }
 
 func (s *StructUtilTestSuite) SetupSuite() {
-	s.structUtil = struct_util.NewStructUtil()
+	s.app = internal.NewApp(s.invoker, s.mock()...)
+}
+
+func (s *StructUtilTestSuite) invoker(
+	structUtil struct_util.StructUtil,
+) {
+	s.structUtil = structUtil
+}
+
+func (s *StructUtilTestSuite) mock() []any {
+	// s.exampleService = mocks.NewExampleService(s.T())
+	return []any{
+		// func() interfaces.ExampleService { return s.exampleService },
+	}
 }
 
 func (s *StructUtilTestSuite) TestSetValueIfNotEmpty() {
@@ -50,14 +66,12 @@ func (s *StructUtilTestSuite) TestSetValueIfNotEmpty() {
 	}
 
 	for _, testCase := range testCases {
-		config := testCase.Config.(testConfig)
-
 		s.Run(testCase.Description, func() {
 			if testCase.BeforeCall != nil {
-				testCase.BeforeCall(config)
+				testCase.BeforeCall(testCase.Config)
 			}
 
-			result := s.structUtil.SetValueIfNotEmpty(config.Data)
+			result := s.structUtil.SetValueIfNotEmpty(testCase.Config.Data)
 
 			if testCase.AfterCall != nil {
 				testCase.AfterCall()
