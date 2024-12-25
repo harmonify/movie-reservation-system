@@ -14,6 +14,7 @@ import (
 	constant "github.com/harmonify/movie-reservation-system/user-service/lib/config/constant"
 	http_interface "github.com/harmonify/movie-reservation-system/user-service/lib/http/interface"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
+	"github.com/harmonify/movie-reservation-system/user-service/lib/metrics"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/fx"
@@ -21,11 +22,20 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+type HttpServer struct {
+	Server      *http.Server
+	Gin         *gin.Engine
+	cfg         *config.Config
+	logger      logger.Logger
+	middlewares *httpServerMiddlewares
+}
+
 type HttpServerParam struct {
 	fx.In
 
-	cfg    *config.Config
-	logger logger.Logger
+	Config            *config.Config
+	Logger            logger.Logger
+	MetricsMiddleware metrics.PrometheusHttpMiddleware
 }
 
 type HttpServerResult struct {
@@ -34,11 +44,8 @@ type HttpServerResult struct {
 	HttpServer *HttpServer
 }
 
-type HttpServer struct {
-	Server *http.Server
-	Gin    *gin.Engine
-	cfg    *config.Config
-	logger logger.Logger
+type httpServerMiddlewares struct {
+	metrics metrics.PrometheusHttpMiddleware
 }
 
 type httpMethodPath struct {
@@ -49,26 +56,31 @@ type httpMethodPath struct {
 func NewHttpServer(p HttpServerParam) (HttpServerResult, error) {
 	gin := gin.New()
 
-	readTimeout, err := time.ParseDuration(p.cfg.HttpReadTimeOut)
+	readTimeout, err := time.ParseDuration(p.Config.HttpReadTimeOut)
 	if err != nil {
-		p.logger.Error(fmt.Sprintf("HTTP: Failed to parse HTTP read timeout. Error: %v", err))
+		p.Logger.Error(fmt.Sprintf("HTTP: Failed to parse HTTP read timeout. Error: %v", err))
+		return HttpServerResult{}, err
 	}
 
-	writeTimeout, err := time.ParseDuration(p.cfg.HttpWriteTimeOut)
+	writeTimeout, err := time.ParseDuration(p.Config.HttpWriteTimeOut)
 	if err != nil {
-		p.logger.Error(fmt.Sprintf("HTTP: Failed to parse HTTP write timeout. Error: %v", err))
+		p.Logger.Error(fmt.Sprintf("HTTP: Failed to parse HTTP write timeout. Error: %v", err))
+		return HttpServerResult{}, err
 	}
 
 	h := &HttpServer{
 		Gin: gin,
 		Server: &http.Server{
-			Addr:         ":" + p.cfg.AppPort,
+			Addr:         ":" + p.Config.AppPort,
 			Handler:      gin,
 			ReadTimeout:  time.Second * readTimeout,
 			WriteTimeout: time.Second * writeTimeout,
 		},
-		cfg:    p.cfg,
-		logger: p.logger,
+		cfg:    p.Config,
+		logger: p.Logger,
+		middlewares: &httpServerMiddlewares{
+			metrics: p.MetricsMiddleware,
+		},
 	}
 
 	return HttpServerResult{
@@ -78,7 +90,7 @@ func NewHttpServer(p HttpServerParam) (HttpServerResult, error) {
 
 func (h *HttpServer) Start(ctx context.Context, handlers ...http_interface.RestHandler) error {
 	h.configure(handlers...)
-	h.logger.WithCtx(ctx).Info(">> HTTP server Rest Server run on port: " + h.cfg.AppPort)
+	h.logger.WithCtx(ctx).Info(">> HTTP server run on port: " + h.cfg.AppPort)
 	var err error
 	if err = h.Server.ListenAndServe(); err == nil {
 		h.logger.WithCtx(ctx).Info(">> HTTP server started on port " + h.cfg.AppPort)
@@ -165,6 +177,7 @@ func (h *HttpServer) configureMiddlewares() {
 			return false
 		},
 	}))
+	h.Gin.Use(h.middlewares.metrics.LogHttpMetrics)
 }
 
 func (h *HttpServer) configureCorsMiddleware(c *gin.Context) {
