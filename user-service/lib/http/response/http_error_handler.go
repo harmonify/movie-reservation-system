@@ -1,9 +1,5 @@
 package response
 
-type HttpErrorHandler interface {
-	Error() string
-}
-
 type HttpErrorHandlerImpl struct {
 	Code     string
 	Original error
@@ -15,10 +11,10 @@ type HttpErrorHandlerImpl struct {
 	stack    []string
 }
 
-func NewHttpErrorHandler() HttpErrorHandler {
+func NewHttpErrorHandler() error {
 	return &HttpErrorHandlerImpl{}
 }
 
-func (e *HttpErrorHandlerImpl) Error() string {
+func (e HttpErrorHandlerImpl) Error() string {
 	return e.Original.Error()
 }

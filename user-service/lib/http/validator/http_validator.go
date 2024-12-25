@@ -12,11 +12,6 @@ import (
 	"github.com/harmonify/movie-reservation-system/user-service/lib/util/validation"
 )
 
-type errorMsg struct {
-	Field   string `json:"field"`
-	Message string `json:"message"`
-}
-
 type HttpValidator interface {
 	Validate(c *gin.Context, schema interface{}) error
 	ValidateQueryParams(c *gin.Context, schema interface{}) error
@@ -90,11 +85,11 @@ func (v *HttpValidatorImpl) registerCustomValidation(validate *validator.Validat
 	return nil
 }
 
-func constructValidationField(err error) (errorsData []errorMsg) {
+func constructValidationField(err error) (errorsData []response.BaseErrorValidationSchema) {
 	var val validator.ValidationErrors
 
 	if errors.As(err, &val) {
-		errorsData = make([]errorMsg, len(val))
+		errorsData = make([]response.BaseErrorValidationSchema, len(val))
 		for i, fe := range val {
 			fieldPath := fe.Field()
 
@@ -102,7 +97,10 @@ func constructValidationField(err error) (errorsData []errorMsg) {
 				fieldPath = extractNestedField(fe.StructNamespace())
 			}
 
-			errorsData[i] = errorMsg{fieldPath, getErrorMsg(fe)}
+			errorsData[i] = response.BaseErrorValidationSchema{
+				Field:   fieldPath,
+				Message: getErrorMsg(fe),
+			}
 		}
 	}
 

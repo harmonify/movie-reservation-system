@@ -48,7 +48,7 @@ type testExpectation struct {
 	Success  bool
 	HttpCode int
 	Result   string
-	Error    *response.HttpErrorHandler
+	Error    error
 }
 
 func (s *ResponseTestSuite) SetupSuite() {
@@ -88,14 +88,12 @@ func (s *ResponseTestSuite) TestBuild() {
 	}
 
 	for _, testCase := range testCases {
-		config := testCase.Config.(testConfig)
-
 		s.Run(testCase.Description, func() {
 			if testCase.BeforeCall != nil {
-				testCase.BeforeCall(config)
+				testCase.BeforeCall(testCase.Config)
 			}
 
-			httpCode, response, responseError := s.response.Build(context.Background(), config.HttpCode, config.Data, config.Error)
+			httpCode, response, responseError := s.response.Build(context.Background(), testCase.Config.HttpCode, testCase.Config.Data, testCase.Config.Error)
 
 			if testCase.AfterCall != nil {
 				testCase.AfterCall()
@@ -113,14 +111,12 @@ func (s *ResponseTestSuite) TestBuildWithResponseCode(t *testing.T) {
 	testCases := []test_interface.TestCase[testConfig, testExpectation]{}
 
 	for _, testCase := range testCases {
-		config := testCase.Config.(testConfig)
-
 		s.Run(testCase.Description, func() {
 			if testCase.BeforeCall != nil {
-				testCase.BeforeCall(config)
+				testCase.BeforeCall(testCase.Config)
 			}
 
-			httpCode, response, responseError := s.response.Build(context.Background(), config.HttpCode, config.Data, nil)
+			httpCode, response, responseError := s.response.Build(context.Background(), testCase.Config.HttpCode, testCase.Config.Data, nil)
 
 			if testCase.AfterCall != nil {
 				testCase.AfterCall()
@@ -198,28 +194,24 @@ func (s *ResponseTestSuite) TestBuildError(t *testing.T) {
 		err := errors.New("test error")
 		handler := s.response.BuildError("test_code", err)
 
-		if handlerImpl, ok := handler.(*response.HttpErrorHandlerImpl); ok {
-			if handlerImpl.Code != "test_code" {
-				t.Errorf("Expected code 'test_code', got '%s'", handlerImpl.Code)
-			}
-		} else {
-			t.Errorf("Expected ErrorHandlerImpl, got %T", handler)
+		if handler.Code != "test_code" {
+			t.Errorf("Expected code 'test_code', got '%s'", handler.Code)
 		}
 	})
 }
 
 func (s *ResponseTestSuite) TestBuildErrorValidation(t *testing.T) {
-	t.Run("Should Validate Buildn Error Correctly", func(t *testing.T) {
+	t.Run("Should build error correctly", func(t *testing.T) {
 		err := errors.New("test error")
-		errorFields := map[string]string{"field": "error"}
-		handler := s.response.BuildValidationError("test_code", err, errorFields)
+		handler := s.response.BuildValidationError("test_code", err, []response.BaseErrorValidationSchema{
+			{
+				Field:   "error",
+				Message: "test error",
+			},
+		})
 
-		if handlerImpl, ok := handler.(*response.HttpErrorHandlerImpl); ok {
-			if handlerImpl.Code != "test_code" {
-				t.Errorf("Expected code 'test_code', got '%s'", handlerImpl.Code)
-			}
-		} else {
-			t.Errorf("Expected ErrorHandlerImpl, got %T", handler)
+		if handler.Code != "test_code" {
+			t.Errorf("Expected code 'test_code', got '%s'", handler.Code)
 		}
 	})
 }

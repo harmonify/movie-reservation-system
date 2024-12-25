@@ -20,11 +20,11 @@ import (
 )
 
 type HttpResponse interface {
-	Send(c *gin.Context, data interface{}, err error) (int, BaseResponseSchema)
-	SendWithResponseCode(c *gin.Context, httpCode int, data interface{}, err error) (int, BaseResponseSchema)
+	Send(c *gin.Context, data interface{}, err error)
+	SendWithResponseCode(c *gin.Context, httpCode int, data interface{}, err error)
 	Build(ctx context.Context, httpCode int, data interface{}, err error) (int, BaseResponseSchema, error)
-	BuildError(code string, err error) HttpErrorHandler
-	BuildValidationError(code string, err error, errorFields interface{}) HttpErrorHandler
+	BuildError(code string, err error) *HttpErrorHandlerImpl
+	BuildValidationError(code string, err error, errorFields []BaseErrorValidationSchema) *HttpErrorHandlerImpl
 }
 
 type httpResponseImpl struct {
@@ -43,29 +43,81 @@ func NewHttpResponse(logger logger.Logger, tracer tracer.Tracer, structUtil stru
 	}
 }
 
-func (r *httpResponseImpl) Send(c *gin.Context, data interface{}, err error) (int, BaseResponseSchema) {
+func (r *httpResponseImpl) Send(c *gin.Context, data interface{}, err error) {
 	ctx := c.Request.Context()
 	_, span := r.tracer.Start(ctx, "Response.Send")
 	defer span.End()
 
-	return r.SendWithResponseCode(c, http.StatusOK, data, err)
+	code, response, responseError := r.Build(ctx, http.StatusOK, data, err)
+
+	r.logResponse(ctx, code, response, responseError)
+
+	c.JSON(code, response)
 }
 
-func (r *httpResponseImpl) SendWithResponseCode(c *gin.Context, httpCode int, data interface{}, err error) (int, BaseResponseSchema) {
+func (r *httpResponseImpl) SendWithResponseCode(c *gin.Context, httpCode int, data interface{}, err error) {
 	ctx := c.Request.Context()
 	_, span := r.tracer.Start(ctx, "Response.SendWithResponseCode")
 	defer span.End()
 
 	code, response, responseError := r.Build(ctx, httpCode, data, err)
 
-	r.log(ctx, code, response, responseError)
+	r.logResponse(ctx, code, response, responseError)
 
 	c.JSON(code, response)
-
-	return code, response
 }
 
-func (r *httpResponseImpl) log(ctx context.Context, httpCode int, response BaseResponseSchema, responseError error) {
+func (r *httpResponseImpl) Build(ctx context.Context, responseCode int, data interface{}, err error) (httpCode int, response BaseResponseSchema, responseError error) {
+	_, span := r.tracer.Start(ctx, "Response.Build")
+	defer span.End()
+
+	var (
+		traceId     = span.SpanContext().TraceID().String()
+		errMetaData interface{}
+		metadata    interface{}
+	)
+
+	response = BaseResponseSchema{
+		Success:  true,
+		TraceId:  traceId,
+		Error:    r.structUtil.SetValueIfNotEmpty(errMetaData),
+		Metadata: r.structUtil.SetValueIfNotEmpty(metadata),
+		Result:   r.structUtil.SetValueIfNotEmpty(data),
+	}
+
+	if err != nil {
+		response.Success = false
+
+		var responseError *HttpErrorHandlerImpl
+		if !errors.As(err, &responseError) {
+			// responseError = &HttpErrorHandlerImpl{
+			// 	Code:     constant.InternalServerError,
+			// 	Original: err,
+			// }
+			responseError = r.buildErrorV2(err.Error(), err)
+		}
+
+		if _, ok := (*r.customHttpErrorMap)[responseError.Code]; !ok {
+			(*r.customHttpErrorMap)[responseError.Code] = constant.DefaultCustomHttpErrorMap[constant.InternalServerError]
+		}
+
+		if responseError.Errors == nil {
+			responseError.Errors = r.structUtil.SetValueIfNotEmpty([]BaseErrorValidationSchema{})
+		}
+
+		response.Error = BaseErrorResponseSchema{
+			Code:    responseError.Code,
+			Message: (*r.customHttpErrorMap)[responseError.Code].Message,
+			Errors:  responseError.Errors,
+		}
+
+		return (*r.customHttpErrorMap)[responseError.Code].HttpCode, response, responseError
+	}
+
+	return responseCode, response, nil
+}
+
+func (r *httpResponseImpl) logResponse(ctx context.Context, httpCode int, response BaseResponseSchema, responseError error) {
 	span := trace.SpanFromContext(ctx)
 
 	fields := []zapcore.Field{
@@ -122,59 +174,10 @@ func (r *httpResponseImpl) log(ctx context.Context, httpCode int, response BaseR
 		span.RecordError(responseError)
 	}
 
-	r.logger.Debug(stringResponse, fields...)
+	r.logger.WithCtx(ctx).Debug(stringResponse, fields...)
 }
 
-func (r *httpResponseImpl) Build(ctx context.Context, responseCode int, data interface{}, err error) (httpCode int, response BaseResponseSchema, responseError error) {
-	_, span := r.tracer.Start(ctx, "Response.Build")
-	defer span.End()
-
-	var (
-		traceId     = span.SpanContext().TraceID().String()
-		errMetaData interface{}
-		metadata    interface{}
-	)
-
-	response = BaseResponseSchema{
-		Success:  true,
-		TraceId:  traceId,
-		Error:    r.structUtil.SetValueIfNotEmpty(errMetaData),
-		Metadata: r.structUtil.SetValueIfNotEmpty(metadata),
-		Result:   r.structUtil.SetValueIfNotEmpty(data),
-	}
-
-	if err != nil {
-		response.Success = false
-
-		var responseError *HttpErrorHandlerImpl
-		if !errors.As(err, &responseError) {
-			responseError = &HttpErrorHandlerImpl{
-				Code:     constant.InternalServerError,
-				Original: err,
-			}
-		}
-
-		if _, ok := (*r.customHttpErrorMap)[responseError.Code]; !ok {
-			(*r.customHttpErrorMap)[responseError.Code] = constant.DefaultCustomHttpErrorMap[constant.InternalServerError]
-		}
-
-		if responseError.Errors == nil {
-			responseError.Errors = r.structUtil.SetValueIfNotEmpty([]BaseErrorValidationSchema{})
-		}
-
-		response.Error = BaseErrorResponseSchema{
-			Code:    responseError.Code,
-			Message: (*r.customHttpErrorMap)[responseError.Code].Message,
-			Errors:  responseError.Errors,
-		}
-
-		return (*r.customHttpErrorMap)[responseError.Code].HttpCode, response, responseError
-	}
-
-	return responseCode, response, nil
-}
-
-func (r *httpResponseImpl) BuildError(code string, err error) HttpErrorHandler {
+func (r *httpResponseImpl) BuildError(code string, err error) *HttpErrorHandlerImpl {
 	source, fn, ln, path, stack := r.getSource(runtime.Caller(1))
 
 	return &HttpErrorHandlerImpl{
@@ -217,13 +220,27 @@ func (r *httpResponseImpl) stackTrace(skip int) []string {
 	return stacks
 }
 
-func (r *httpResponseImpl) BuildValidationError(code string, err error, errorFields interface{}) HttpErrorHandler {
+func (r *httpResponseImpl) BuildValidationError(code string, err error, errorFields []BaseErrorValidationSchema) *HttpErrorHandlerImpl {
 	source, fn, ln, path, stack := r.getSource(runtime.Caller(1))
 
 	return &HttpErrorHandlerImpl{
 		Code:     code,
 		Original: err,
 		Errors:   errorFields,
+		source:   source,
+		fn:       fn,
+		line:     ln,
+		path:     path,
+		stack:    stack,
+	}
+}
+
+func (r *httpResponseImpl) buildErrorV2(code string, err error) *HttpErrorHandlerImpl {
+	source, fn, ln, path, stack := r.getSource(runtime.Caller(3))
+
+	return &HttpErrorHandlerImpl{
+		Code:     code,
+		Original: err,
 		source:   source,
 		fn:       fn,
 		line:     ln,
