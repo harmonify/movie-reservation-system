@@ -1,15 +1,12 @@
 package auth_rest
 
 import (
-	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	auth_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/auth"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/middleware"
 	constant "github.com/harmonify/movie-reservation-system/user-service/lib/http/constant"
-	http_interface "github.com/harmonify/movie-reservation-system/user-service/lib/http/interface"
-	middleware "github.com/harmonify/movie-reservation-system/user-service/lib/http/middleware"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/http/response"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/http/validator"
 	http_validator "github.com/harmonify/movie-reservation-system/user-service/lib/http/validator"
@@ -27,7 +24,7 @@ type authRestHandlerImpl struct {
 	response    response.HttpResponse
 	tracer      tracer.Tracer
 	util        *util.Util
-	middleware  middleware.JWTMiddleware
+	middleware  *middleware.HttpMiddleware
 }
 
 func NewAuthRestHandler(
@@ -36,7 +33,7 @@ func NewAuthRestHandler(
 	response response.HttpResponse,
 	validator validator.HttpValidator,
 	util *util.Util,
-	middleware middleware.JWTMiddleware,
+	middleware *middleware.HttpMiddleware,
 ) AuthRestHandler {
 	return &authRestHandlerImpl{
 		authService: authService,
@@ -49,18 +46,17 @@ func NewAuthRestHandler(
 }
 
 func (h *authRestHandlerImpl) Register(g *gin.RouterGroup) {
-	g.POST("/register", h.PostUserRegistration)
-	// TODO: email verification & connect to email service
-	// g.GET("/email/verify", h.middleware.JWTMiddleware.AuthenticateUser, h.GetEmailVerificationLink)
-	// g.POST("/email/verify", h.PostVerifyEmail)
-	// g.GET("/email/edit/verify", h.middleware.JWTMiddleware.AuthenticateUser, h.GetChangeEmailVerificationLink)
-	// g.POST("/email/edit/verify", h.PostVerifyChangeEmail)
-	g.POST("/login", h.PostUserLogin)
-	g.POST("/logout", h.middleware.AuthenticateUser, h.PostUserLogout)
-	g.GET("/token", h.GetRefreshToken)
+	g.POST("/register", h.PostRegister)
+	g.POST("/email/verify", h.PostVerifyEmail)
+	// TODO:
+	// g.PUT("/email/edit", h.middleware.JwtHttpMiddleware.AuthenticateUser, h.PutEditEmail)
+	// g.GET("/email/edit/verify", h.PostVerifyEditEmail)
+	g.POST("/login", h.PostLogin)
+	g.POST("/logout", h.middleware.JwtHttpMiddleware.AuthenticateUser, h.PostUserLogout)
+	g.GET("/token", h.GetToken)
 }
 
-func (h *authRestHandlerImpl) PostUserRegistration(c *gin.Context) {
+func (h *authRestHandlerImpl) PostRegister(c *gin.Context) {
 	var (
 		ctx  = c.Request.Context()
 		body PostUserRegisterReq
@@ -75,44 +71,16 @@ func (h *authRestHandlerImpl) PostUserRegistration(c *gin.Context) {
 		return
 	}
 
-	headers := http_interface.HeadersExtension{
-		UserAgent: c.Request.UserAgent(),
-		IpAddress: h.util.HttpUtil.GetUserIP(c.Request),
-	}
-
-	res, err = h.authService.Register(ctx, &auth_service.RegisterParam{
-		Username:         body.Username,
-		Password:         body.Password,
-		Email:            body.Email,
-		PhoneNumber:      body.PhoneNumber,
-		FullName:         body.FullName,
-		HeadersExtension: headers,
+	err = h.authService.Register(ctx, auth_service.RegisterParam{
+		Username:    body.Username,
+		Password:    body.Password,
+		Email:       body.Email,
+		PhoneNumber: body.PhoneNumber,
+		FirstName:   body.FirstName,
+		LastName:    body.LastName,
 	})
 
-	if err != nil {
-		if errors.Is(err, constant.ErrUnauthorized) {
-			err = h.response.BuildError(constant.Unauthorized, err)
-		} else if errors.Is(err, constant.ErrServiceUnavailable) {
-			err = h.response.BuildError(constant.ServiceUnavailable, err)
-		} else if errors.Is(err, auth_service.ErrDuplicateEmail) {
-			err = h.response.BuildError(auth_service.DuplicateEmail, err)
-		} else if errors.Is(err, auth_service.ErrDuplicatePhoneNumber) {
-			err = h.response.BuildError(auth_service.DuplicatePhoneNumber, err)
-		} else if errors.Is(err, auth_service.ErrInvalidPhoneNumber) {
-			err = h.response.BuildError(auth_service.InvalidPhoneNumber, err)
-		} else if errors.Is(err, constant.ErrRateLimitExceeded) {
-			err = h.response.BuildError(constant.RateLimitExceeded, err)
-		} else if errors.Is(err, constant.ErrInvalidJwt) {
-			err = h.response.BuildError(constant.InvalidJwt, err)
-		} else {
-			err = h.response.BuildError(constant.InternalServerError, err)
-		}
-
-		h.response.Send(c, nil, err)
-		return
-	}
-
-	h.response.Send(c, nil, nil)
+	h.response.Send(c, nil, err)
 }
 
 func (h *authRestHandlerImpl) PostVerifyEmail(c *gin.Context) {
@@ -126,126 +94,22 @@ func (h *authRestHandlerImpl) PostVerifyEmail(c *gin.Context) {
 	defer span.End()
 
 	if err = h.validator.Validate(c, &body); err != nil {
-		c.JSON(h.response.Send(ctx, nil, err))
+		h.response.Send(c, nil, err)
 		return
 	}
 
-	header := http_interface.VerifierHeader{
-		TokenVerifier: c.Request.Header.Get("x-token-verifier"),
-	}
-
-	err = h.authService.VerifyEmailUser(ctx, &header, &body)
+	err = h.authService.VerifyEmail(ctx, auth_service.VerifyEmailParam{
+		Email: body.Email,
+	})
 	if err != nil {
-		if errors.Is(err, constant.RecordNotFoundError) {
-			err = h.errorResponse.ThrowError(constant.EmailNotRegistered, err)
-		} else if errors.Is(err, constant.EmailVerificationLinkExpiredError) {
-			err = h.errorResponse.ThrowError(constant.EmailVerificationLinkExpired, err)
-		} else if errors.Is(err, constant.InvalidEmailError) {
-			err = h.errorResponse.ThrowError(constant.InvalidEmail, err)
-		} else {
-			err = h.errorResponse.ThrowError(constant.InternalServerError, err)
-		}
-		c.JSON(h.response.Send(ctx, nil, err))
+		h.response.Send(c, nil, err)
 		return
 	}
 
 	c.Status(http.StatusNoContent)
 }
 
-func (h *authRestHandlerImpl) GetEmailVerificationLink(c *gin.Context) {
-	var (
-		ctx = c.Request.Context()
-		err error
-	)
-
-	ctx, span := h.tracer.StartSpanWithCaller(ctx)
-	defer span.End()
-
-	userInfo := c.Request.Context().Value(middleware.UserInfoKey).(*jwt.JWTBodyPayload)
-
-	err = h.authService.GetEmailVerificationLink(ctx, userInfo.Email)
-	if err != nil {
-		if errors.Is(err, constant.RateLimitExceededError) {
-			err = h.errorResponse.ThrowError(constant.RateLimitExceeded, err)
-		} else {
-			err = h.errorResponse.ThrowError(constant.InternalServerError, err)
-		}
-		c.JSON(h.response.Send(ctx, nil, err))
-		return
-	}
-
-	c.Status(http.StatusNoContent)
-}
-
-func (h *authRestHandlerImpl) GetChangeEmailVerificationLink(c *gin.Context) {
-	var (
-		ctx    = c.Request.Context()
-		params PostVerifyEmailReq
-		err    error
-	)
-
-	userInfo := c.Request.Context().Value(middleware.UserInfoKey).(*jwt.JWTBodyPayload)
-
-	ctx, span := h.tracer.StartSpanWithCaller(ctx)
-	defer span.End()
-
-	if err = h.validator.ValidateQueryParams(c, &params); err != nil {
-		c.JSON(h.response.Send(ctx, nil, err))
-		return
-	}
-
-	err = h.authService.GetChangeEmailVerificationLink(ctx, userInfo.Email, params.Email)
-	if err != nil {
-		if errors.Is(err, constant.RateLimitExceededError) {
-			err = h.errorResponse.ThrowError(constant.RateLimitExceeded, err)
-		} else {
-			err = h.errorResponse.ThrowError(constant.InternalServerError, err)
-		}
-		c.JSON(h.response.Send(ctx, nil, err))
-		return
-	}
-
-	c.Status(http.StatusNoContent)
-}
-
-func (h *authRestHandlerImpl) PostVerifyChangeEmail(c *gin.Context) {
-	var (
-		ctx  = c.Request.Context()
-		body PostVerifyEmailReq
-		err  error
-	)
-
-	ctx, span := h.tracer.StartSpanWithCaller(ctx)
-	defer span.End()
-
-	if err = h.validator.Validate(c, &body); err != nil {
-		c.JSON(h.response.Send(ctx, nil, err))
-		return
-	}
-
-	header := http_interface.VerifierHeader{
-		TokenVerifier: c.Request.Header.Get("x-token-verifier"),
-	}
-
-	err = h.authService.VerifyChangeEmailUser(ctx, &header, &body)
-	if err != nil {
-		if errors.Is(err, constant.RecordNotFoundError) {
-			err = h.errorResponse.ThrowError(constant.EmailNotRegistered, err)
-		} else if errors.Is(err, constant.EmailVerificationLinkExpiredError) {
-			err = h.errorResponse.ThrowError(constant.EmailVerificationLinkExpired, err)
-		} else if errors.Is(err, constant.InvalidEmailError) {
-			err = h.errorResponse.ThrowError(constant.InvalidEmail, err)
-		} else {
-			err = h.errorResponse.ThrowError(constant.InternalServerError, err)
-		}
-		c.JSON(h.response.Send(ctx, nil, err))
-		return
-	}
-
-	c.Status(http.StatusNoContent)
-}
-
-func (h *authRestHandlerImpl) PostUserLogin(c *gin.Context) {
+func (h *authRestHandlerImpl) PostLogin(c *gin.Context) {
 	var (
 		ctx    = c.Request.Context()
 		params PostUserLoginReq
@@ -256,49 +120,63 @@ func (h *authRestHandlerImpl) PostUserLogin(c *gin.Context) {
 	defer span.End()
 
 	if err = h.validator.Validate(c, &params); err != nil {
-		c.JSON(h.response.Send(ctx, nil, err))
+		h.response.Send(c, nil, err)
 		return
 	}
 
-	headers := http_interface.HeadersExtension{
+	data, err := h.authService.Login(ctx, auth_service.LoginParam{
+		Username:  params.Username,
+		Password:  params.Password,
 		UserAgent: c.Request.UserAgent(),
-		IpAddress: h.util.MiscellaneousUtil.GetUserIP(c.Request),
-	}
-
-	data, err := h.authService.UserAuthentication(ctx, &UserAuthenticationReq{
-		PostUserLoginReq: params,
-		Attributes:       params.Attributes,
-		HeadersExtension: headers,
+		IpAddress: h.util.HttpUtil.GetUserIP(c.Request),
 	})
 	if err != nil {
-		if errors.Is(err, constant.InvalidCredentialError) {
-			err = h.errorResponse.ThrowError(constant.InvalidCredential, err)
-		} else if errors.Is(err, constant.ServiceUnavailableError) {
-			err = h.errorResponse.ThrowError(constant.ServiceUnavailable, err)
-		} else if errors.Is(err, constant.UserExistError) {
-			err = h.errorResponse.ThrowError(constant.UserExist, err)
-		} else {
-			err = h.errorResponse.ThrowError(constant.InternalServerError, err)
-		}
-		c.JSON(h.response.Send(ctx, nil, err))
+		h.response.Send(c, nil, err)
 		return
 	}
 
 	// Set refresh token cookies
-	cookiesName := constant.DefaultAppCookie + "token"
-	cookiesValue := data.RefreshToken
-	// TODO: limit the cookies domain
-	cookiesDomain := "*localhost"
-	cookiesPath := "/user/token"
-	c.SetCookie(cookiesName, cookiesValue, 0, cookiesPath, cookiesDomain, true, true)
+	cookieName := constant.HttpCookiePrefix + "token"
+	cookieMaxAge := 0
+	cookieValue := data.RefreshToken
+	cookieDomain := "*localhost"
+	cookiePath := "/user/token"
+	c.SetCookie(cookieName, cookieValue, cookieMaxAge, cookiePath, cookieDomain, true, true)
 
-	// Set token verifier for 2FA
-	if data.TokenVerifier != "" {
-		c.Header("x-token-verifier", data.TokenVerifier)
+	h.response.Send(c, PostUserLoginRes{
+		AccessToken:         data.AccessToken,
+		AccessTokenDuration: data.AccessTokenDuration,
+	}, err)
+}
+
+func (h *authRestHandlerImpl) GetToken(c *gin.Context) {
+	var (
+		ctx    = c.Request.Context()
+		params GetTokenReq
+		err    error
+	)
+
+	ctx, span := h.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
+	if err = h.validator.Validate(c, &params); err != nil {
+		h.response.Send(c, nil, err)
+		return
 	}
 
-	mapper := mappers.MapperPostUserLogin(data)
-	c.JSON(h.response.Send(ctx, mapper, err))
+	data, err := h.authService.GetToken(ctx, auth_service.GetTokenParam{
+		RefreshToken: params.RefreshToken,
+	})
+	if err != nil {
+		h.response.Send(c, nil, err)
+		return
+	}
+
+	h.response.Send(c, GetTokenRes{
+		AccessToken:         data.AccessToken,
+		AccessTokenDuration: data.AccessTokenDuration,
+	}, err)
+
 }
 
 func (h *authRestHandlerImpl) PostUserLogout(c *gin.Context) {
@@ -310,109 +188,24 @@ func (h *authRestHandlerImpl) PostUserLogout(c *gin.Context) {
 	ctx, span := h.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	cookiesName := "refreshToken"
-	refreshToken, err := c.Cookie(cookiesName)
+	cookieName := constant.HttpCookiePrefix + "token"
+	refreshToken, err := c.Cookie(cookieName)
 	if err != nil {
-		err = h.errorResponse.ThrowError(constant.InvalidToken, err)
-		c.JSON(h.response.Send(ctx, nil, err))
+		err = h.response.BuildError(constant.InvalidJwt, err)
+		h.response.Send(c, nil, err)
 		return
 	}
 
-	accessToken := c.Request.Header.Get("Authorization")
-	splitAccessToken := strings.Split(accessToken, " ")
-	if len(splitAccessToken) == 2 {
-		if splitAccessToken[1] == "" {
-			err = h.errorResponse.ThrowError(constant.Unauthorized, nil)
-			c.JSON(h.response.Send(ctx, nil, err))
-			return
-		}
-		accessToken = splitAccessToken[1]
-	} else {
-		err = h.errorResponse.ThrowError(constant.Unauthorized, nil)
-		c.JSON(h.response.Send(ctx, nil, err))
-		return
-	}
-
-	err = h.authService.UserLogout(ctx, &HandleRefreshTokenReq{
-		UserToken: http_interface.UserToken{
-			AccessToken:  accessToken,
-			RefreshToken: refreshToken,
-		}})
-	if err != nil {
-		if errors.Is(err, constant.InvalidCredentialError) {
-			err = h.errorResponse.ThrowError(constant.InvalidCredential, err)
-		} else if errors.Is(err, constant.ServiceUnavailableError) {
-			err = h.errorResponse.ThrowError(constant.ServiceUnavailable, err)
-		} else if errors.Is(err, constant.UserExistError) {
-			err = h.errorResponse.ThrowError(constant.UserExist, err)
-		} else {
-			err = h.errorResponse.ThrowError(constant.InternalServerError, err)
-		}
-		c.JSON(h.response.Send(ctx, nil, err))
-		return
-	}
-
-	c.Status(http.StatusNoContent)
-}
-
-func (h *authRestHandlerImpl) GetRefreshToken(c *gin.Context) {
-	var (
-		ctx = c.Request.Context()
-		err error
-	)
-
-	ctx, span := h.tracer.StartSpanWithCaller(ctx)
-	defer span.End()
-
-	refreshToken, err := c.Cookie("refreshToken")
-	if err != nil {
-		err = h.errorResponse.ThrowError(constant.InvalidToken, err)
-		c.JSON(h.response.Send(ctx, nil, err))
-		return
-	}
-
-	accessToken := c.Request.Header.Get("Authorization")
-	splitAccessToken := strings.Split(accessToken, " ")
-	if len(splitAccessToken) == 2 {
-		if splitAccessToken[1] == "" {
-			err = h.errorResponse.ThrowError(constant.Unauthorized, nil)
-			c.JSON(h.response.Send(ctx, nil, err))
-			return
-		}
-		accessToken = splitAccessToken[1]
-	} else {
-		err = h.errorResponse.ThrowError(constant.Unauthorized, nil)
-		c.JSON(h.response.Send(ctx, nil, err))
-		return
-	}
-
-	headers := http_interface.HeadersExtension{
-		UserAgent: c.Request.UserAgent(),
-		IpAddress: h.util.MiscellaneousUtil.GetUserIP(c.Request),
-	}
-
-	data, err := h.authService.HandleRefreshToken(ctx, &HandleRefreshTokenReq{
-		UserToken: http_interface.UserToken{
-			AccessToken:  accessToken,
-			RefreshToken: refreshToken,
-		},
-		HeadersExtension: headers,
+	err = h.authService.Logout(ctx, auth_service.LogoutParam{
+		RefreshToken: refreshToken,
 	})
-	if err != nil {
-		if errors.Is(err, constant.InvalidTokenError) {
-			err = h.errorResponse.ThrowError(constant.InvalidToken, err)
-		} else {
-			err = h.errorResponse.ThrowError(constant.InternalServerError, err)
-		}
-		c.JSON(h.response.Send(ctx, nil, err))
-		return
-	}
 
-	// Set refresh token cookies
-	cookiesName := constant.DefaultAppCookie + "token"
-	cookiesValue := data.RefreshToken
-	cookiesDomain := "*populix.co"
-	cookiesPath := "/user/token"
-	c.SetCookie(cookiesName, cookiesValue, 0, cookiesPath, cookiesDomain, true, true)
-	c.JSON(h.response.Send(ctx, data, err))
+	// Delete refresh token cookie
+	cookieValue := ""
+	cookieMaxAge := -1
+	cookieDomain := "*localhost"
+	cookiePath := "/user/token"
+	c.SetCookie(cookieName, cookieValue, cookieMaxAge, cookiePath, cookieDomain, true, true)
+
+	h.response.Send(c, nil, err)
 }
