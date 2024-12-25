@@ -12,11 +12,13 @@ var (
 	DuplicatePhoneNumber = "DUPLICATE_PHONE_NUMBER"
 	InvalidEmail         = "INVALID_EMAIL"
 	InvalidPhoneNumber   = "INVALID_PHONE_NUMBER"
+	UnverifiedEmail      = "UNVERIFIED_EMAIL"
 
 	ErrDuplicateEmail       = errors.New(DuplicateEmail)
 	ErrDuplicatePhoneNumber = errors.New(DuplicatePhoneNumber)
 	ErrInvalidEmail         = errors.New(InvalidEmail)
 	ErrInvalidPhoneNumber   = errors.New(InvalidPhoneNumber)
+	ErrUnverifiedEmail      = errors.New(UnverifiedEmail)
 
 	AuthServiceErrorMap = http_constant.CustomHttpErrorMap{
 		DuplicateEmail: {
@@ -34,6 +36,10 @@ var (
 		InvalidPhoneNumber: {
 			HttpCode: http.StatusBadRequest,
 			Message:  "The provided phone number is invalid. Please enter a valid phone number.",
+		},
+		UnverifiedEmail: {
+			HttpCode: http.StatusBadRequest,
+			Message:  "Please check your email inbox to verify the account and try again.",
 		},
 	}
 )
