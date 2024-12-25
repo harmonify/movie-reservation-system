@@ -15,9 +15,31 @@ import (
 	"github.com/harmonify/movie-reservation-system/user-service/lib/util/encryption"
 )
 
-type JWTUtil interface {
-	JWTSign(payload *JWTPayload) (string, error)
-	JWTVerify(accessToken string) (*JWTBodyPayload, error)
+type (
+	JWTSignParam struct {
+		ExpInSeconds int
+		SecretKey    string
+		PrivateKey   []byte // in PEM format
+		BodyPayload  JWTBodyPayload
+	}
+
+	JWTCustomClaims struct {
+		*jwt.RegisteredClaims
+		Data      JWTBodyPayload `json:"data"`
+		PublicKey string         `json:"publicKey"` // in base64 format
+	}
+
+	JWTBodyPayload struct {
+		UUID        string `json:"uuid"`
+		Username    string `json:"username"`
+		Email       string `json:"email"`
+		PhoneNumber string `json:"phoneNumber"`
+	}
+)
+
+type JwtUtil interface {
+	JWTSign(payload JWTSignParam) (string, error)
+	JWTVerify(token string) (*JWTBodyPayload, error)
 }
 
 type jwtUtilImpl struct {
@@ -25,83 +47,41 @@ type jwtUtilImpl struct {
 	cfg        *config.Config
 }
 
-type JWTPayload struct {
-	ExpInMinutes int // expiration in minutes
-	SecretKey    string
-	PrivateKey   string
-	PublicKey    string
-	BodyPayload  JWTBodyPayload
-}
-
-type JWTBodyPayload struct {
-	Email       string `json:"email"`
-	UserID      string `json:"userId"` // user UUID
-	PhoneNumber string `json:"phoneNumber"`
-}
-
-type JWTCustomClaims struct {
-	Aud  string         `json:"aud"`
-	Sub  string         `json:"sub"`
-	Exp  int64          `json:"exp"`
-	Data JWTBodyPayload `json:"data"`
-}
-
-func NewJWTUtil(
+func NewJwtUtil(
 	encryption *encryption.Encryption,
 	cfg *config.Config,
-) JWTUtil {
+) JwtUtil {
 	return &jwtUtilImpl{
 		encryption: encryption,
 		cfg:        cfg,
 	}
 }
 
-func (i *jwtUtilImpl) JWTSign(payload *JWTPayload) (string, error) {
-	decPrivKey, err := i.encryption.AESEncryption.Decrypt(&encryption.AESPayload{
-		Secret:  payload.SecretKey,
-		Payload: payload.PrivateKey,
-	})
-	if err != nil {
-		return "", err
-	}
-
-	privKey, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(decPrivKey))
-	if err != nil {
-		return "", err
-	}
-
-	decPubKey, err := i.encryption.AESEncryption.Decrypt(&encryption.AESPayload{
-		Secret:  payload.SecretKey,
-		Payload: payload.PublicKey,
-	})
-	if err != nil {
-		return "", err
-	}
-
-	encPubKey, err := i.encryption.AESEncryption.Encrypt(&encryption.AESPayload{
-		Secret:  i.cfg.AppSecret,
-		Payload: decPubKey,
-	})
+func (i *jwtUtilImpl) JWTSign(payload JWTSignParam) (string, error) {
+	privKey, err := jwt.ParseRSAPrivateKeyFromPEM(payload.PrivateKey)
 	if err != nil {
 		return "", err
 	}
 
 	// Define time expiration
-	timeNow := time.Now()
-	timeSubtract := time.Duration(payload.ExpInMinutes)
-	expDate := timeNow.Add(time.Minute * timeSubtract).Unix()
+	now := time.Now()
 
 	// Claim Property
-	var claimsProperty JWTCustomClaims
-	claimsProperty.Aud = encPubKey
-	claimsProperty.Sub = payload.BodyPayload.UserID
-	claimsProperty.Exp = expDate
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-		"aud":  claimsProperty.Aud,
-		"sub":  claimsProperty.Sub,
-		"exp":  claimsProperty.Exp,
-		"data": payload.BodyPayload,
-	})
+	claims := JWTCustomClaims{
+		RegisteredClaims: &jwt.RegisteredClaims{
+			Issuer: i.cfg.AppName, // TODO: auth server URI
+			// Audience:  jwt.ClaimStrings{}, // TODO: resource servers URI
+			Subject:   payload.BodyPayload.UUID,
+			ExpiresAt: jwt.NewNumericDate(now.Add(time.Second * time.Duration(payload.ExpInSeconds))),
+			NotBefore: jwt.NewNumericDate(now),
+			IssuedAt:  jwt.NewNumericDate(now),
+			// ID: "", // TODO: secure random value
+		},
+		Data:      payload.BodyPayload,
+		PublicKey: string(i.encryption.RSAEncryption.EncodePublicKey(&privKey.PublicKey)),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 
 	// Sign the JWT
 	tokenString, err := token.SignedString(privKey)
@@ -112,25 +92,16 @@ func (i *jwtUtilImpl) JWTSign(payload *JWTPayload) (string, error) {
 	return tokenString, nil
 }
 
-func (i *jwtUtilImpl) JWTVerify(accessToken string) (*JWTBodyPayload, error) {
-	payload, err := i.parser(accessToken)
-	if err != nil {
-		return nil, err
-	}
-
-	decodePubKey, err := i.encryption.AESEncryption.Decrypt(&encryption.AESPayload{
-		Secret:  i.cfg.AppSecret,
-		Payload: payload.Aud,
-	},
-	)
+func (i *jwtUtilImpl) JWTVerify(token string) (*JWTBodyPayload, error) {
+	claims, err := i.decodeClaims(token)
 	if err != nil {
 		return nil, err
 	}
 
 	// Decode PEM block
-	block, _ := pem.Decode([]byte(decodePubKey))
+	block, _ := pem.Decode([]byte(claims.PublicKey))
 	if block == nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to decode PEM: no PEM data is found.")
 	}
 
 	// Parse RSA public key
@@ -139,8 +110,8 @@ func (i *jwtUtilImpl) JWTVerify(accessToken string) (*JWTBodyPayload, error) {
 		return nil, err
 	}
 
-	token, err := jwt.Parse(accessToken, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+	parsedToken, err := jwt.Parse(token, func(jwtToken *jwt.Token) (interface{}, error) {
+		if _, ok := jwtToken.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, constant.ErrInvalidJwtSigningMethod
 		}
 		return rsaPublicKey, nil
@@ -149,33 +120,31 @@ func (i *jwtUtilImpl) JWTVerify(accessToken string) (*JWTBodyPayload, error) {
 		return nil, err
 	}
 
-	if !token.Valid {
+	if !parsedToken.Valid {
 		return nil, constant.ErrInvalidJwt
 	}
 
-	return &payload.Data, nil
+	return &claims.Data, nil
 }
 
-func (i *jwtUtilImpl) parser(accessToken string) (*JWTCustomClaims, error) {
-	var claims JWTCustomClaims
-
-	splittedString := strings.Split(accessToken, ".")
+func (i *jwtUtilImpl) decodeClaims(token string) (claims *JWTCustomClaims, err error) {
+	splittedString := strings.Split(token, ".")
 	if len(splittedString) < 2 {
-		return &claims, constant.ErrInvalidJwtFormat
+		return claims, constant.ErrInvalidJwtFormat
 	}
 
-	encPayload := splittedString[1]
+	// header := splittedString[0]
+	encodedClaims := splittedString[1]
 
-	decPayload, err := base64.RawStdEncoding.DecodeString(encPayload)
+	rawClaims, err := base64.RawStdEncoding.DecodeString(encodedClaims)
 	if err != nil {
-		return &claims, err
+		return claims, err
 	}
 
-	err = json.Unmarshal([]byte(decPayload), &claims)
+	err = json.Unmarshal([]byte(rawClaims), &claims)
 	if err != nil {
-		fmt.Println("Error unmarshaling JSON:", err)
-		return &claims, err
+		return claims, err
 	}
 
-	return &claims, nil
+	return claims, nil
 }
