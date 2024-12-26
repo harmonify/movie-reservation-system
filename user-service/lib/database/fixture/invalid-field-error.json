@@ -1,0 +1,19 @@
+{
+    "Severity": "ERROR",
+    "Code": "42703",
+    "Message": "column \"expired_atz\" of relation \"user_sessions\" does not exist",
+    "Detail": "",
+    "Hint": "",
+    "Position": 65,
+    "InternalPosition": 0,
+    "InternalQuery": "",
+    "Where": "",
+    "SchemaName": "",
+    "TableName": "",
+    "ColumnName": "",
+    "DataTypeName": "",
+    "ConstraintName": "",
+    "File": "parse_target.c",
+    "Line": 1066,
+    "Routine": "checkInsertTargets"
+}

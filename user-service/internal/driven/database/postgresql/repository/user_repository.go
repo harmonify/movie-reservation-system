@@ -11,7 +11,6 @@ import (
 	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/model"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/database"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/database/postgresql"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/util"
@@ -23,10 +22,11 @@ import (
 type UserRepositoryParam struct {
 	fx.In
 
-	Database *database.Database
-	Tracer   tracer.Tracer
-	Logger   logger.Logger
-	Util     *util.Util
+	Database                  *database.Database
+	PostgresqlErrorTranslator database.PostgresqlErrorTranslator
+	Tracer                    tracer.Tracer
+	Logger                    logger.Logger
+	Util                      *util.Util
 }
 
 type UserRepositoryResult struct {
@@ -37,6 +37,7 @@ type UserRepositoryResult struct {
 
 type userRepositoryImpl struct {
 	database *database.Database
+	pgErrTl  database.PostgresqlErrorTranslator
 	tracer   tracer.Tracer
 	logger   logger.Logger
 	util     *util.Util
@@ -46,6 +47,7 @@ func NewUserRepository(p UserRepositoryParam) UserRepositoryResult {
 	return UserRepositoryResult{
 		UserStorage: &userRepositoryImpl{
 			database: p.Database,
+			pgErrTl:  p.PostgresqlErrorTranslator,
 			tracer:   p.Tracer,
 			logger:   p.Logger,
 			util:     p.Util,
@@ -81,9 +83,13 @@ func (r *userRepositoryImpl) SaveUser(ctx context.Context, createModel entity.Sa
 		Error
 
 	if err != nil {
+		terr := r.pgErrTl.Translate(err)
+		switch (terr).(type) {
+			
+		}
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
-			if pgErr.Code == postgresql.UniqueViolation {
+			if pgErr.Code == database.UniqueViolation {
 				if strings.Contains(err.Error(), "username") {
 					return nil, auth_service.ErrDuplicateUsername
 				} else if strings.Contains(err.Error(), "email") {

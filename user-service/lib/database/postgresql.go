@@ -2,6 +2,8 @@ package database
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"time"
 
 	config_constant "github.com/harmonify/movie-reservation-system/user-service/lib/config/constant"
@@ -23,7 +25,16 @@ func newPostgresqlDatabase(p DatabaseParam) (DatabaseResult, error) {
 	)
 
 	db, err := gorm.Open(pgDriver.Open(master), &gorm.Config{
-		Logger: gormLogger.Default.LogMode(gormLogger.Error),
+		Logger: gormLogger.New(
+			log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+			gormLogger.Config{
+				SlowThreshold:             200 * time.Millisecond, // Slow SQL threshold
+				LogLevel:                  gormLogger.Error,       // Log level
+				IgnoreRecordNotFoundError: true,                   // Ignore gorm.ErrRecordNotFound error for logger
+				ParameterizedQueries:      false,                  // False, meaning include params in the SQL log
+				Colorful:                  true,                   // Colorful for non-production environment is fine
+			},
+		),
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true,
 		},

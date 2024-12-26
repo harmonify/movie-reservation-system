@@ -11,7 +11,6 @@ import (
 	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/model"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/database"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/database/postgresql"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/util"
@@ -79,7 +78,7 @@ func (r *userKeyRepositoryImpl) SaveUserKey(ctx context.Context, createModel ent
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
-			if pgErr.Code == postgresql.UniqueViolation {
+			if pgErr.Code == database.UniqueViolation {
 				if strings.Contains(err.Error(), "email") {
 					return nil, auth_service.ErrDuplicateEmail
 				} else if strings.Contains(err.Error(), "phone_number") {

@@ -1,0 +1,19 @@
+{
+    "Severity": "ERROR",
+    "Code": "23505",
+    "Message": "duplicate key value violates unique constraint \"uni_users_phone_number\"",
+    "Detail": "Key (phone_number)=(+6281234567890) already exists.",
+    "Hint": "",
+    "Position": 0,
+    "InternalPosition": 0,
+    "InternalQuery": "",
+    "Where": "",
+    "SchemaName": "public",
+    "TableName": "users",
+    "ColumnName": "",
+    "DataTypeName": "",
+    "ConstraintName": "uni_users_phone_number",
+    "File": "nbtinsert.c",
+    "Line": 666,
+    "Routine": "_bt_check_unique"
+}

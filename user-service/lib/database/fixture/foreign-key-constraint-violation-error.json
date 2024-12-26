@@ -1,0 +1,19 @@
+{
+    "Severity": "ERROR",
+    "Code": "23503",
+    "Message": "update or delete on table \"users\" violates foreign key constraint \"fk_users_user_key\" on table \"user_keys\"",
+    "Detail": "Key (uuid)=(55f39ef0-cc97-4f37-9efc-1d0af0ad89c8) is still referenced from table \"user_keys\".",
+    "Hint": "",
+    "Position": 0,
+    "InternalPosition": 0,
+    "InternalQuery": "",
+    "Where": "",
+    "SchemaName": "public",
+    "TableName": "user_keys",
+    "ColumnName": "",
+    "DataTypeName": "",
+    "ConstraintName": "fk_users_user_key",
+    "File": "ri_triggers.c",
+    "Line": 2621,
+    "Routine": "ri_ReportViolation"
+}

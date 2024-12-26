@@ -1,0 +1,19 @@
+{
+    "Severity": "ERROR",
+    "Code": "22P02",
+    "Message": "invalid input syntax for type boolean: \"falsze\"",
+    "Detail": "",
+    "Hint": "",
+    "Position": 165,
+    "InternalPosition": 0,
+    "InternalQuery": "",
+    "Where": "",
+    "SchemaName": "",
+    "TableName": "",
+    "ColumnName": "",
+    "DataTypeName": "",
+    "ConstraintName": "",
+    "File": "bool.c",
+    "Line": 151,
+    "Routine": "boolin"
+}
