@@ -2,7 +2,6 @@ package messaging
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/harmonify/movie-reservation-system/user-service/lib/config"
@@ -11,32 +10,8 @@ import (
 	"github.com/harmonify/movie-reservation-system/user-service/lib/util"
 	"github.com/twilio/twilio-go"
 	twilioApi "github.com/twilio/twilio-go/rest/api/v2010"
-	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
-
-var (
-	ErrInvalidPhoneNumber = errors.New("INVALID_PHONE_NUMBER")
-)
-
-type TwilioMessager interface {
-	SendOTP(ctx context.Context, otpCode string, phoneNumber string) error
-}
-
-type TwilioMessagerParam struct {
-	fx.In
-
-	Config *config.Config
-	Logger logger.Logger
-	Tracer tracer.Tracer
-	Util   *util.Util
-}
-
-type TwilioMessagerResult struct {
-	fx.Out
-
-	TwilioMessager TwilioMessager
-}
 
 type twilioMessagerImpl struct {
 	client *twilio.RestClient
@@ -46,14 +21,14 @@ type twilioMessagerImpl struct {
 	util   *util.Util
 }
 
-func NewTwilio(p TwilioMessagerParam) TwilioMessagerResult {
+func NewTwilioMessager(p MessagerParam) MessagerResult {
 	client := twilio.NewRestClientWithParams(twilio.ClientParams{
 		Username: p.Config.TwilioAccountSid,
 		Password: p.Config.TwilioAuthToken,
 	})
 
-	return TwilioMessagerResult{
-		TwilioMessager: &twilioMessagerImpl{
+	return MessagerResult{
+		Messager: &twilioMessagerImpl{
 			client: client,
 			config: p.Config,
 			logger: p.Logger,
@@ -81,7 +56,7 @@ func (s *twilioMessagerImpl) Send(ctx context.Context, message Message) (id stri
 	resp, err := s.client.Api.CreateMessage(params)
 	if err != nil {
 		s.logger.Error("Failed to send SMS message", zap.Error(err), zap.Any("params", params))
-		return "", fmt.Errorf("Error sending SMS message: %v", err)
+		return "", fmt.Errorf("error sending SMS message: %v", err)
 	}
 
 	s.logger.Info("Successfully send a message", zap.Any("response", resp), zap.Any("params", params))

@@ -1,12 +1,16 @@
 package messaging
 
-import "context"
+import (
+	"go.uber.org/fx"
+)
 
-type Messager interface {
-	Send(ctx context.Context, message Message) (id string, err error)
-}
+var MessagingModule = fx.Module(
+	"messaging",
+	fx.Provide(
+		NewTwilioMessager,
+	),
+)
 
-type Message struct {
-	To   string // phone number
-	Body string
+func NewMessager(p MessagerParam) MessagerResult {
+	return NewTwilioMessager(p)
 }
