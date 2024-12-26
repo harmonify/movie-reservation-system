@@ -52,14 +52,14 @@ func (h *authRestHandlerImpl) Register(g *gin.RouterGroup) {
 	// g.PUT("/email/edit", h.middleware.JwtHttpMiddleware.AuthenticateUser, h.PutEditEmail)
 	// g.GET("/email/edit/verify", h.PostVerifyEditEmail)
 	g.POST("/login", h.PostLogin)
-	g.POST("/logout", h.middleware.JwtHttpMiddleware.AuthenticateUser, h.PostUserLogout)
+	g.POST("/logout", h.middleware.JwtHttpMiddleware.AuthenticateUser, h.PostLogout)
 	g.GET("/token", h.GetToken)
 }
 
 func (h *authRestHandlerImpl) PostRegister(c *gin.Context) {
 	var (
 		ctx  = c.Request.Context()
-		body PostUserRegisterReq
+		body PostRegisterReq
 		err  error
 	)
 
@@ -112,7 +112,7 @@ func (h *authRestHandlerImpl) PostVerifyEmail(c *gin.Context) {
 func (h *authRestHandlerImpl) PostLogin(c *gin.Context) {
 	var (
 		ctx    = c.Request.Context()
-		params PostUserLoginReq
+		params PostLoginReq
 		err    error
 	)
 
@@ -143,7 +143,7 @@ func (h *authRestHandlerImpl) PostLogin(c *gin.Context) {
 	cookiePath := "/user/token"
 	c.SetCookie(cookieName, cookieValue, cookieMaxAge, cookiePath, cookieDomain, true, true)
 
-	h.response.Send(c, PostUserLoginRes{
+	h.response.Send(c, PostLoginRes{
 		AccessToken:         data.AccessToken,
 		AccessTokenDuration: data.AccessTokenDuration,
 	}, err)
@@ -179,7 +179,7 @@ func (h *authRestHandlerImpl) GetToken(c *gin.Context) {
 
 }
 
-func (h *authRestHandlerImpl) PostUserLogout(c *gin.Context) {
+func (h *authRestHandlerImpl) PostLogout(c *gin.Context) {
 	var (
 		ctx = c.Request.Context()
 		err error

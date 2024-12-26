@@ -97,6 +97,22 @@ func (r *otpRedisRepositoryImpl) GetEmailVerificationToken(ctx context.Context, 
 	return token, nil
 }
 
+func (r *otpRedisRepositoryImpl) DeleteEmailVerificationToken(ctx context.Context, email string) (bool, error) {
+	cacheKey, err := r.constructCacheKey(ctx, "email", email)
+	if err != nil {
+		r.logger.WithCtx(ctx).Error("Failed to construct email verification token cache key", zap.Error(err))
+		return false, err
+	}
+
+	removed, err := r.redis.Client.WithContext(ctx).Del(cacheKey).Result()
+	if err != nil {
+		r.logger.WithCtx(ctx).Error("Failed to delete email verification token", zap.Error(err))
+		return false, err
+	}
+
+	return removed == 1, nil
+}
+
 func (r *otpRedisRepositoryImpl) SavePhoneOtp(ctx context.Context, p shared_service.SavePhoneOtpParam) error {
 	cacheKey, err := r.constructCacheKey(ctx, "phone", p.PhoneNumber)
 	if err != nil {
@@ -130,6 +146,22 @@ func (r *otpRedisRepositoryImpl) GetPhoneOtp(ctx context.Context, phoneNumber st
 	}
 
 	return otp, nil
+}
+
+func (r *otpRedisRepositoryImpl) DeletePhoneOtp(ctx context.Context, phoneNumber string) (bool, error) {
+	cacheKey, err := r.constructCacheKey(ctx, "phone", phoneNumber)
+	if err != nil {
+		r.logger.WithCtx(ctx).Error("Failed to construct phone OTP cache key", zap.Error(err))
+		return false, err
+	}
+
+	removed, err := r.redis.Client.WithContext(ctx).Del(cacheKey).Result()
+	if err != nil {
+		r.logger.WithCtx(ctx).Error("Failed to delete phone OTP", zap.Error(err))
+		return false, err
+	}
+
+	return removed == 1, nil
 }
 
 func (r *otpRedisRepositoryImpl) IncrementPhoneOtpAttempt(ctx context.Context, phoneNumber string) error {
@@ -171,4 +203,20 @@ func (r *otpRedisRepositoryImpl) GetPhoneOtpAttempt(ctx context.Context, phoneNu
 	}
 
 	return attemptInt, nil
+}
+
+func (r *otpRedisRepositoryImpl) DeletePhoneOtpAttempt(ctx context.Context, phoneNumber string) (bool, error) {
+	cacheKey, err := r.constructCacheKey(ctx, "phone-attempt", phoneNumber)
+	if err != nil {
+		r.logger.WithCtx(ctx).Error("Failed to construct phone OTP attempt cache key", zap.Error(err))
+		return false, err
+	}
+
+	removed, err := r.redis.Client.WithContext(ctx).Del(cacheKey).Result()
+	if err != nil {
+		r.logger.WithCtx(ctx).Error("Failed to delete phone OTP attempt", zap.Error(err))
+		return false, err
+	}
+
+	return removed == 1, nil
 }

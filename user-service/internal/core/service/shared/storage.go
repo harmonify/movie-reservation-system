@@ -38,9 +38,12 @@ type (
 	OtpStorage interface {
 		SaveEmailVerificationToken(ctx context.Context, p SaveEmailVerificationTokenParam) error
 		GetEmailVerificationToken(ctx context.Context, email string) (string, error)
+		DeleteEmailVerificationToken(ctx context.Context, email string) (bool, error)
 		SavePhoneOtp(ctx context.Context, p SavePhoneOtpParam) error
 		GetPhoneOtp(ctx context.Context, phoneNumber string) (string, error)
+		DeletePhoneOtp(ctx context.Context, phoneNumber string) (bool, error)
 		IncrementPhoneOtpAttempt(ctx context.Context, phoneNumber string) error
 		GetPhoneOtpAttempt(ctx context.Context, phoneNumber string) (int, error)
+		DeletePhoneOtpAttempt(ctx context.Context, phoneNumber string) (bool, error)
 	}
 )

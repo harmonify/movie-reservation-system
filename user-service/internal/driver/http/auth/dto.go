@@ -5,12 +5,12 @@ import (
 )
 
 type (
-	RegisterUserReq struct {
-		PostUserRegisterReq
+	RegisterReq struct {
+		PostRegisterReq
 		http_interface.HeadersExtension
 	}
 
-	PostUserRegisterReq struct {
+	PostRegisterReq struct {
 		Username    string `json:"username" validate:"required"`
 		Password    string `json:"password" validate:"required,min=8"`
 		Email       string `json:"email" validate:"required,email"`
@@ -24,12 +24,12 @@ type (
 		Token string `form:"token" json:"token" validate:"required"`
 	}
 
-	PostUserLoginReq struct {
+	PostLoginReq struct {
 		Username string `json:"username" validate:"required"`
 		Password string `json:"password" validate:"required,min=6"`
 	}
 
-	PostUserLoginRes struct {
+	PostLoginRes struct {
 		AccessToken         string `json:"accessToken"`
 		AccessTokenDuration int    `json:"accessTokenDuration"` // in seconds
 	}
