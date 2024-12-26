@@ -34,20 +34,15 @@ type testExpectation struct {
 }
 
 func (s *StructUtilTestSuite) SetupSuite() {
-	s.app = internal.NewApp(s.invoker, s.mock()...)
-}
-
-func (s *StructUtilTestSuite) invoker(
-	structUtil struct_util.StructUtil,
-) {
-	s.structUtil = structUtil
-}
-
-func (s *StructUtilTestSuite) mock() []any {
-	// s.exampleService = mocks.NewExampleService(s.T())
-	return []any{
-		// func() interfaces.ExampleService { return s.exampleService },
-	}
+	s.app = internal.NewApp(
+		fx.Invoke(func(structUtil struct_util.StructUtil) {
+			s.structUtil = structUtil
+		}),
+		// fx.Decorate(func() interfaces.ExampleService {
+		// s.exampleService = mocks.NewExampleService(s.T())
+		// 	return s.exampleService
+		// }),
+	)
 }
 
 func (s *StructUtilTestSuite) TestSetValueIfNotEmpty() {

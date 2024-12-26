@@ -2,6 +2,7 @@ package util
 
 import (
 	"github.com/harmonify/movie-reservation-system/user-service/lib/util/encryption"
+	"github.com/harmonify/movie-reservation-system/user-service/lib/util/formatter"
 	generator_util "github.com/harmonify/movie-reservation-system/user-service/lib/util/generator"
 	http_util "github.com/harmonify/movie-reservation-system/user-service/lib/util/http"
 	jwt_util "github.com/harmonify/movie-reservation-system/user-service/lib/util/jwt"
@@ -12,6 +13,7 @@ import (
 
 type Util struct {
 	EncryptionUtil *encryption.Encryption
+	FormatterUtil  formatter.FormatterUtil
 	GeneratorUtil  generator_util.GeneratorUtil
 	HttpUtil       http_util.HttpUtil
 	JWTUtil        jwt_util.JwtUtil
@@ -21,6 +23,7 @@ type Util struct {
 
 func NewUtil(
 	encryptionUtil *encryption.Encryption,
+	formatterUtil formatter.FormatterUtil,
 	generatorUtil generator_util.GeneratorUtil,
 	httpUtil http_util.HttpUtil,
 	jwtUtil jwt_util.JwtUtil,
@@ -29,6 +32,7 @@ func NewUtil(
 ) *Util {
 	return &Util{
 		EncryptionUtil: encryptionUtil,
+		FormatterUtil:  formatterUtil,
 		GeneratorUtil:  generatorUtil,
 		HttpUtil:       httpUtil,
 		JWTUtil:        jwtUtil,
@@ -42,6 +46,7 @@ var (
 		"util",
 		generator_util.GeneratorUtilModule,
 		encryption.EncryptionModule,
+		formatter.FormatterModule,
 		http_util.HttpUtilModule,
 		jwt_util.JWTUtilModule,
 		struct_util.StructUtilModule,

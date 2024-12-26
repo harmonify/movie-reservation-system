@@ -3,10 +3,11 @@ package config
 type Config struct {
 	Env string `mapstructure:"ENV"`
 
-	AppName     string `mapstructure:"APP_NAME"`
-	AppSecret   string `mapstructure:"APP_SECRET"`
-	AppPort     string `mapstructure:"APP_PORT"`
-	FrontEndUrl string `mapstructure:"FRONTEND_URL"`
+	AppName                   string `mapstructure:"APP_NAME"`
+	AppDefaultCountryDialCode string `mapstructure:"APP_DEFAULT_COUNTRY_DIAL_CODE"`
+	AppSecret                 string `mapstructure:"APP_SECRET"`
+	AppPort                   string `mapstructure:"APP_PORT"`
+	FrontEndUrl               string `mapstructure:"FRONTEND_URL"`
 
 	ServiceIdentifier string `mapstructure:"SERVICE_IDENTIFIER"` // any identifier, used in RBAC
 	BaseUrl           string `mapstructure:"BASE_URL"`
@@ -49,4 +50,8 @@ type Config struct {
 	MailgunDefaultSender string `mapstructure:"MAILGUN_DEFAULT_SENDER"`
 	MailgunDomain        string `mapstructure:"MAILGUN_DOMAIN"`
 	MailgunApiKey        string `mapstructure:"MAILGUN_API_KEY"`
+
+	TwilioAccountSid string `mapstructure:"TWILIO_ACCOUNT_SID"`
+	TwilioAuthToken  string `mapstructure:"TWILIO_AUTH_TOKEN"`
+	TwilioServiceSID string `mapstructure:"TWILIO_SERVICE_SID"`
 }

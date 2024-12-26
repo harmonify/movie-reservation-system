@@ -7,6 +7,6 @@ type Messager interface {
 }
 
 type Message struct {
-	To   []string // phone numbers
+	To   string // phone number
 	Body string
 }

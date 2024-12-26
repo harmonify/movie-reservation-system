@@ -17,6 +17,52 @@ func (_m *ValidationUtil) EXPECT() *ValidationUtil_Expecter {
 	return &ValidationUtil_Expecter{mock: &_m.Mock}
 }
 
+// ValidateE164PhoneNumber provides a mock function with given fields: value
+func (_m *ValidationUtil) ValidateE164PhoneNumber(value string) bool {
+	ret := _m.Called(value)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ValidateE164PhoneNumber")
+	}
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(string) bool); ok {
+		r0 = rf(value)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
+// ValidationUtil_ValidateE164PhoneNumber_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ValidateE164PhoneNumber'
+type ValidationUtil_ValidateE164PhoneNumber_Call struct {
+	*mock.Call
+}
+
+// ValidateE164PhoneNumber is a helper method to define mock.On call
+//   - value string
+func (_e *ValidationUtil_Expecter) ValidateE164PhoneNumber(value interface{}) *ValidationUtil_ValidateE164PhoneNumber_Call {
+	return &ValidationUtil_ValidateE164PhoneNumber_Call{Call: _e.mock.On("ValidateE164PhoneNumber", value)}
+}
+
+func (_c *ValidationUtil_ValidateE164PhoneNumber_Call) Run(run func(value string)) *ValidationUtil_ValidateE164PhoneNumber_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *ValidationUtil_ValidateE164PhoneNumber_Call) Return(_a0 bool) *ValidationUtil_ValidateE164PhoneNumber_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *ValidationUtil_ValidateE164PhoneNumber_Call) RunAndReturn(run func(string) bool) *ValidationUtil_ValidateE164PhoneNumber_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ValidatePhoneNumber provides a mock function with given fields: value
 func (_m *ValidationUtil) ValidatePhoneNumber(value string) bool {
 	ret := _m.Called(value)

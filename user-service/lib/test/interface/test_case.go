@@ -3,6 +3,8 @@ package test_interface
 import (
 	"net/http"
 	"net/http/httptest"
+
+	"github.com/harmonify/movie-reservation-system/user-service/lib/http/response"
 )
 
 type (
@@ -42,8 +44,7 @@ type (
 		ResponseBodyResult       any
 		ResponseBodyErrorCode    string
 		ResponseBodyErrorMessage string
-		// ResponseBodyErrorObject  []response.BaseErrorValidationSchema
-		ResponseBodyErrorObject any
+		ResponseBodyErrorObject  []response.BaseErrorValidationSchema
 	}
 
 	// similar to [database/sql#NullBool]
