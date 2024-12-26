@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/go-redis/redis"
+	otp_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/otp"
 	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/cache"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
@@ -18,7 +20,7 @@ type (
 	OtpRedisRepositoryParam struct {
 		fx.In
 
-		Redis  cache.Redis
+		Redis  *cache.Redis
 		Logger logger.Logger
 		Tracer tracer.Tracer
 		Util   *util.Util
@@ -31,7 +33,7 @@ type (
 	}
 
 	otpRedisRepositoryImpl struct {
-		redis  cache.Redis
+		redis  *cache.Redis
 		logger logger.Logger
 		tracer tracer.Tracer
 		util   *util.Util
@@ -85,12 +87,14 @@ func (r *otpRedisRepositoryImpl) GetEmailVerificationToken(ctx context.Context, 
 
 	token, err := r.redis.Client.WithContext(ctx).Get(cacheKey).Result()
 	if err != nil {
-		r.logger.WithCtx(ctx).Error("Failed to get email verification token", zap.Error(err))
+		if err == redis.Nil {
+			return "", otp_service.ErrKeyNotExist
+		}
+		r.logger.WithCtx(ctx).Error("Failed to generate email verification token", zap.Error(err))
 		return "", err
 	}
 
 	return token, nil
-
 }
 
 func (r *otpRedisRepositoryImpl) SavePhoneOtp(ctx context.Context, p shared_service.SavePhoneOtpParam) error {
@@ -118,7 +122,10 @@ func (r *otpRedisRepositoryImpl) GetPhoneOtp(ctx context.Context, phoneNumber st
 
 	otp, err := r.redis.Client.WithContext(ctx).Get(cacheKey).Result()
 	if err != nil {
-		r.logger.WithCtx(ctx).Error("Failed to get phone OTP", zap.Error(err))
+		if err == redis.Nil {
+			return "", otp_service.ErrKeyNotExist
+		}
+		r.logger.WithCtx(ctx).Error("Failed to generate phone OTP", zap.Error(err))
 		return "", err
 	}
 
@@ -150,6 +157,9 @@ func (r *otpRedisRepositoryImpl) GetPhoneOtpAttempt(ctx context.Context, phoneNu
 
 	attempt, err := r.redis.Client.WithContext(ctx).Get(cacheKey).Result()
 	if err != nil {
+		if err == redis.Nil {
+			return 0, otp_service.ErrKeyNotExist
+		}
 		r.logger.WithCtx(ctx).Error("Failed to increment phone OTP attempt", zap.Error(err))
 		return 0, err
 	}

@@ -115,6 +115,8 @@ func (s *authServiceImpl) Register(ctx context.Context, p RegisterParam) error {
 			FirstName:   p.FirstName,
 			LastName:    p.LastName,
 		})
+		s.logger.WithCtx(ctx).Debug("User record", zap.Any("param", p), zap.Any("user", user))
+
 		if err != nil {
 			s.logger.WithCtx(ctx).Error("Failed to save user record", zap.Error(err))
 			return err
@@ -143,7 +145,11 @@ func (s *authServiceImpl) Register(ctx context.Context, p RegisterParam) error {
 
 		return nil
 	})
-
+	if err != nil {
+		s.logger.WithCtx(ctx).Error("Failed to save records", zap.Error(err))
+		return err
+	}
+	
 	// Send email verification link
 	err = s.otpService.SendEmailVerificationLink(ctx, otp_service.SendEmailVerificationLinkParam{
 		Email: p.Email,

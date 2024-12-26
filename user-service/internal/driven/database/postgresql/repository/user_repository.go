@@ -73,20 +73,20 @@ func (r *userRepositoryImpl) SaveUser(ctx context.Context, createModel entity.Sa
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	createMap, err := r.util.StructUtil.ConvertSqlStructToMap(createModel)
-	if err != nil {
-		r.logger.WithCtx(ctx).Error(err.Error())
-		return nil, err
-	}
+	userModel := (&model.User{}).FromSaveEntity(createModel)
 
-	var userModel *model.User
+	err := r.database.DB.
+		WithContext(ctx).
+		Create(userModel).
+		Error
 
-	err = r.database.DB.WithContext(ctx).Model(&userModel).Create(createMap).Error
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == postgresql.UniqueViolation {
-				if strings.Contains(err.Error(), "email") {
+				if strings.Contains(err.Error(), "username") {
+					return nil, auth_service.ErrDuplicateUsername
+				} else if strings.Contains(err.Error(), "email") {
 					return nil, auth_service.ErrDuplicateEmail
 				} else if strings.Contains(err.Error(), "phone_number") {
 					return nil, auth_service.ErrDuplicatePhoneNumber

@@ -73,15 +73,9 @@ func (r *userKeyRepositoryImpl) SaveUserKey(ctx context.Context, createModel ent
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	createMap, err := r.util.StructUtil.ConvertSqlStructToMap(createModel)
-	if err != nil {
-		r.logger.WithCtx(ctx).Error(err.Error())
-		return nil, err
-	}
+	userKeyModel := (&model.UserKey{}).FromSaveEntity(createModel)
 
-	var userKeyModel *model.UserKey
-
-	err = r.database.DB.WithContext(ctx).Model(&userKeyModel).Create(createMap).Error
+	err := r.database.DB.WithContext(ctx).Create(&userKeyModel).Error
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {

@@ -8,6 +8,7 @@ import (
 	"github.com/casbin/casbin/v2"
 	gormadapter "github.com/casbin/gorm-adapter/v3"
 	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/lib/config"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/database"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
@@ -21,6 +22,7 @@ type (
 		Database *database.Database
 		Tracer   tracer.Tracer
 		Logger   logger.Logger
+		Config   *config.Config
 	}
 
 	CasbinResult struct {
@@ -33,6 +35,7 @@ type (
 		enforcer *casbin.Enforcer
 		tracer   tracer.Tracer
 		logger   logger.Logger
+		config   *config.Config
 	}
 )
 
@@ -53,6 +56,7 @@ func NewCasbin(p CasbinParam) CasbinResult {
 			enforcer: e,
 			tracer:   p.Tracer,
 			logger:   p.Logger,
+			config:   p.Config,
 		},
 	}
 }
@@ -110,6 +114,6 @@ func (c *casbinImpl) GrantRole(ctx context.Context, p shared_service.GrantRolePa
 	ctx, span := c.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	success, err := c.enforcer.AddRoleForUser(p.UUID, string(p.Role))
+	success, err := c.enforcer.AddRoleForUserInDomain(p.UUID, string(p.Role), c.config.ServiceIdentifier)
 	return success, err
 }

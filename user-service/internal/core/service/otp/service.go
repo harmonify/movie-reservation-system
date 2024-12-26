@@ -9,6 +9,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/user-service/lib/config"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/mail"
+
 	// "github.com/harmonify/movie-reservation-system/user-service/lib/messaging"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/util"
@@ -32,7 +33,8 @@ type (
 		Tracer tracer.Tracer
 		Mailer mail.Mailer
 		// Messager messaging.Messager
-		Util *util.Util
+		OtpStorage shared_service.OtpStorage
+		Util       *util.Util
 	}
 
 	OtpServiceResult struct {
@@ -63,7 +65,8 @@ func NewOtpService(p OtpServiceParam) OtpServiceResult {
 			tracer: p.Tracer,
 			mailer: p.Mailer,
 			// messager: p.Messager,
-			util: p.Util,
+			otpStorage: p.OtpStorage,
+			util:       p.Util,
 
 			EmailVerificationLinkTTL: 24 * 60 * 60, // 24 hours
 			PhoneOtpTTL:              15 * 60,      // 15 minutes
@@ -83,11 +86,11 @@ func (s *otpServiceImpl) SendEmailVerificationLink(ctx context.Context, p SendEm
 	defer span.End()
 
 	savedToken, err := s.otpStorage.GetEmailVerificationToken(ctx, p.Email)
-	if err != nil {
+	if err != nil && err != ErrKeyNotExist {
 		return err
 	}
 	if savedToken != "" {
-		return fmt.Errorf("Verification email link already sent")
+		return ErrOtpAlreadyExist
 	}
 
 	token, err := s.util.GeneratorUtil.GenerateRandomBase64(32)
@@ -105,7 +108,7 @@ func (s *otpServiceImpl) SendEmailVerificationLink(ctx context.Context, p SendEm
   <p>Thank you for choosing %s! Please confirm your email address by clicking the link below. We'll communicate important updates with you from time to time via email, so it's essential that we have an up-to-date email address on file.</p>
   <p><a href="%s" style="color: #1a73e8; text-decoration: none;">Verify your email address</a></p>
   <p>If you did not sign up for a %s account, you can simply disregard this email.</p>
-  <p>Happy Emailing!</p>
+  <p>Hope you have a nice day!</p>
   <p>The %s Team</p>
 </body>
 </html>`,

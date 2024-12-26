@@ -33,6 +33,7 @@ func (m *User) TableName() string {
 func (m *User) FromEntity(e entity.User) *User {
 	return &User{
 		UUID:                  e.UUID,
+		Username:              e.Username,
 		Email:                 e.Email,
 		PhoneNumber:           e.PhoneNumber,
 		FirstName:             e.FirstName,
@@ -48,6 +49,8 @@ func (m *User) FromEntity(e entity.User) *User {
 func (m *User) ToEntity() *entity.User {
 	return &entity.User{
 		UUID:                  m.UUID,
+		Username:              m.Username,
+		Password:              m.Password,
 		Email:                 m.Email,
 		PhoneNumber:           m.PhoneNumber,
 		FirstName:             m.FirstName,
@@ -57,5 +60,18 @@ func (m *User) ToEntity() *entity.User {
 		CreatedAt:             m.CreatedAt,
 		UpdatedAt:             m.UpdatedAt,
 		DeletedAt:             sql.NullTime(m.DeletedAt),
+	}
+}
+
+func (m *User) FromSaveEntity(e entity.SaveUser) *User {
+	return &User{
+		Username:              e.Username,
+		Password:              e.Password,
+		Email:                 e.Email,
+		PhoneNumber:           e.PhoneNumber,
+		FirstName:             e.FirstName,
+		LastName:              e.LastName,
+		IsEmailVerified:       false,
+		IsPhoneNumberVerified: false,
 	}
 }

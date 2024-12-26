@@ -8,19 +8,27 @@ import (
 )
 
 var (
+	DuplicateUsername    = "DUPLICATE_USERNAME"
 	DuplicateEmail       = "DUPLICATE_EMAIL"
 	DuplicatePhoneNumber = "DUPLICATE_PHONE_NUMBER"
+	InvalidUsername      = "INVALID_USERNAME"
 	InvalidEmail         = "INVALID_EMAIL"
 	InvalidPhoneNumber   = "INVALID_PHONE_NUMBER"
 	UnverifiedEmail      = "UNVERIFIED_EMAIL"
 
+	ErrDuplicateUsername    = errors.New(DuplicateUsername)
 	ErrDuplicateEmail       = errors.New(DuplicateEmail)
 	ErrDuplicatePhoneNumber = errors.New(DuplicatePhoneNumber)
+	ErrInvalidUsername      = errors.New(InvalidUsername)
 	ErrInvalidEmail         = errors.New(InvalidEmail)
 	ErrInvalidPhoneNumber   = errors.New(InvalidPhoneNumber)
 	ErrUnverifiedEmail      = errors.New(UnverifiedEmail)
 
 	AuthServiceErrorMap = http_constant.CustomHttpErrorMap{
+		DuplicateUsername: {
+			HttpCode: http.StatusBadRequest,
+			Message:  "The username is already registered. Please use a different username.",
+		},
 		DuplicateEmail: {
 			HttpCode: http.StatusBadRequest,
 			Message:  "The email address is already registered. Please use a different email.",

@@ -24,6 +24,14 @@ func (m *UserKey) TableName() string {
 	return "user_keys"
 }
 
+func (m *UserKey) FromSaveEntity(e entity.SaveUserKey) *UserKey {
+	return &UserKey{
+		UserUUID:   e.UserUUID,
+		PublicKey:  e.PublicKey,
+		PrivateKey: e.PrivateKey,
+	}
+}
+
 func (m *UserKey) ToEntity() *entity.UserKey {
 	return &entity.UserKey{
 		UserUUID:   m.UserUUID,

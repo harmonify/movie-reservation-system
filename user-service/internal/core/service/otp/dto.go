@@ -1,7 +1,7 @@
 package otp_service
 
 type (
-	GenerateEmailVerificationTokenParam struct {
+	GetEmailVerificationTokenParam struct {
 		Email string
 		TTL   uint32 // in seconds
 	}
