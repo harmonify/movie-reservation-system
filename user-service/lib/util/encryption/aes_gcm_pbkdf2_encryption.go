@@ -96,7 +96,7 @@ func (i *AesGcmPbkdf2EncryptionImpl) Encrypt(text string) (string, error) {
 	// Generate salt
 	salt, err := i.generatorUtil.GenerateRandomBytes(32)
 	if err != nil {
-		return "", fmt.Errorf("Failed to generate salt")
+		return "", fmt.Errorf("failed to generate salt")
 	}
 
 	// Build cipher
@@ -106,13 +106,13 @@ func (i *AesGcmPbkdf2EncryptionImpl) Encrypt(text string) (string, error) {
 		PBKDF2Iterations: i.PBKDF2Iterations,
 	})
 	if err != nil {
-		return "", fmt.Errorf("Failed to build cipher. Error: %s", err.Error())
+		return "", fmt.Errorf("failed to build cipher. Error: %s", err.Error())
 	}
 
 	// Generate nonce
 	nonce, err := i.generatorUtil.GenerateRandomBytes(uint32(aesGCM.NonceSize()))
 	if err != nil {
-		return "", fmt.Errorf("Failed to generate nonce")
+		return "", fmt.Errorf("failed to generate nonce")
 	}
 
 	// Encrypt value
@@ -129,7 +129,7 @@ func (i *AesGcmPbkdf2EncryptionImpl) Encrypt(text string) (string, error) {
 func (i *AesGcmPbkdf2EncryptionImpl) Decrypt(cipherTextCompleteBase64 string) (string, error) {
 	data := strings.Split(cipherTextCompleteBase64, ".")
 	if len(data) < 4 {
-		return "", fmt.Errorf("Invalid cipher text format")
+		return "", fmt.Errorf("invalid cipher text format")
 	}
 
 	cipherText, err := base64.StdEncoding.DecodeString(data[0])
@@ -159,7 +159,7 @@ func (i *AesGcmPbkdf2EncryptionImpl) Decrypt(cipherTextCompleteBase64 string) (s
 		PBKDF2Iterations: pbkdf2Iterations,
 	})
 	if err != nil {
-		return "", fmt.Errorf("Failed to build cipher. Error: %s", err.Error())
+		return "", fmt.Errorf("failed to build cipher. Error: %s", err.Error())
 	}
 
 	// Decrypt

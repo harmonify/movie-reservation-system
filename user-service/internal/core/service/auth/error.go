@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	http_constant "github.com/harmonify/movie-reservation-system/user-service/lib/http/constant"
+	error_constant "github.com/harmonify/movie-reservation-system/user-service/lib/error/constant"
 )
 
 var (
@@ -15,6 +15,7 @@ var (
 	InvalidEmail         = "INVALID_EMAIL"
 	InvalidPhoneNumber   = "INVALID_PHONE_NUMBER"
 	UnverifiedEmail      = "UNVERIFIED_EMAIL"
+	IncorrectPassword    = "INCORRECT_PASSWORD"
 
 	ErrDuplicateUsername    = errors.New(DuplicateUsername)
 	ErrDuplicateEmail       = errors.New(DuplicateEmail)
@@ -23,8 +24,9 @@ var (
 	ErrInvalidEmail         = errors.New(InvalidEmail)
 	ErrInvalidPhoneNumber   = errors.New(InvalidPhoneNumber)
 	ErrUnverifiedEmail      = errors.New(UnverifiedEmail)
+	ErrIncorrectPassword    = errors.New(IncorrectPassword)
 
-	AuthServiceErrorMap = http_constant.CustomHttpErrorMap{
+	AuthServiceErrorMap = error_constant.CustomErrorMap{
 		DuplicateUsername: {
 			HttpCode: http.StatusBadRequest,
 			Message:  "The username is already registered. Please use a different username.",
@@ -48,6 +50,10 @@ var (
 		UnverifiedEmail: {
 			HttpCode: http.StatusBadRequest,
 			Message:  "Please check your email inbox to verify the account and try again.",
+		},
+		IncorrectPassword: {
+			HttpCode: http.StatusBadRequest,
+			Message:  "The password you've entered is incorrect. Please try again.",
 		},
 	}
 )

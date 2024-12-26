@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/base64"
-	"fmt"
 	"time"
 
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
@@ -102,7 +101,7 @@ func (s *tokenServiceImpl) GenerateAccessToken(ctx context.Context, p GenerateAc
 
 	decryptedPrivateKey, err := s.util.EncryptionUtil.AESEncryption.Decrypt(p.PrivateKey)
 	if err != nil {
-		s.logger.Error("Failed to decrypt user private key", zap.Error(err))
+		s.logger.WithCtx(ctx).Error("Failed to decrypt user private key", zap.Error(err))
 	}
 	accessToken, err := s.util.JWTUtil.JWTSign(jwt_util.JWTSignParam{
 		ExpInSeconds: s.AccessTokenDuration,
@@ -116,7 +115,7 @@ func (s *tokenServiceImpl) GenerateAccessToken(ctx context.Context, p GenerateAc
 		},
 	})
 	if err != nil {
-		s.logger.Error("Failed to sign JWT", zap.Error(err))
+		s.logger.WithCtx(ctx).Error("Failed to sign JWT", zap.Error(err))
 	}
 
 	return &GenerateAccessTokenResult{
@@ -131,13 +130,13 @@ func (s *tokenServiceImpl) GenerateRefreshToken(ctx context.Context) (*GenerateR
 
 	refreshToken, err := s.util.GeneratorUtil.GenerateRandomBase64(32)
 	if err != nil {
-		s.logger.Error("Failed to generate refresh token", zap.Error(err))
+		s.logger.WithCtx(ctx).Error("Failed to generate refresh token", zap.Error(err))
 		return nil, err
 	}
 
 	hashedRefreshToken, err := s.util.EncryptionUtil.SHA256Hasher.Hash(refreshToken)
 	if err != nil {
-		s.logger.Error("Failed to hash refresh token with SHA256", zap.Error(err))
+		s.logger.WithCtx(ctx).Error("Failed to hash refresh token with SHA256", zap.Error(err))
 		return nil, err
 	}
 
@@ -154,7 +153,7 @@ func (s *tokenServiceImpl) VerifyRefreshToken(ctx context.Context, p VerifyRefre
 
 	hashedRefreshToken, err := s.util.EncryptionUtil.SHA256Hasher.Hash(p.RefreshToken)
 	if err != nil {
-		s.logger.Error("Failed to hash refresh token with SHA256", zap.Error(err))
+		s.logger.WithCtx(ctx).Error("Failed to hash refresh token with SHA256", zap.Error(err))
 		return nil, err
 	}
 
@@ -162,23 +161,23 @@ func (s *tokenServiceImpl) VerifyRefreshToken(ctx context.Context, p VerifyRefre
 		RefreshToken: sql.NullString{String: hashedRefreshToken, Valid: true},
 	})
 	if err != nil {
-		s.logger.Error("Failed to get user session from the storage", zap.Error(err))
-		return nil, err
+		s.logger.WithCtx(ctx).Error("Failed to get user session from the storage", zap.Error(err))
+		return nil, ErrSessionInvalid
 	}
 
 	if session == nil {
-		s.logger.Info("Session not found")
-		return nil, fmt.Errorf("Session not found")
+		s.logger.WithCtx(ctx).Info("Session not found")
+		return nil, ErrSessionInvalid
 	}
 
 	if session.IsRevoked {
-		s.logger.Info("Session is revoked")
-		return nil, fmt.Errorf("Session is revoked")
+		s.logger.WithCtx(ctx).Info("Session is revoked")
+		return nil, ErrSessionRevoked
 	}
 
 	if time.Now().After(session.ExpiredAt) {
-		s.logger.Info("Session is expired")
-		return nil, fmt.Errorf("Session is expired")
+		s.logger.WithCtx(ctx).Info("Session is expired")
+		return nil, ErrSessionExpired
 	}
 
 	return &VerifyRefreshTokenResult{

@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/config"
-	http_constant "github.com/harmonify/movie-reservation-system/user-service/lib/http/constant"
+	error_constant "github.com/harmonify/movie-reservation-system/user-service/lib/error/constant"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/http/response"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
@@ -82,7 +82,7 @@ func (m *rbacHttpMiddlewareImpl) checkPermission(c *gin.Context) (bool, error) {
 	var userInfo *jwt_util.JWTBodyPayload
 	_userInfo := c.Request.Context().Value(UserInfoKey)
 	if _userInfo == nil {
-		return false, http_constant.ErrUnauthorized
+		return false, error_constant.ErrUnauthorized
 	} else {
 		userInfo = _userInfo.(*jwt_util.JWTBodyPayload)
 	}

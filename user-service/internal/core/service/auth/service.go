@@ -3,7 +3,6 @@ package auth_service
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	otp_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/otp"
@@ -149,7 +148,7 @@ func (s *authServiceImpl) Register(ctx context.Context, p RegisterParam) error {
 		s.logger.WithCtx(ctx).Error("Failed to save records", zap.Error(err))
 		return err
 	}
-	
+
 	// Send email verification link
 	err = s.otpService.SendEmailVerificationLink(ctx, otp_service.SendEmailVerificationLinkParam{
 		Email: p.Email,
@@ -205,7 +204,7 @@ func (s *authServiceImpl) Login(ctx context.Context, p LoginParam) (*LoginResult
 		return nil, err
 	} else if !match {
 		s.logger.WithCtx(ctx).Info("Password didn't match")
-		return nil, fmt.Errorf("Password didn't match")
+		return nil, ErrIncorrectPassword
 	}
 
 	// Generate and encrypt user session

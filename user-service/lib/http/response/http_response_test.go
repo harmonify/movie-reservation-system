@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	constant "github.com/harmonify/movie-reservation-system/user-service/lib/http/constant"
+	"github.com/harmonify/movie-reservation-system/user-service/lib/error/constant"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/http/response"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/mocks"
@@ -55,7 +55,7 @@ func (s *ResponseTestSuite) SetupSuite() {
 	s.logger = mocks.NewLogger(s.T())
 	s.tracer = mocks.NewTracer(s.T())
 	s.structUtil = mocks.NewStructUtil(s.T())
-	s.response = response.NewHttpResponse(s.logger, s.tracer, s.structUtil, &constant.DefaultCustomHttpErrorMap)
+	s.response = response.NewHttpResponse(s.logger, s.tracer, s.structUtil, &error_constant.DefaultCustomErrorMap)
 }
 
 func (s *ResponseTestSuite) TestBuild() {
@@ -180,7 +180,7 @@ func (s *ResponseTestSuite) TestSend(t *testing.T) {
 		c.Request = req
 
 		// Act
-		err := s.response.BuildError(constant.InternalServerError, errors.New("test error"))
+		err := s.response.BuildError(error_constant.InternalServerError, errors.New("test error"))
 		s.response.Send(c, nil, err)
 
 		// Assert

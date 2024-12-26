@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	auth_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/auth"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/middleware"
+	error_constant "github.com/harmonify/movie-reservation-system/user-service/lib/error/constant"
 	constant "github.com/harmonify/movie-reservation-system/user-service/lib/http/constant"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/http/response"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/http/validator"
@@ -191,7 +192,7 @@ func (h *authRestHandlerImpl) PostLogout(c *gin.Context) {
 	cookieName := constant.HttpCookiePrefix + "token"
 	refreshToken, err := c.Cookie(cookieName)
 	if err != nil {
-		err = h.response.BuildError(constant.InvalidJwt, err)
+		err = h.response.BuildError(error_constant.InvalidJwt, err)
 		h.response.Send(c, nil, err)
 		return
 	}

@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/gobeam/stringy"
+	"github.com/harmonify/movie-reservation-system/user-service/lib/error/constant"
 	http_constant "github.com/harmonify/movie-reservation-system/user-service/lib/http/constant"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/http/response"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/util/validation"
@@ -32,7 +33,7 @@ func NewHttpValidator(response response.HttpResponse, validationUtil validation.
 func (v *HttpValidatorImpl) Validate(c *gin.Context, schema interface{}) error {
 	if err := c.ShouldBind(schema); err != nil {
 		errMsg := constructValidationField(err)
-		return v.response.BuildValidationError(http_constant.InvalidRequestBody, err, errMsg)
+		return v.response.BuildValidationError(error_constant.InvalidRequestBody, err, errMsg)
 	}
 
 	validate := validator.New()
@@ -43,7 +44,7 @@ func (v *HttpValidatorImpl) Validate(c *gin.Context, schema interface{}) error {
 
 	if err := validate.Struct(schema); err != nil {
 		errMsg := constructValidationField(err)
-		return v.response.BuildValidationError(http_constant.InvalidRequestBody, err, errMsg)
+		return v.response.BuildValidationError(error_constant.InvalidRequestBody, err, errMsg)
 	}
 
 	return nil
@@ -53,7 +54,7 @@ func (v *HttpValidatorImpl) ValidateQueryParams(c *gin.Context, schema interface
 	err := c.ShouldBindQuery(schema)
 	if err != nil {
 		errMsg := constructValidationField(err)
-		return v.response.BuildValidationError(http_constant.InvalidRequestBody, err, errMsg)
+		return v.response.BuildValidationError(error_constant.InvalidRequestBody, err, errMsg)
 	}
 
 	validate := validator.New()
@@ -64,7 +65,7 @@ func (v *HttpValidatorImpl) ValidateQueryParams(c *gin.Context, schema interface
 
 	if err := validate.Struct(schema); err != nil {
 		errMsg := constructValidationField(err)
-		return v.response.BuildValidationError(http_constant.InvalidRequestBody, err, errMsg)
+		return v.response.BuildValidationError(error_constant.InvalidRequestBody, err, errMsg)
 	}
 
 	return nil

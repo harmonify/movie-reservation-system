@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	constant "github.com/harmonify/movie-reservation-system/user-service/lib/http/constant"
+	error_constant "github.com/harmonify/movie-reservation-system/user-service/lib/error/constant"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/http/response"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/util"
@@ -50,14 +50,14 @@ func (h *jwtHttpMiddlewareImpl) AuthenticateUser(c *gin.Context) {
 	splitAccessToken := strings.Split(accessToken, " ")
 	if len(splitAccessToken) == 2 {
 		if splitAccessToken[1] == "" {
-			err := h.response.BuildError(constant.Unauthorized, nil)
+			err := h.response.BuildError(error_constant.Unauthorized, nil)
 			h.response.Send(c, nil, err)
 			c.Abort()
 			return
 		}
 		accessToken = splitAccessToken[1]
 	} else {
-		err := h.response.BuildError(constant.Unauthorized, nil)
+		err := h.response.BuildError(error_constant.Unauthorized, nil)
 		h.response.Send(c, nil, err)
 		c.Abort()
 		return
@@ -65,10 +65,10 @@ func (h *jwtHttpMiddlewareImpl) AuthenticateUser(c *gin.Context) {
 
 	payload, err := h.util.JWTUtil.JWTVerify(accessToken)
 	if err != nil {
-		if errors.Is(err, constant.ErrUnauthorized) {
-			err = h.response.BuildError(constant.Unauthorized, err)
+		if errors.Is(err, error_constant.ErrUnauthorized) {
+			err = h.response.BuildError(error_constant.Unauthorized, err)
 		} else {
-			err = h.response.BuildError(constant.InternalServerError, err)
+			err = h.response.BuildError(error_constant.InternalServerError, err)
 		}
 
 		h.response.Send(c, nil, err)

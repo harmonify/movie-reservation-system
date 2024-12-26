@@ -9,15 +9,17 @@ import (
 
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/service"
 	auth_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/auth"
+	otp_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/otp"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven"
 	http_driver "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/cache"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/config"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/database"
+	error_constant "github.com/harmonify/movie-reservation-system/user-service/lib/error/constant"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/http"
-	http_constant "github.com/harmonify/movie-reservation-system/user-service/lib/http/constant"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/mail"
+	"github.com/harmonify/movie-reservation-system/user-service/lib/messaging"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/metrics"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/util"
@@ -68,13 +70,15 @@ func NewApp(p ...fx.Option) *fx.App {
 		database.DatabaseModule,
 		cache.RedisModule,
 		mail.MailerModule,
+		messaging.MessagingModule,
 		driven.DrivenModule,
 
 		// API (DRIVER)
 		fx.Provide(
-			func() *http_constant.CustomHttpErrorMap {
-				maps.Copy(http_constant.DefaultCustomHttpErrorMap, auth_service.AuthServiceErrorMap)
-				return &http_constant.DefaultCustomHttpErrorMap
+			func() *error_constant.CustomErrorMap {
+				maps.Copy(error_constant.DefaultCustomErrorMap, auth_service.AuthServiceErrorMap)
+				maps.Copy(error_constant.DefaultCustomErrorMap, otp_service.OtpServiceErrorMap)
+				return &error_constant.DefaultCustomErrorMap
 			},
 		),
 		http.HttpModule,

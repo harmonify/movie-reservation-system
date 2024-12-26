@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	constant "github.com/harmonify/movie-reservation-system/user-service/lib/http/constant"
+	"github.com/harmonify/movie-reservation-system/user-service/lib/error/constant"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
 	struct_util "github.com/harmonify/movie-reservation-system/user-service/lib/util/struct"
@@ -28,18 +28,18 @@ type HttpResponse interface {
 }
 
 type httpResponseImpl struct {
-	logger             logger.Logger
-	tracer             tracer.Tracer
-	structUtil         struct_util.StructUtil
-	customHttpErrorMap *constant.CustomHttpErrorMap
+	logger         logger.Logger
+	tracer         tracer.Tracer
+	structUtil     struct_util.StructUtil
+	customErrorMap *error_constant.CustomErrorMap
 }
 
-func NewHttpResponse(logger logger.Logger, tracer tracer.Tracer, structUtil struct_util.StructUtil, customHttpErrorMap *constant.CustomHttpErrorMap) HttpResponse {
+func NewHttpResponse(logger logger.Logger, tracer tracer.Tracer, structUtil struct_util.StructUtil, customHttpErrorMap *error_constant.CustomErrorMap) HttpResponse {
 	return &httpResponseImpl{
-		logger:             logger,
-		tracer:             tracer,
-		structUtil:         structUtil,
-		customHttpErrorMap: customHttpErrorMap,
+		logger:         logger,
+		tracer:         tracer,
+		structUtil:     structUtil,
+		customErrorMap: customHttpErrorMap,
 	}
 }
 
@@ -97,8 +97,8 @@ func (r *httpResponseImpl) Build(ctx context.Context, responseCode int, data int
 			responseError = r.buildErrorV2(err.Error(), err)
 		}
 
-		if _, ok := (*r.customHttpErrorMap)[responseError.Code]; !ok {
-			(*r.customHttpErrorMap)[responseError.Code] = constant.DefaultCustomHttpErrorMap[constant.InternalServerError]
+		if _, ok := (*r.customErrorMap)[responseError.Code]; !ok {
+			(*r.customErrorMap)[responseError.Code] = error_constant.DefaultCustomErrorMap[error_constant.InternalServerError]
 		}
 
 		if responseError.Errors == nil {
@@ -107,11 +107,11 @@ func (r *httpResponseImpl) Build(ctx context.Context, responseCode int, data int
 
 		response.Error = BaseErrorResponseSchema{
 			Code:    responseError.Code,
-			Message: (*r.customHttpErrorMap)[responseError.Code].Message,
+			Message: (*r.customErrorMap)[responseError.Code].Message,
 			Errors:  responseError.Errors,
 		}
 
-		return (*r.customHttpErrorMap)[responseError.Code].HttpCode, response, responseError
+		return (*r.customErrorMap)[responseError.Code].HttpCode, response, responseError
 	}
 
 	return responseCode, response, nil
@@ -136,7 +136,7 @@ func (r *httpResponseImpl) logResponse(ctx context.Context, httpCode int, respon
 	var respError *HttpErrorHandlerImpl
 	if !errors.As(responseError, &respError) {
 		respError = &HttpErrorHandlerImpl{
-			Code:     constant.InternalServerError,
+			Code:     error_constant.InternalServerError,
 			Original: responseError,
 		}
 	}

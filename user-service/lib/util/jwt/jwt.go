@@ -11,7 +11,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/config"
-	constant "github.com/harmonify/movie-reservation-system/user-service/lib/http/constant"
+	error_constant "github.com/harmonify/movie-reservation-system/user-service/lib/error/constant"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/util/encryption"
 )
 
@@ -101,7 +101,7 @@ func (i *jwtUtilImpl) JWTVerify(token string) (*JWTBodyPayload, error) {
 	// Decode PEM block
 	block, _ := pem.Decode([]byte(claims.PublicKey))
 	if block == nil {
-		return nil, fmt.Errorf("Failed to decode PEM: no PEM data is found.")
+		return nil, fmt.Errorf("failed to decode PEM: no PEM data is found.")
 	}
 
 	// Parse RSA public key
@@ -112,7 +112,7 @@ func (i *jwtUtilImpl) JWTVerify(token string) (*JWTBodyPayload, error) {
 
 	parsedToken, err := jwt.Parse(token, func(jwtToken *jwt.Token) (interface{}, error) {
 		if _, ok := jwtToken.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, constant.ErrInvalidJwtSigningMethod
+			return nil, error_constant.ErrInvalidJwtSigningMethod
 		}
 		return rsaPublicKey, nil
 	})
@@ -121,7 +121,7 @@ func (i *jwtUtilImpl) JWTVerify(token string) (*JWTBodyPayload, error) {
 	}
 
 	if !parsedToken.Valid {
-		return nil, constant.ErrInvalidJwt
+		return nil, error_constant.ErrInvalidJwt
 	}
 
 	return &claims.Data, nil
@@ -130,7 +130,7 @@ func (i *jwtUtilImpl) JWTVerify(token string) (*JWTBodyPayload, error) {
 func (i *jwtUtilImpl) decodeClaims(token string) (claims *JWTCustomClaims, err error) {
 	splittedString := strings.Split(token, ".")
 	if len(splittedString) < 2 {
-		return claims, constant.ErrInvalidJwtFormat
+		return claims, error_constant.ErrInvalidJwtFormat
 	}
 
 	// header := splittedString[0]

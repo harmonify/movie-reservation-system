@@ -11,6 +11,7 @@ import (
 	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/model"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/database"
+	error_constant "github.com/harmonify/movie-reservation-system/user-service/lib/error/constant"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/util"
@@ -84,8 +85,17 @@ func (r *userRepositoryImpl) SaveUser(ctx context.Context, createModel entity.Sa
 
 	if err != nil {
 		terr := r.pgErrTl.Translate(err)
-		switch (terr).(type) {
-			
+		switch e := (terr).(type) {
+		case *database.DuplicatedKeyError:
+			if e.ColumnName == "username" {
+				return nil, auth_service.ErrDuplicateUsername
+			} else if e.ColumnName == "email" {
+				return nil, auth_service.ErrDuplicateEmail
+			} else if e.ColumnName == "phone_number" {
+				return nil, auth_service.ErrDuplicatePhoneNumber
+			}
+		default:
+			return nil, error_constant.ErrInternalServerError
 		}
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
