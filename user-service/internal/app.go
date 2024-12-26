@@ -11,6 +11,7 @@ import (
 	auth_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/auth"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven"
 	http_driver "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http"
+	"github.com/harmonify/movie-reservation-system/user-service/lib/cache"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/config"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/database"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/http"
@@ -24,7 +25,9 @@ import (
 )
 
 func StartApp() error {
-	app := NewApp(bootstrap)
+	app := NewApp(
+		fx.Invoke(Bootstrap),
+	)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -40,8 +43,7 @@ func StartApp() error {
 }
 
 // This is a function to initialize all services and invoke their functions.
-// It accepts a generic type of invoker, so you can specify some modules to be mocked in the test file
-func NewApp(invoker interface{}, overrideConstructors ...any) *fx.App {
+func NewApp(p ...fx.Option) *fx.App {
 	options := []fx.Option{
 		fx.Provide(
 			func() *config.ConfigFile {
@@ -64,6 +66,7 @@ func NewApp(invoker interface{}, overrideConstructors ...any) *fx.App {
 
 		// INFRA (DRIVEN)
 		database.DatabaseModule,
+		cache.RedisModule,
 		mail.MailerModule,
 		driven.DrivenModule,
 
@@ -76,21 +79,19 @@ func NewApp(invoker interface{}, overrideConstructors ...any) *fx.App {
 		),
 		http.HttpModule,
 		http_driver.HttpModule,
-
-		fx.Invoke(invoker),
 	}
 
 	// Override dependencies
-	if len(overrideConstructors) > 0 {
-		for _, c := range overrideConstructors {
-			options = append(options, fx.Decorate(c))
+	if len(p) > 0 {
+		for _, c := range p {
+			options = append(options, c)
 		}
 	}
 
 	return fx.New(options...)
 }
 
-func bootstrap(lc fx.Lifecycle, l logger.Logger, h *http_driver.HttpServer, t tracer.Tracer, handlers http_driver.RestHandlers) {
+func Bootstrap(lc fx.Lifecycle, l logger.Logger, h *http_driver.HttpServer, t tracer.Tracer, handlers http_driver.RestHandlers) {
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			err := h.Start(ctx, handlers...)

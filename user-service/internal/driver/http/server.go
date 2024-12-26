@@ -89,7 +89,7 @@ func NewHttpServer(p HttpServerParam) (HttpServerResult, error) {
 }
 
 func (h *HttpServer) Start(ctx context.Context, handlers ...http_interface.RestHandler) error {
-	h.configure(handlers...)
+	h.Configure(handlers...)
 	h.logger.WithCtx(ctx).Info(">> HTTP server run on port: " + h.cfg.AppPort)
 	var err error
 	if err = h.Server.ListenAndServe(); err == nil {
@@ -110,7 +110,7 @@ func (h *HttpServer) Shutdown(ctx context.Context) error {
 	return err
 }
 
-func (h *HttpServer) configure(handlers ...http_interface.RestHandler) {
+func (h *HttpServer) Configure(handlers ...http_interface.RestHandler) {
 	h.configureMiddlewares()
 
 	if h.cfg.Env == constant.EnvironmentProduction {
