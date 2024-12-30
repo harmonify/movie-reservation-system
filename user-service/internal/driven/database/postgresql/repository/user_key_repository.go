@@ -5,7 +5,6 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	auth_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/auth"
 	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
@@ -101,7 +100,7 @@ func (r *userKeyRepositoryImpl) FindUserKey(ctx context.Context, findModel entit
 		return nil, err
 	}
 
-	var userKeyModel model.UserKey
+	userKeyModel := model.UserKey{}
 	err = r.database.DB.WithContext(ctx).Where(findMap).First(&userKeyModel).Error
 	if err != nil {
 		return nil, err
@@ -110,9 +109,15 @@ func (r *userKeyRepositoryImpl) FindUserKey(ctx context.Context, findModel entit
 	return userKeyModel.ToEntity(), err
 }
 
-func (r *userKeyRepositoryImpl) UpdateUserKey(ctx context.Context, userUUID string, updateModel entity.UpdateUserKey) (*entity.UserKey, error) {
+func (r *userKeyRepositoryImpl) UpdateUserKey(ctx context.Context, findModel entity.FindUserKey, updateModel entity.UpdateUserKey) (*entity.UserKey, error) {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
+
+	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(findModel)
+	if err != nil {
+		r.logger.WithCtx(ctx).Error(err.Error())
+		return nil, err
+	}
 
 	updateMap, err := r.util.StructUtil.ConvertSqlStructToMap(updateModel)
 	if err != nil {
@@ -120,16 +125,11 @@ func (r *userKeyRepositoryImpl) UpdateUserKey(ctx context.Context, userUUID stri
 		return nil, err
 	}
 
-	parsedUUID, err := uuid.Parse(userUUID)
-	if err != nil {
-		r.logger.WithCtx(ctx).Error(err.Error())
-		return nil, err
-	}
-
-	var updatedUserKeyModel model.UserKey = model.UserKey{UserUUID: parsedUUID}
+	userKeyModel := model.UserKey{}
 	err = r.database.DB.
 		WithContext(ctx).
-		Model(&updatedUserKeyModel).
+		Model(&userKeyModel).
+		Where(findMap).
 		Clauses(clause.Returning{}).
 		Updates(updateMap).
 		Error
@@ -137,7 +137,7 @@ func (r *userKeyRepositoryImpl) UpdateUserKey(ctx context.Context, userUUID stri
 		r.logger.WithCtx(ctx).Error(err.Error())
 	}
 
-	return updatedUserKeyModel.ToEntity(), err
+	return userKeyModel.ToEntity(), err
 }
 
 func (r *userKeyRepositoryImpl) SoftDeleteUserKey(ctx context.Context, userUUID string) error {

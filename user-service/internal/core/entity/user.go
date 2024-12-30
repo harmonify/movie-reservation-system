@@ -8,18 +8,18 @@ import (
 )
 
 type User struct {
-	UUID                  uuid.UUID
-	Username              string
-	Password              string `json:"-"` // hashed
-	Email                 string
-	PhoneNumber           string
-	FirstName             string
-	LastName              string
-	IsEmailVerified       bool
-	IsPhoneNumberVerified bool
-	CreatedAt             time.Time
-	UpdatedAt             time.Time
-	DeletedAt             sql.NullTime
+	UUID                  uuid.UUID    `json:"uuid"`
+	Username              string       `json:"username"`
+	Password              string       `json:"-"` // hashed
+	Email                 string       `json:"email"`
+	PhoneNumber           string       `json:"phone_number"`
+	FirstName             string       `json:"first_name"`
+	LastName              string       `json:"last_name"`
+	IsEmailVerified       bool         `json:"is_email_verified"`
+	IsPhoneNumberVerified bool         `json:"is_phone_number_verified"`
+	CreatedAt             time.Time    `json:"created_at"`
+	UpdatedAt             time.Time    `json:"updated_at"`
+	DeletedAt             sql.NullTime `json:"deleted_at"`
 }
 
 func (e *User) FullName() string {
@@ -52,6 +52,7 @@ type SaveUser struct {
 type UpdateUser struct {
 	Email                 sql.NullString
 	PhoneNumber           sql.NullString
+	Username              sql.NullString
 	FirstName             sql.NullString
 	LastName              sql.NullString
 	IsEmailVerified       sql.NullBool

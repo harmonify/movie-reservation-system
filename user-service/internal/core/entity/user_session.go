@@ -7,16 +7,16 @@ import (
 
 type (
 	UserSession struct {
-		ID           uint64
-		UserUUID     string
-		RefreshToken string // hashed
-		IsRevoked    bool
-		ExpiredAt    time.Time
-		IpAddress    sql.NullString
-		UserAgent    sql.NullString
-		CreatedAt    time.Time
-		UpdatedAt    time.Time
-		DeletedAt    sql.NullTime
+		ID           uint64         `json:"id"`
+		UserUUID     string         `json:"user_uuid"`
+		RefreshToken string         `json:"refresh_token"` // hashed
+		IsRevoked    bool           `json:"is_revoked"`
+		ExpiredAt    time.Time      `json:"expired_at"`
+		IpAddress    sql.NullString `json:"ip_address"`
+		UserAgent    sql.NullString `json:"user_agent"`
+		CreatedAt    time.Time      `json:"created_at"`
+		UpdatedAt    time.Time      `json:"updated_at"`
+		DeletedAt    sql.NullTime   `json:"deleted_at"`
 	}
 
 	FindUserSession struct {

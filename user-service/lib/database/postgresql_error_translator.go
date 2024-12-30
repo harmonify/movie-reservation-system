@@ -21,6 +21,10 @@ func NewPostgresqlErrorTranslator() PostgresqlErrorTranslator {
 // Translate it will translate the error to custom errors.
 // Since currently gorm supporting both pgx and pg drivers, only checking for pgx PgError types is not enough for translating errors, so we have additional error json marshal fallback.
 func (t *postgresqlErrorTranslatorImpl) Translate(err error) error {
+	if err == nil {
+		return nil
+	}
+
 	// Translate gorm generic error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return NewRecordNotFoundError(err)

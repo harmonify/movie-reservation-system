@@ -16,8 +16,8 @@ type (
 		WithTx(tx *database.Transaction) UserStorage
 		FindUser(ctx context.Context, findModel entity.FindUser) (*entity.User, error)
 		SaveUser(ctx context.Context, createModel entity.SaveUser) (*entity.User, error)
-		UpdateUser(ctx context.Context, userUUID string, updateModel entity.UpdateUser) (*entity.User, error)
-		SoftDeleteUser(ctx context.Context, userUUID string) error
+		UpdateUser(ctx context.Context, findModel entity.FindUser, updateModel entity.UpdateUser) (*entity.User, error)
+		SoftDeleteUser(ctx context.Context, findModel entity.FindUser) error
 	}
 
 	UserSessionStorage interface {
@@ -32,7 +32,7 @@ type (
 		WithTx(tx *database.Transaction) UserKeyStorage
 		FindUserKey(ctx context.Context, findModel entity.FindUserKey) (*entity.UserKey, error)
 		SaveUserKey(ctx context.Context, createModel entity.SaveUserKey) (*entity.UserKey, error)
-		UpdateUserKey(ctx context.Context, userUUID string, updateModel entity.UpdateUserKey) (*entity.UserKey, error)
+		UpdateUserKey(ctx context.Context, findModel entity.FindUserKey, updateModel entity.UpdateUserKey) (*entity.UserKey, error)
 	}
 
 	OtpStorage interface {

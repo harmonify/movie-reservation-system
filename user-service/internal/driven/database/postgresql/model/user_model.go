@@ -75,3 +75,14 @@ func (m *User) FromSaveEntity(e entity.SaveUser) *User {
 		IsPhoneNumberVerified: false,
 	}
 }
+
+func (m *User) ToSaveEntity() *entity.SaveUser {
+	return &entity.SaveUser{
+		Username:    m.Username,
+		Password:    m.Password,
+		Email:       m.Email,
+		PhoneNumber: m.PhoneNumber,
+		FirstName:   m.FirstName,
+		LastName:    m.LastName,
+	}
+}

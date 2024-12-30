@@ -5,7 +5,6 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	auth_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/auth"
 	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
@@ -17,6 +16,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/user-service/lib/util"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.uber.org/fx"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -82,10 +82,9 @@ func (r *userRepositoryImpl) SaveUser(ctx context.Context, createModel entity.Sa
 		WithContext(ctx).
 		Create(userModel).
 		Error
-
+	err = r.pgErrTl.Translate(err)
 	if err != nil {
-		terr := r.pgErrTl.Translate(err)
-		switch e := (terr).(type) {
+		switch e := (err).(type) {
 		case *database.DuplicatedKeyError:
 			if e.ColumnName == "username" {
 				return nil, auth_service.ErrDuplicateUsername
@@ -124,8 +123,9 @@ func (r *userRepositoryImpl) FindUser(ctx context.Context, findModel entity.Find
 		return nil, err
 	}
 
-	var userModel model.User
+	userModel := model.User{}
 	err = r.database.DB.WithContext(ctx).Where(findMap).First(&userModel).Error
+	err = r.pgErrTl.Translate(err)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +133,7 @@ func (r *userRepositoryImpl) FindUser(ctx context.Context, findModel entity.Find
 	return userModel.ToEntity(), err
 }
 
-func (r *userRepositoryImpl) UpdateUser(ctx context.Context, userUUID string, updateModel entity.UpdateUser) (*entity.User, error) {
+func (r *userRepositoryImpl) UpdateUser(ctx context.Context, findModel entity.FindUser, updateModel entity.UpdateUser) (*entity.User, error) {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -143,29 +143,47 @@ func (r *userRepositoryImpl) UpdateUser(ctx context.Context, userUUID string, up
 		return nil, err
 	}
 
-	parsedUUID, err := uuid.Parse(userUUID)
+	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(findModel)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error())
 		return nil, err
 	}
 
-	var updatedUserModel model.User = model.User{UUID: parsedUUID}
-	err = r.database.DB.
+	userModel := model.User{}
+	result := r.database.DB.
 		WithContext(ctx).
-		Model(&updatedUserModel).
+		Model(&userModel).
+		Where(findMap).
 		Clauses(clause.Returning{}).
-		Updates(updateMap).
-		Error
+		Updates(updateMap)
+
+	err = result.Error
+	err = r.pgErrTl.Translate(err)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error())
+		return userModel.ToEntity(), err
 	}
 
-	return updatedUserModel.ToEntity(), err
+	rowsAffected := result.RowsAffected
+	if rowsAffected <= 0 {
+		err := database.NewRecordNotFoundError(gorm.ErrRecordNotFound)
+		r.logger.WithCtx(ctx).Error(err.Error())
+		return userModel.ToEntity(), err
+	}
+
+	return userModel.ToEntity(), nil
 }
 
-func (r *userRepositoryImpl) SoftDeleteUser(ctx context.Context, userUUID string) error {
+func (r *userRepositoryImpl) SoftDeleteUser(ctx context.Context, findModel entity.FindUser) error {
+	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(findModel)
+	if err != nil {
+		r.logger.WithCtx(ctx).Error(err.Error())
+		return err
+	}
+
 	return r.database.DB.
 		WithContext(ctx).
-		Delete(&model.User{}, userUUID).
+		Where(findMap).
+		Delete(&model.User{}).
 		Error
 }

@@ -175,6 +175,16 @@ func (s *authServiceImpl) VerifyEmail(ctx context.Context, p VerifyEmailParam) e
 		return err
 	}
 
+	s.userStorage.UpdateUser(
+		ctx,
+		entity.FindUser{
+			Email: sql.NullString{String: p.Email, Valid: true},
+		},
+		entity.UpdateUser{
+			IsEmailVerified: sql.NullBool{Bool: true, Valid: true},
+		},
+	)
+
 	return nil
 }
 
