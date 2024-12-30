@@ -1,128 +1,124 @@
 package user_rest
 
 import (
-	// "errors"
-
 	"github.com/gin-gonic/gin"
-	// constant "github.com/harmonify/movie-reservation-system/user-service/lib/http/constant"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/http/response"
 	http_validator "github.com/harmonify/movie-reservation-system/user-service/lib/http/validator"
+	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
 	jwt_util "github.com/harmonify/movie-reservation-system/user-service/lib/util/jwt"
+	"go.uber.org/fx"
 
 	user_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/user"
 	middleware "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/middleware"
 )
 
 type UserRestHandler interface {
-	// Register(g *gin.RouterGroup)
-	// GetUser(c *gin.Context)
-	// PatchUser(c *gin.Context)
+	Register(g *gin.RouterGroup)
+}
+
+type UserRestHandlerParam struct {
+	fx.In
+
+	Logger      logger.Logger
+	Tracer      tracer.Tracer
+	Middleware  middleware.HttpMiddleware
+	Validator   http_validator.HttpValidator
+	Response    response.HttpResponse
+	UserService user_service.UserService
+}
+
+type UserRestHandlerResult struct {
+	fx.Out
+
+	UserRestHandler UserRestHandler
 }
 
 type userRestHandlerImpl struct {
-	userService user_service.UserService
+	logger      logger.Logger
+	tracer      tracer.Tracer
+	middleware  middleware.HttpMiddleware
 	validator   http_validator.HttpValidator
 	response    response.HttpResponse
-	tracer      tracer.Tracer
-	jwtUtil     jwt_util.JwtUtil
-	middleware  middleware.HttpMiddleware
+	userService user_service.UserService
 }
 
-func NewUserRestHandler(
-	userService user_service.UserService,
-	tracer tracer.Tracer,
-	response response.HttpResponse,
-	validator http_validator.HttpValidator,
-	jwtUtil jwt_util.JwtUtil,
-	middleware middleware.HttpMiddleware,
-) UserRestHandler {
-	return &userRestHandlerImpl{
-		userService: userService,
-		tracer:      tracer,
-		response:    response,
-		validator:   validator,
-		jwtUtil:     jwtUtil,
-		middleware:  middleware,
+func NewUserRestHandler(p UserRestHandlerParam) UserRestHandlerResult {
+	return UserRestHandlerResult{
+		UserRestHandler: &userRestHandlerImpl{
+			logger:      p.Logger,
+			tracer:      p.Tracer,
+			middleware:  p.Middleware,
+			validator:   p.Validator,
+			response:    p.Response,
+			userService: p.UserService,
+		},
 	}
 }
 
 func (h *userRestHandlerImpl) Register(g *gin.RouterGroup) {
-	// g.GET("/profile", h.middleware.JwtHttpMiddleware.AuthenticateUser, h.GetUser)
-	// g.PATCH("/profile", h.middleware.JwtHttpMiddleware.AuthenticateUser, h.PatchUser)
+	g.GET("/profile", h.middleware.JwtHttpMiddleware.AuthenticateUser, h.GetUser)
+	g.PATCH("/profile", h.middleware.JwtHttpMiddleware.AuthenticateUser, h.PatchUser)
+	// TODO
+	// g.GET("/profile/email/verify", h.middleware.JwtHttpMiddleware.AuthenticateUser, h.GetVerifyUpdateEmail)
+	// g.POST("/profile/email/verify", h.PostVerifyUpdateEmail)
+	// g.GET("/profile/phone/verify", h.middleware.JwtHttpMiddleware.AuthenticateUser, h.GetVerifyUpdatePhoneNumber)
+	// g.POST("/profile/phone/verify", h.PostVerifyUpdatePhoneNumber)
 }
 
-// func (h *userRestHandlerImpl) GetUser(c *gin.Context) {
-// 	var (
-// 		ctx    = c.Request.Context()
-// 		params GetQueryInfoReq
-// 		err    error
-// 	)
+func (h *userRestHandlerImpl) GetUser(c *gin.Context) {
+	var (
+		ctx = c.Request.Context()
+		err error
+	)
 
-// 	ctx, span := h.tracer.StartSpanWithCaller(ctx)
-// 	defer span.End()
+	ctx, span := h.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
 
-// 	var fUserInfo *jwt_util.JWTBodyPayload
-// 	userInfo := c.Request.Context().Value(middleware.UserInfoKey)
-// 	if userInfo != nil {
-// 		fUserInfo = userInfo.(*jwt_util.JWTBodyPayload)
-// 	}
+	var fUserInfo *jwt_util.JWTBodyPayload
+	userInfo := c.Request.Context().Value(middleware.UserInfoKey)
+	if userInfo != nil {
+		fUserInfo = userInfo.(*jwt_util.JWTBodyPayload)
+	}
 
-// 	if err = h.validator.ValidateQueryParams(c, &params); err != nil {
-// 		h.response.Send(c, nil, err)
-// 		return
-// 	}
+	data, err := h.userService.GetUser(ctx, user_service.GetUserParam{
+		UUID: fUserInfo.UUID,
+	})
 
-// 	data, err := h.userService.GetUser(ctx, fUserInfo, &params)
-// 	if err != nil {
-// 		if errors.Is(err, constant.ErrRateLimitExceeded) {
-// 			err = h.response.BuildError(constant.RateLimitExceeded, err)
-// 		} else if errors.Is(err, constant.ErrInvalidJwt) {
-// 			err = h.response.BuildError(constant.ErrInvalidJwt, err)
-// 		} else if errors.Is(err, constant.ErrNotFound) {
-// 			err = h.response.BuildError(constant.ErrUnregisteredAccount, err)
-// 		} else {
-// 			err = h.response.BuildError(constant.InternalServerError, err)
-// 		}
+	if err != nil {
+		h.response.Send(c, nil, err)
+	} else {
+		h.response.Send(c, data, nil)
+	}
+}
 
-// 		h.response.Send(c, nil, err)
-// 		return
-// 	}
+func (h *userRestHandlerImpl) PatchUser(c *gin.Context) {
+	var (
+		ctx  = c.Request.Context()
+		body PatchUserReq
+		err  error
+	)
 
-// 	h.response.Send(c, data, err)
-// }
+	ctx, span := h.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
 
-// func (h *userRestHandlerImpl) PatchUser(c *gin.Context) {
-// 	var (
-// 		ctx  = c.Request.Context()
-// 		body PatchUserReq
-// 		err  error
-// 	)
+	if err = h.validator.Validate(c, &body); err != nil {
+		h.response.Send(c, nil, err)
+		return
+	}
 
-// 	ctx, span := h.tracer.StartSpanWithCaller(ctx)
-// 	defer span.End()
+	userInfo := c.Request.Context().Value(middleware.UserInfoKey).(*jwt_util.JWTBodyPayload)
 
-// 	if err = h.validator.Validate(c, &body); err != nil {
-// 		h.response.Send(c, nil, err)
-// 		return
-// 	}
+	data, err := h.userService.UpdateUser(ctx, user_service.UpdateUserParam{
+		UUID:      userInfo.UUID,
+		Username:  body.Username,
+		FirstName: body.FirstName,
+		LastName:  body.LastName,
+	})
 
-// 	userInfo := c.Request.Context().Value(middleware.UserInfoKey).(*jwt_util.JWTBodyPayload)
-
-// 	data, err := h.userService.EditUser(ctx, &body, userInfo)
-// 	if err != nil {
-// 		if errors.Is(err, constant.InvalidCredentialError) {
-// 			err = h.response.BuildError(constant.InvalidCredential, err)
-// 		} else if errors.Is(err, constant.ChangeLimitEmailError) {
-// 			err = h.response.BuildError(constant.ChangeLimitEmail, err)
-// 		} else if errors.Is(err, constant.ChangeLimitPhoneNumberError) {
-// 			err = h.response.BuildError(constant.ChangeLimitPhoneNumber, err)
-// 		} else {
-// 			err = h.response.BuildError(constant.InternalServerError, err)
-// 		}
-// 		h.response.Send(ctx, nil, err)
-// 		return
-// 	}
-
-// 	h.response.Send(ctx, data, err)
-// }
+	if err != nil {
+		h.response.Send(c, nil, err)
+	} else {
+		h.response.Send(c, data, nil)
+	}
+}
