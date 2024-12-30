@@ -39,3 +39,14 @@ func (m *UserSession) ToEntity() *entity.UserSession {
 		DeletedAt:    sql.NullTime(m.DeletedAt),
 	}
 }
+
+func (m *UserSession) FromSaveEntity(e entity.SaveUserSession) *UserSession {
+	return &UserSession{
+		UserUUID:     e.UserUUID,
+		RefreshToken: e.RefreshToken,
+		IsRevoked:    false,
+		ExpiredAt:    e.ExpiredAt,
+		IpAddress:    e.IpAddress,
+		UserAgent:    e.UserAgent,
+	}
+}

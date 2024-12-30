@@ -49,7 +49,7 @@ func (s *userKeySeederImpl) CreateUserKey(user model.User) (*model.UserKey, erro
 	var notFoundError *database.RecordNotFoundError
 
 	newUserKey := model.UserKey{}
-	err := s.database.DB.Unscoped().Where(model.UserKey{UserUUID: user.UUID}).Assign(user).FirstOrCreate(&newUserKey).Error
+	err := s.database.DB.Unscoped().Where(model.UserKey{UserUUID: user.UUID}).Assign(TestUserKey).FirstOrCreate(&newUserKey).Error
 	err = s.translator.Translate(err)
 	if err != nil && !errors.As(err, &notFoundError) {
 		return nil, err
@@ -59,7 +59,7 @@ func (s *userKeySeederImpl) CreateUserKey(user model.User) (*model.UserKey, erro
 }
 
 func (s *userKeySeederImpl) DeleteUserKey(user model.User) error {
-	err := s.database.DB.Unscoped().Where(&model.UserKey{UserUUID: user.UUID}).Delete(&model.UserKey{}).Error
+	err := s.database.DB.Unscoped().Where(model.UserKey{UserUUID: user.UUID}).Delete(&model.UserKey{}).Error
 	err = s.translator.Translate(err)
 	if err != nil {
 		var terr *database.RecordNotFoundError

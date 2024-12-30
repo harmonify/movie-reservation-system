@@ -86,6 +86,11 @@ func (s *AuthRestTestSuite) SetupSuite() {
 }
 
 func (s *AuthRestTestSuite) TestAuthRest_PostRegister() {
+	var (
+		PATH   = "/v1/register"
+		METHOD = "POST"
+	)
+
 	testCases := []test_interface.HttpTestCase[auth_rest.PostRegisterReq, any]{
 		{
 			Description: "It should return a 200 OK response",
@@ -127,7 +132,7 @@ func (s *AuthRestTestSuite) TestAuthRest_PostRegister() {
 			jsonPayload, err := json.Marshal(testCase.Config.RequestBody)
 			s.Require().NoError(err)
 
-			req, err := http.NewRequest("POST", "/register", bytes.NewBuffer(jsonPayload))
+			req, err := http.NewRequest(METHOD, PATH, bytes.NewBuffer(jsonPayload))
 			s.Require().NoError(err)
 
 			req.Header.Set("Content-Type", "application/json")
@@ -163,6 +168,7 @@ func (s *AuthRestTestSuite) TestAuthRest_PostRegister() {
 				fmt.Sprintf("response body should be a valid JSON, but got %s", bodyString),
 			)
 			body := gjson.Parse(bodyString)
+			s.T().Log(body)
 			status := body.Get("success").Bool()
 			responseError := body.Get("error")
 			resultBody := body.Get("result")
@@ -196,6 +202,11 @@ func (s *AuthRestTestSuite) TestAuthRest_PostRegister() {
 }
 
 func (s *AuthRestTestSuite) TestAuthRest_PostLogin() {
+	var (
+		PATH   = "/v1/login"
+		METHOD = "POST"
+	)
+
 	testCases := []test_interface.HttpTestCase[auth_rest.PostLoginReq, any]{
 		{
 			Description: "It should return a 200 OK response",
@@ -227,7 +238,7 @@ func (s *AuthRestTestSuite) TestAuthRest_PostLogin() {
 			jsonPayload, err := json.Marshal(testCase.Config.RequestBody)
 			s.Require().NoError(err)
 
-			req, err := http.NewRequest("POST", "/login", bytes.NewBuffer(jsonPayload))
+			req, err := http.NewRequest(METHOD, PATH, bytes.NewBuffer(jsonPayload))
 			s.Require().NoError(err)
 
 			req.Header.Set("Content-Type", "application/json")

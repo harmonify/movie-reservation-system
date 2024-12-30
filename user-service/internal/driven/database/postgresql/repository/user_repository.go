@@ -2,8 +2,6 @@ package repository
 
 import (
 	"context"
-	"errors"
-	"strings"
 
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	auth_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/auth"
@@ -14,27 +12,9 @@ import (
 	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/util"
-	"github.com/jackc/pgx/v5/pgconn"
-	"go.uber.org/fx"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
-
-type UserRepositoryParam struct {
-	fx.In
-
-	Database                  *database.Database
-	PostgresqlErrorTranslator database.PostgresqlErrorTranslator
-	Tracer                    tracer.Tracer
-	Logger                    logger.Logger
-	Util                      *util.Util
-}
-
-type UserRepositoryResult struct {
-	fx.Out
-
-	UserStorage shared_service.UserStorage
-}
 
 type userRepositoryImpl struct {
 	database *database.Database
@@ -44,15 +24,19 @@ type userRepositoryImpl struct {
 	util     *util.Util
 }
 
-func NewUserRepository(p UserRepositoryParam) UserRepositoryResult {
-	return UserRepositoryResult{
-		UserStorage: &userRepositoryImpl{
-			database: p.Database,
-			pgErrTl:  p.PostgresqlErrorTranslator,
-			tracer:   p.Tracer,
-			logger:   p.Logger,
-			util:     p.Util,
-		},
+func NewUserRepository(
+	database *database.Database,
+	pgErrTl database.PostgresqlErrorTranslator,
+	tracer tracer.Tracer,
+	logger logger.Logger,
+	util *util.Util,
+) shared_service.UserStorage {
+	return &userRepositoryImpl{
+		database: database,
+		pgErrTl:  pgErrTl,
+		tracer:   tracer,
+		logger:   logger,
+		util:     util,
 	}
 }
 
@@ -60,16 +44,13 @@ func (r *userRepositoryImpl) WithTx(tx *database.Transaction) shared_service.Use
 	if tx == nil {
 		return r
 	}
-
-	return &userRepositoryImpl{
-		database: &database.Database{
-			DB:     tx.DB,
-			Logger: r.logger,
-		},
-		tracer: r.tracer,
-		logger: r.logger,
-		util:   r.util,
-	}
+	return NewUserRepository(
+		r.database.WithTx(tx),
+		r.pgErrTl,
+		r.tracer,
+		r.logger,
+		r.util,
+	)
 }
 
 func (r *userRepositoryImpl) SaveUser(ctx context.Context, createModel entity.SaveUser) (*entity.User, error) {
@@ -78,12 +59,12 @@ func (r *userRepositoryImpl) SaveUser(ctx context.Context, createModel entity.Sa
 
 	userModel := (&model.User{}).FromSaveEntity(createModel)
 
-	err := r.database.DB.
+	result := r.database.DB.
 		WithContext(ctx).
-		Create(userModel).
-		Error
-	err = r.pgErrTl.Translate(err)
+		Create(userModel)
+	err := r.pgErrTl.Translate(result.Error)
 	if err != nil {
+		r.logger.WithCtx(ctx).Error(err.Error())
 		switch e := (err).(type) {
 		case *database.DuplicatedKeyError:
 			if e.ColumnName == "username" {
@@ -95,18 +76,6 @@ func (r *userRepositoryImpl) SaveUser(ctx context.Context, createModel entity.Sa
 			}
 		default:
 			return nil, error_constant.ErrInternalServerError
-		}
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			if pgErr.Code == database.UniqueViolation {
-				if strings.Contains(err.Error(), "username") {
-					return nil, auth_service.ErrDuplicateUsername
-				} else if strings.Contains(err.Error(), "email") {
-					return nil, auth_service.ErrDuplicateEmail
-				} else if strings.Contains(err.Error(), "phone_number") {
-					return nil, auth_service.ErrDuplicatePhoneNumber
-				}
-			}
 		}
 	}
 
@@ -124,9 +93,10 @@ func (r *userRepositoryImpl) FindUser(ctx context.Context, findModel entity.Find
 	}
 
 	userModel := model.User{}
-	err = r.database.DB.WithContext(ctx).Where(findMap).First(&userModel).Error
-	err = r.pgErrTl.Translate(err)
+	result := r.database.DB.WithContext(ctx).Where(findMap).First(&userModel)
+	err = r.pgErrTl.Translate(result.Error)
 	if err != nil {
+		r.logger.WithCtx(ctx).Error(err.Error())
 		return nil, err
 	}
 
@@ -157,18 +127,17 @@ func (r *userRepositoryImpl) UpdateUser(ctx context.Context, findModel entity.Fi
 		Clauses(clause.Returning{}).
 		Updates(updateMap)
 
-	err = result.Error
-	err = r.pgErrTl.Translate(err)
+	err = r.pgErrTl.Translate(result.Error)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error())
-		return userModel.ToEntity(), err
+		return nil, err
 	}
 
 	rowsAffected := result.RowsAffected
 	if rowsAffected <= 0 {
 		err := database.NewRecordNotFoundError(gorm.ErrRecordNotFound)
 		r.logger.WithCtx(ctx).Error(err.Error())
-		return userModel.ToEntity(), err
+		return nil, err
 	}
 
 	return userModel.ToEntity(), nil
@@ -181,9 +150,23 @@ func (r *userRepositoryImpl) SoftDeleteUser(ctx context.Context, findModel entit
 		return err
 	}
 
-	return r.database.DB.
+	result := r.database.DB.
 		WithContext(ctx).
 		Where(findMap).
-		Delete(&model.User{}).
-		Error
+		Delete(&model.User{})
+
+	err = r.pgErrTl.Translate(result.Error)
+	if err != nil {
+		r.logger.WithCtx(ctx).Error(err.Error())
+		return err
+	}
+
+	rowsAffected := result.RowsAffected
+	if rowsAffected <= 0 {
+		err := database.NewRecordNotFoundError(gorm.ErrRecordNotFound)
+		r.logger.WithCtx(ctx).Error(err.Error())
+		return err
+	}
+
+	return nil
 }

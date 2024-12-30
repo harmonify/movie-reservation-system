@@ -16,7 +16,7 @@ var (
 	TestUser = model.User{
 		UUID:                  uuid.MustParse("868b606b-26d5-4c8d-ba45-9587919e059f"),
 		Username:              "user1234",
-		Password:              "user1234",
+		Password:              "$argon2id$v=19$m=65536,t=1,p=8$idhUhR61RiIephSttaskBA$qVXDMG91UIJr5qduxs5CDO1FC4A8Y8F0QwJhuWOE+tw", // user1234
 		Email:                 "user1234@example.com",
 		PhoneNumber:           "+6281234567890",
 		FirstName:             "Example",
@@ -43,22 +43,25 @@ type UserSeederParam struct {
 	Database                  *database.Database
 	UserStorage               shared_service.UserStorage
 	UserKeySeeder             UserKeySeeder
+	UserSessionSeeder         UserSessionSeeder
 }
 
 func NewUserSeeder(p UserSeederParam) UserSeeder {
 	return &userSeederImpl{
-		translator:    p.PostgresqlErrorTranslator,
-		database:      p.Database,
-		userStorage:   p.UserStorage,
-		userKeySeeder: p.UserKeySeeder,
+		translator:        p.PostgresqlErrorTranslator,
+		database:          p.Database,
+		userStorage:       p.UserStorage,
+		userKeySeeder:     p.UserKeySeeder,
+		userSessionSeeder: p.UserSessionSeeder,
 	}
 }
 
 type userSeederImpl struct {
-	translator    database.PostgresqlErrorTranslator
-	database      *database.Database
-	userStorage   shared_service.UserStorage
-	userKeySeeder UserKeySeeder
+	translator        database.PostgresqlErrorTranslator
+	database          *database.Database
+	userStorage       shared_service.UserStorage
+	userKeySeeder     UserKeySeeder
+	userSessionSeeder UserSessionSeeder
 }
 
 func (s *userSeederImpl) CreateTestUser() (*model.User, error) {
@@ -70,7 +73,7 @@ func (s *userSeederImpl) CreateUser(user model.User) (*model.User, error) {
 
 	newUser := model.User{}
 
-	err := s.database.DB.Unscoped().Where(model.User{UUID: user.UUID}).Assign(user).FirstOrCreate(&newUser).Error
+	err := s.database.DB.Unscoped().Where(model.User{Username: user.Username}).Assign(user).FirstOrCreate(&newUser).Error
 	err = s.translator.Translate(err)
 	if err != nil && !errors.As(err, &terr) {
 		return &newUser, err
@@ -90,13 +93,13 @@ func (s *userSeederImpl) CreateUser(user model.User) (*model.User, error) {
 }
 
 func (s *userSeederImpl) DeleteTestUser() error {
-	return s.DeleteUser(TestUser.UUID.String())
+	return s.DeleteUser(TestUser.Username)
 }
 
-func (s *userSeederImpl) DeleteUser(uuidString string) error {
+func (s *userSeederImpl) DeleteUser(username string) error {
 	user := model.User{}
 
-	err := s.database.DB.Unscoped().Where(&model.User{UUID: uuid.MustParse(uuidString)}).First(&user).Error
+	err := s.database.DB.Unscoped().Where(&model.User{Username: username}).First(&user).Error
 	err = s.translator.Translate(err)
 	if err != nil {
 		var terr *database.RecordNotFoundError
@@ -107,6 +110,11 @@ func (s *userSeederImpl) DeleteUser(uuidString string) error {
 	}
 
 	err = s.userKeySeeder.DeleteUserKey(user)
+	if err != nil {
+		return err
+	}
+
+	err = s.userSessionSeeder.DeleteUserSession(user)
 	if err != nil {
 		return err
 	}

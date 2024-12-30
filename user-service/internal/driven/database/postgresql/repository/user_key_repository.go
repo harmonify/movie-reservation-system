@@ -2,52 +2,39 @@ package repository
 
 import (
 	"context"
-	"errors"
-	"strings"
 
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
-	auth_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/auth"
 	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/model"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/database"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/util"
-	"github.com/jackc/pgx/v5/pgconn"
-	"go.uber.org/fx"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
-type UserKeyRepositoryParam struct {
-	fx.In
-
-	Database *database.Database
-	Tracer   tracer.Tracer
-	Logger   logger.Logger
-	Util     *util.Util
-}
-
-type UserKeyRepositoryResult struct {
-	fx.Out
-
-	UserKeyStorage shared_service.UserKeyStorage
-}
-
 type userKeyRepositoryImpl struct {
 	database *database.Database
+	pgErrTl  database.PostgresqlErrorTranslator
 	tracer   tracer.Tracer
 	logger   logger.Logger
 	util     *util.Util
 }
 
-func NewUserKeyRepository(p UserKeyRepositoryParam) UserKeyRepositoryResult {
-	return UserKeyRepositoryResult{
-		UserKeyStorage: &userKeyRepositoryImpl{
-			database: p.Database,
-			tracer:   p.Tracer,
-			logger:   p.Logger,
-			util:     p.Util,
-		},
+func NewUserKeyRepository(
+	database *database.Database,
+	pgErrTl database.PostgresqlErrorTranslator,
+	tracer tracer.Tracer,
+	logger logger.Logger,
+	util *util.Util,
+) shared_service.UserKeyStorage {
+	return &userKeyRepositoryImpl{
+		database: database,
+		pgErrTl:  pgErrTl,
+		tracer:   tracer,
+		logger:   logger,
+		util:     util,
 	}
 }
 
@@ -55,16 +42,13 @@ func (r *userKeyRepositoryImpl) WithTx(tx *database.Transaction) shared_service.
 	if tx == nil {
 		return r
 	}
-
-	return &userKeyRepositoryImpl{
-		database: &database.Database{
-			DB:     tx.DB,
-			Logger: r.logger,
-		},
-		tracer: r.tracer,
-		logger: r.logger,
-		util:   r.util,
-	}
+	return NewUserKeyRepository(
+		r.database.WithTx(tx),
+		r.pgErrTl,
+		r.tracer,
+		r.logger,
+		r.util,
+	)
 }
 
 func (r *userKeyRepositoryImpl) SaveUserKey(ctx context.Context, createModel entity.SaveUserKey) (*entity.UserKey, error) {
@@ -73,18 +57,13 @@ func (r *userKeyRepositoryImpl) SaveUserKey(ctx context.Context, createModel ent
 
 	userKeyModel := (&model.UserKey{}).FromSaveEntity(createModel)
 
-	err := r.database.DB.WithContext(ctx).Create(&userKeyModel).Error
+	result := r.database.DB.
+		WithContext(ctx).
+		Create(userKeyModel)
+	err := r.pgErrTl.Translate(result.Error)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			if pgErr.Code == database.UniqueViolation {
-				if strings.Contains(err.Error(), "email") {
-					return nil, auth_service.ErrDuplicateEmail
-				} else if strings.Contains(err.Error(), "phone_number") {
-					return nil, auth_service.ErrDuplicatePhoneNumber
-				}
-			}
-		}
+		r.logger.WithCtx(ctx).Error(err.Error())
+		return nil, err
 	}
 
 	return userKeyModel.ToEntity(), err
@@ -101,8 +80,10 @@ func (r *userKeyRepositoryImpl) FindUserKey(ctx context.Context, findModel entit
 	}
 
 	userKeyModel := model.UserKey{}
-	err = r.database.DB.WithContext(ctx).Where(findMap).First(&userKeyModel).Error
+	result := r.database.DB.WithContext(ctx).Where(findMap).First(&userKeyModel)
+	err = r.pgErrTl.Translate(result.Error)
 	if err != nil {
+		r.logger.WithCtx(ctx).Error(err.Error())
 		return nil, err
 	}
 
@@ -126,23 +107,53 @@ func (r *userKeyRepositoryImpl) UpdateUserKey(ctx context.Context, findModel ent
 	}
 
 	userKeyModel := model.UserKey{}
-	err = r.database.DB.
+	result := r.database.DB.
 		WithContext(ctx).
 		Model(&userKeyModel).
 		Where(findMap).
 		Clauses(clause.Returning{}).
-		Updates(updateMap).
-		Error
+		Updates(updateMap)
+
+	err = r.pgErrTl.Translate(result.Error)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error())
+		return nil, err
+	}
+
+	rowsAffected := result.RowsAffected
+	if rowsAffected <= 0 {
+		err := database.NewRecordNotFoundError(gorm.ErrRecordNotFound)
+		r.logger.WithCtx(ctx).Error(err.Error())
+		return nil, err
 	}
 
 	return userKeyModel.ToEntity(), err
 }
 
-func (r *userKeyRepositoryImpl) SoftDeleteUserKey(ctx context.Context, userUUID string) error {
-	return r.database.DB.
+func (r *userKeyRepositoryImpl) SoftDeleteUserKey(ctx context.Context, findModel entity.FindUserKey) error {
+	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(findModel)
+	if err != nil {
+		r.logger.WithCtx(ctx).Error(err.Error())
+		return err
+	}
+
+	result := r.database.DB.
 		WithContext(ctx).
-		Delete(&model.UserKey{}, userUUID).
-		Error
+		Where(findMap).
+		Delete(&model.UserKey{})
+
+	err = r.pgErrTl.Translate(result.Error)
+	if err != nil {
+		r.logger.WithCtx(ctx).Error(err.Error())
+		return err
+	}
+
+	rowsAffected := result.RowsAffected
+	if rowsAffected <= 0 {
+		err := database.NewRecordNotFoundError(gorm.ErrRecordNotFound)
+		r.logger.WithCtx(ctx).Error(err.Error())
+		return err
+	}
+
+	return nil
 }

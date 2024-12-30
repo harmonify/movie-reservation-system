@@ -125,7 +125,7 @@ func (s *UserRepositoryTestSuite) TestUserRepository_SaveUser() {
 				},
 			},
 			AfterCall: func() {
-				err := s.userSeeder.DeleteUser(newUser.UUID.String())
+				err := s.userSeeder.DeleteUser(newUser.Username)
 				s.Require().Nil(err)
 			},
 		},
@@ -263,10 +263,9 @@ func (s *UserRepositoryTestSuite) TestUserRepository_UpdateUser() {
 	expectedUser1.FirstName = "Testing"
 
 	expectedUser2 := seeder.TestUser.ToEntity()
-	expectedUser2.Username = "ooooooooooooooooooooooooooo"
+	expectedUser2.Email = "test2@example.com"
 
 	expectedUser3 := seeder.TestUser.ToEntity()
-	expectedUser3.Email = "test3@example.com"
 	expectedUser3.PhoneNumber = "+62812345678922"
 	expectedUser3.LastName = "User3"
 	expectedUser3.IsEmailVerified = true
@@ -301,7 +300,7 @@ func (s *UserRepositoryTestSuite) TestUserRepository_UpdateUser() {
 					},
 				},
 				Update: &entity.UpdateUser{
-					Username: sql.NullString{String: "ooooooooooooooooooooooooooo", Valid: true},
+					Email: sql.NullString{String: "test2@example.com", Valid: true},
 				},
 			},
 			Expectation: updateUserTestExpectation{
@@ -319,7 +318,6 @@ func (s *UserRepositoryTestSuite) TestUserRepository_UpdateUser() {
 					},
 				},
 				Update: &entity.UpdateUser{
-					Email:                 sql.NullString{String: "test3@example.com", Valid: true},
 					PhoneNumber:           sql.NullString{String: "+62812345678922", Valid: true},
 					LastName:              sql.NullString{String: "User3", Valid: true},
 					IsEmailVerified:       sql.NullBool{Bool: true, Valid: true},

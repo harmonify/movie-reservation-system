@@ -17,6 +17,7 @@ import (
 
 type AuthRestHandler interface {
 	Register(g *gin.RouterGroup)
+	Version() string
 }
 
 type authRestHandlerImpl struct {
@@ -48,13 +49,14 @@ func NewAuthRestHandler(
 
 func (h *authRestHandlerImpl) Register(g *gin.RouterGroup) {
 	g.POST("/register", h.PostRegister)
-	g.POST("/email/verify", h.PostVerifyEmail)
-	// TODO:
-	// g.PUT("/email/edit", h.middleware.JwtHttpMiddleware.AuthenticateUser, h.PutEditEmail)
-	// g.GET("/email/edit/verify", h.PostVerifyEditEmail)
+	g.POST("/register/verify", h.PostVerifyEmail)
 	g.POST("/login", h.PostLogin)
 	g.POST("/logout", h.middleware.JwtHttpMiddleware.AuthenticateUser, h.PostLogout)
 	g.GET("/token", h.GetToken)
+}
+
+func (h *authRestHandlerImpl) Version() string {
+	return "1"
 }
 
 func (h *authRestHandlerImpl) PostRegister(c *gin.Context) {

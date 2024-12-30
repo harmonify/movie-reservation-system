@@ -33,6 +33,7 @@ type (
 		FindUserKey(ctx context.Context, findModel entity.FindUserKey) (*entity.UserKey, error)
 		SaveUserKey(ctx context.Context, createModel entity.SaveUserKey) (*entity.UserKey, error)
 		UpdateUserKey(ctx context.Context, findModel entity.FindUserKey, updateModel entity.UpdateUserKey) (*entity.UserKey, error)
+		SoftDeleteUserKey(ctx context.Context, findModel entity.FindUserKey) error
 	}
 
 	OtpStorage interface {

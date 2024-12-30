@@ -9,7 +9,8 @@ import (
 
 type HealthCheckRestHandler interface {
 	Register(g *gin.RouterGroup)
-	HealthCheck(c *gin.Context)
+	Version() string
+	GetHealthCheck(c *gin.Context)
 }
 
 type HealthCheckRestHandlerParam struct {
@@ -44,10 +45,14 @@ func NewHealthCheckRestHandler(p HealthCheckRestHandlerParam) HealthCheckRestHan
 }
 
 func (h *healthCheckRestHandlerImpl) Register(g *gin.RouterGroup) {
-	g.GET("/health", h.HealthCheck)
+	g.GET("/health", h.GetHealthCheck)
 }
 
-func (h *healthCheckRestHandlerImpl) HealthCheck(c *gin.Context) {
+func (h *healthCheckRestHandlerImpl) Version() string {
+	return "1"
+}
+
+func (h *healthCheckRestHandlerImpl) GetHealthCheck(c *gin.Context) {
 	var (
 		ctx  = c.Request.Context()
 		err  error

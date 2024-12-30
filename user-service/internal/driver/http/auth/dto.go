@@ -1,15 +1,6 @@
 package auth_rest
 
-import (
-	http_interface "github.com/harmonify/movie-reservation-system/user-service/lib/http/interface"
-)
-
 type (
-	RegisterReq struct {
-		PostRegisterReq
-		http_interface.HeadersExtension
-	}
-
 	PostRegisterReq struct {
 		Username    string `json:"username" validate:"required"`
 		Password    string `json:"password" validate:"required,min=8"`

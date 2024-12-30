@@ -8,8 +8,9 @@ var (
 	DrivenPostgresqlSeederModule = fx.Module(
 		"driven-postgresql-seeder",
 		fx.Provide(
-			NewUserKeySeeder,
 			NewUserSeeder,
+			NewUserKeySeeder,
+			NewUserSessionSeeder,
 		),
 	)
 )

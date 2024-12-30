@@ -197,8 +197,13 @@ func (h *HttpServer) configureCorsMiddleware(c *gin.Context) {
 }
 
 func (h *HttpServer) registerRoutes(handlers ...http_interface.RestHandler) {
-	baseRouterGroup := h.Gin.Group(h.cfg.BasePath)
+	baseGroup := h.Gin.Group(h.cfg.BasePath)
+	groupMap := map[string]*gin.RouterGroup{}
 	for _, handler := range handlers {
-		handler.Register(baseRouterGroup)
+		version := "v" + handler.Version()
+		if _, found := groupMap[version]; !found {
+			groupMap[version] = baseGroup.Group(version)
+		}
+		handler.Register(groupMap[version])
 	}
 }

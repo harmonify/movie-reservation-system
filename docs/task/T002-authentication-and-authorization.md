@@ -4,14 +4,14 @@ Build authentication and authorization features on user service.
 
 ## Technical Requirements
 
-- [ ] Authentication
-  - [ ] JWT
-  - [ ] `POST /register`
+- [x] Authentication
+  - [x] JWT
+  - [x] `POST /register`
     - [ ] OAuth and Google Idp?
-  - [ ] `POST /login`
+  - [x] `POST /login`
   - [ ] `GET /me`
-- [ ] Authorization
-  - [ ] Roles: `admin`, `user`
+- [x] Authorization
+  - [x] Roles: `admin`, `user`
 
 ## Implementation
 

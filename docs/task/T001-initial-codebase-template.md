@@ -13,7 +13,7 @@ Build minimal codebase template on user service that will serve as a template fo
   - [x] Add observability
     - [x] Logging: Loki + Promtail + MinIO
     - [x] Tracing: Jaeger (Agent + Collector + Query) + Cassandra
-    - [ ] Metric: Prometheus
+    - [x] Metric: Prometheus
     - [x] Dashboard: Grafana
 
 ## Implementation
