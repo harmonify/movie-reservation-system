@@ -2,6 +2,7 @@ package auth_rest
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	auth_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/auth"
@@ -140,7 +141,7 @@ func (h *authRestHandlerImpl) PostLogin(c *gin.Context) {
 
 	// Set refresh token cookies
 	cookieName := constant.HttpCookiePrefix + "token"
-	cookieMaxAge := 0
+	cookieMaxAge := int(time.Until(data.RefreshTokenExpiredAt).Seconds())
 	cookieValue := data.RefreshToken
 	cookieDomain := "*localhost"
 	cookiePath := "/user/token"
