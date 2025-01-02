@@ -73,11 +73,11 @@ In Solutions Team, we use the following method to spot out `Core` components:
 2. In `Hex Monscape`, when we take a look at its [API specification](../api/rest-api.md), we can see there are `2` context of business logic:
     - `Play context` => This is where the player starting new game and progressing the game itself.
     - `Battle context` => This is where the player battle enemy with his/her monster partner.
-3. For each of these context, define `Service` interface for it. Just like what we did in [here](../../internal/core/service/battle/service.go#L20-L44) & [here](../../internal/core/service/play/service.go#L18-L29). Remember to also write the expected behavior for each methods as comments like in [here](../../internal/core/service/play/service.go#L22-L23). Trust me these comments will greatly help keeping our head in straight line when implementing these methods.
+3. For each of these context, define `Service` interface for it. Just like what we did in [here](https://github.com/Haraj-backend/hex-monscape/tree/master/internal/core/service/battle/service.go#L20-L44) & [here](https://github.com/Haraj-backend/hex-monscape/tree/master/internal/core/service/play/service.go#L18-L29). Remember to also write the expected behavior for each methods as comments like in [here](https://github.com/Haraj-backend/hex-monscape/tree/master/internal/core/service/play/service.go#L22-L23). Trust me these comments will greatly help keeping our head in straight line when implementing these methods.
 4. Notice that the `Service` interface that we define in step `3` is only the `Driver Port` for our application, not our `Core` component. However it is good starting point for us to define our `Core` component.
-5. Implement the `Service` interface just like what we did in [here](../../internal/core/service/battle/service.go#L46-L195) & [here](../../internal/core/service/play/service.go#L31-L81). Notice that this is the place where we put our application business logic. This is also our very first `Core` component.
-6. During the implementation of `Service` interface, we will notice that we need to interact with external entities such as `MySQL` database. This is where we need to define `Driven Port` interfaces for our application just like what we did in [here](../../internal/core/service/battle/storage.go) & [here](../../internal/core/service/play/storage.go).
-7. Beside defining `Driven Port` interfaces, during the implementation of `Service` interface we will also need to define data model for supporting our business logic. This is why we have `Entity` package in [here](../../internal/core/entity/).
+5. Implement the `Service` interface just like what we did in [here](https://github.com/Haraj-backend/hex-monscape/tree/master/internal/core/service/battle/service.go#L46-L195) & [here](https://github.com/Haraj-backend/hex-monscape/tree/master/internal/core/service/play/service.go#L31-L81). Notice that this is the place where we put our application business logic. This is also our very first `Core` component.
+6. During the implementation of `Service` interface, we will notice that we need to interact with external entities such as `MySQL` database. This is where we need to define `Driven Port` interfaces for our application just like what we did in [here](https://github.com/Haraj-backend/hex-monscape/tree/master/internal/core/service/battle/storage.go) & [here](https://github.com/Haraj-backend/hex-monscape/tree/master/internal/core/service/play/storage.go).
+7. Beside defining `Driven Port` interfaces, during the implementation of `Service` interface we will also need to define data model for supporting our business logic. This is why we have `Entity` package in [here](https://github.com/Haraj-backend/hex-monscape/tree/master/internal/core/entity/).
 8. There you have it, we have all `Core` components for our application!
 
 > **Note:**
@@ -108,9 +108,9 @@ There are `2` types of ports:
 - `Driver Port` => Ports for defining interaction between driver actor & core.
 - `Driven Port` => Ports for defining interaction between core & driven actors.
 
-In the case of `Hex Monscape`, the examples for `Driver Ports` are [`battle.Service`](../../internal/core/service/battle/service.go#L20-L44) & [`play.Service`](../../internal/core/service/play/service.go#L18-L29).
+In the case of `Hex Monscape`, the examples for `Driver Ports` are [`battle.Service`](https://github.com/Haraj-backend/hex-monscape/tree/master/internal/core/service/battle/service.go#L20-L44) & [`play.Service`](https://github.com/Haraj-backend/hex-monscape/tree/master/internal/core/service/play/service.go#L18-L29).
 
-As for the examples for `Driven Ports` are all interfaces defined in [here](../../internal/core/service/battle/storage.go) & [here](../../internal/core/service/play/storage.go).
+As for the examples for `Driven Ports` are all interfaces defined in [here](https://github.com/Haraj-backend/hex-monscape/tree/master/internal/core/service/battle/storage.go) & [here](https://github.com/Haraj-backend/hex-monscape/tree/master/internal/core/service/play/storage.go).
 
 ## Adapters
 
@@ -121,9 +121,9 @@ There are `2` types of adapters:
 - `Driver Adapter` => Adapter for translating interaction from the `Driver Actor` into a call acceptable by application core.
 - `Driven Adapter` => Adapter for translating the command given by application core to `Driven Actor`.
 
-In the case of `Hex Monscape`, the example for `Driver Adapters` is [`rest.API`](../../internal/driver/rest/api.go).
+In the case of `Hex Monscape`, the example for `Driver Adapters` is [`rest.API`](https://github.com/Haraj-backend/hex-monscape/tree/master/internal/driver/rest/api.go).
 
-As for the examples for `Driven Adapters` are [`battlestrg.Storage`](../../internal/driven/storage/memory/battlestrg/storage.go), [`gamestrg.Storage`](../../internal/driven/storage/memory/gamestrg/storage.go), & [`monstrg.Storage`](../../internal/driven/storage/memory/monstrg/storage.go).
+As for the examples for `Driven Adapters` are [`battlestrg.Storage`](https://github.com/Haraj-backend/hex-monscape/tree/master/internal/driven/storage/memory/battlestrg/storage.go), [`gamestrg.Storage`](https://github.com/Haraj-backend/hex-monscape/tree/master/internal/driven/storage/memory/gamestrg/storage.go), & [`monstrg.Storage`](https://github.com/Haraj-backend/hex-monscape/tree/master/internal/driven/storage/memory/monstrg/storage.go).
 
 ## Conclusion
 

@@ -1,6 +1,6 @@
 # Project Methodology
 
-This document contains guidelines on implementing [Hexagonal Architecture](../reference/hex-architecture.md) to a new Solutions Team project.
+This document contains guidelines on implementing [Hexagonal Architecture](./hex-architecture.md) to a new Solutions Team project.
 
 1. Understand the business requirements. This is very important because it gives us context on the solution we are trying to build.
 2. Validate our understanding by creating a document containing a high-level application overview. Usually we use `README.md` file for this.

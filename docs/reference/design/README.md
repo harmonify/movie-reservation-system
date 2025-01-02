@@ -2,11 +2,7 @@
 
 Evolving design of the movie reservation system.
 
-The initial design is inspired by [this article](https://roadmap.sh/backend/project-ideas#11-movie-reservation-system). You can also refer to screenshot below:
-
-![alt text](initial-design.png)
-
-And further inspired by [this project idea](https://roadmap.sh/projects/movie-reservation-system).
+![alt text](initial-architecture-design.png)
 
 ## Requirements
 
