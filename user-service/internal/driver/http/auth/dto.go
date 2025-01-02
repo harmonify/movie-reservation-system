@@ -21,8 +21,8 @@ type (
 	}
 
 	PostLoginRes struct {
-		AccessToken         string `json:"accessToken"`
-		AccessTokenDuration int    `json:"accessTokenDuration"` // in seconds
+		AccessToken         string `json:"access_token"`
+		AccessTokenDuration int    `json:"access_token_duration"` // in seconds
 	}
 
 	GetTokenReq struct {
@@ -30,8 +30,8 @@ type (
 	}
 
 	GetTokenRes struct {
-		AccessToken         string `json:"accessToken"`
-		AccessTokenDuration int    `json:"accessTokenDuration"` // in seconds
+		AccessToken         string `json:"access_token"`
+		AccessTokenDuration int    `json:"access_token_duration"` // in seconds
 	}
 
 	PostUserLogoutReq struct {

@@ -140,7 +140,7 @@ func (_c *HttpResponse_BuildError_Call) RunAndReturn(run func(string, error) *re
 }
 
 // BuildValidationError provides a mock function with given fields: code, err, errorFields
-func (_m *HttpResponse) BuildValidationError(code string, err error, errorFields []response.BaseErrorValidationSchema) *response.HttpErrorHandlerImpl {
+func (_m *HttpResponse) BuildValidationError(code string, err error, errorFields []response.BaseValidationErrorSchema) *response.HttpErrorHandlerImpl {
 	ret := _m.Called(code, err, errorFields)
 
 	if len(ret) == 0 {
@@ -148,7 +148,7 @@ func (_m *HttpResponse) BuildValidationError(code string, err error, errorFields
 	}
 
 	var r0 *response.HttpErrorHandlerImpl
-	if rf, ok := ret.Get(0).(func(string, error, []response.BaseErrorValidationSchema) *response.HttpErrorHandlerImpl); ok {
+	if rf, ok := ret.Get(0).(func(string, error, []response.BaseValidationErrorSchema) *response.HttpErrorHandlerImpl); ok {
 		r0 = rf(code, err, errorFields)
 	} else {
 		if ret.Get(0) != nil {
@@ -167,14 +167,14 @@ type HttpResponse_BuildValidationError_Call struct {
 // BuildValidationError is a helper method to define mock.On call
 //   - code string
 //   - err error
-//   - errorFields []response.BaseErrorValidationSchema
+//   - errorFields []response.BaseValidationErrorSchema
 func (_e *HttpResponse_Expecter) BuildValidationError(code interface{}, err interface{}, errorFields interface{}) *HttpResponse_BuildValidationError_Call {
 	return &HttpResponse_BuildValidationError_Call{Call: _e.mock.On("BuildValidationError", code, err, errorFields)}
 }
 
-func (_c *HttpResponse_BuildValidationError_Call) Run(run func(code string, err error, errorFields []response.BaseErrorValidationSchema)) *HttpResponse_BuildValidationError_Call {
+func (_c *HttpResponse_BuildValidationError_Call) Run(run func(code string, err error, errorFields []response.BaseValidationErrorSchema)) *HttpResponse_BuildValidationError_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string), args[1].(error), args[2].([]response.BaseErrorValidationSchema))
+		run(args[0].(string), args[1].(error), args[2].([]response.BaseValidationErrorSchema))
 	})
 	return _c
 }
@@ -184,7 +184,7 @@ func (_c *HttpResponse_BuildValidationError_Call) Return(_a0 *response.HttpError
 	return _c
 }
 
-func (_c *HttpResponse_BuildValidationError_Call) RunAndReturn(run func(string, error, []response.BaseErrorValidationSchema) *response.HttpErrorHandlerImpl) *HttpResponse_BuildValidationError_Call {
+func (_c *HttpResponse_BuildValidationError_Call) RunAndReturn(run func(string, error, []response.BaseValidationErrorSchema) *response.HttpErrorHandlerImpl) *HttpResponse_BuildValidationError_Call {
 	_c.Call.Return(run)
 	return _c
 }

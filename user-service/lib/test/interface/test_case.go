@@ -44,7 +44,7 @@ type (
 		ResponseBodyResult       any
 		ResponseBodyErrorCode    string
 		ResponseBodyErrorMessage string
-		ResponseBodyErrorObject  []response.BaseErrorValidationSchema
+		ResponseBodyErrorObject  []response.BaseValidationErrorSchema
 	}
 
 	// similar to [database/sql#NullBool]

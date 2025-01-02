@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/error/constant"
+	error_constant "github.com/harmonify/movie-reservation-system/user-service/lib/error/constant"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/http/response"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/mocks"
@@ -203,7 +203,7 @@ func (s *ResponseTestSuite) TestBuildError(t *testing.T) {
 func (s *ResponseTestSuite) TestBuildErrorValidation(t *testing.T) {
 	t.Run("Should build error correctly", func(t *testing.T) {
 		err := errors.New("test error")
-		handler := s.response.BuildValidationError("test_code", err, []response.BaseErrorValidationSchema{
+		handler := s.response.BuildValidationError("test_code", err, []response.BaseValidationErrorSchema{
 			{
 				Field:   "error",
 				Message: "test error",

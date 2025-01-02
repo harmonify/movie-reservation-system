@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/error/constant"
+	error_constant "github.com/harmonify/movie-reservation-system/user-service/lib/error/constant"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
 	struct_util "github.com/harmonify/movie-reservation-system/user-service/lib/util/struct"
@@ -24,7 +24,7 @@ type HttpResponse interface {
 	SendWithResponseCode(c *gin.Context, httpCode int, data interface{}, err error)
 	Build(ctx context.Context, httpCode int, data interface{}, err error) (int, BaseResponseSchema, error)
 	BuildError(code string, err error) *HttpErrorHandlerImpl
-	BuildValidationError(code string, err error, errorFields []BaseErrorValidationSchema) *HttpErrorHandlerImpl
+	BuildValidationError(code string, err error, errorFields []BaseValidationErrorSchema) *HttpErrorHandlerImpl
 }
 
 type httpResponseImpl struct {
@@ -102,7 +102,7 @@ func (r *httpResponseImpl) Build(ctx context.Context, responseCode int, data int
 		}
 
 		if responseError.Errors == nil {
-			responseError.Errors = r.structUtil.SetValueIfNotEmpty([]BaseErrorValidationSchema{})
+			responseError.Errors = r.structUtil.SetValueIfNotEmpty([]BaseValidationErrorSchema{})
 		}
 
 		response.Error = BaseErrorResponseSchema{
@@ -220,7 +220,7 @@ func (r *httpResponseImpl) stackTrace(skip int) []string {
 	return stacks
 }
 
-func (r *httpResponseImpl) BuildValidationError(code string, err error, errorFields []BaseErrorValidationSchema) *HttpErrorHandlerImpl {
+func (r *httpResponseImpl) BuildValidationError(code string, err error, errorFields []BaseValidationErrorSchema) *HttpErrorHandlerImpl {
 	source, fn, ln, path, stack := r.getSource(runtime.Caller(1))
 
 	return &HttpErrorHandlerImpl{

@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/gobeam/stringy"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/error/constant"
+	error_constant "github.com/harmonify/movie-reservation-system/user-service/lib/error/constant"
 	http_constant "github.com/harmonify/movie-reservation-system/user-service/lib/http/constant"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/http/response"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/util/validation"
@@ -86,11 +86,11 @@ func (v *HttpValidatorImpl) registerCustomValidation(validate *validator.Validat
 	return nil
 }
 
-func constructValidationField(err error) (errorsData []response.BaseErrorValidationSchema) {
+func constructValidationField(err error) (errorsData []response.BaseValidationErrorSchema) {
 	var val validator.ValidationErrors
 
 	if errors.As(err, &val) {
-		errorsData = make([]response.BaseErrorValidationSchema, len(val))
+		errorsData = make([]response.BaseValidationErrorSchema, len(val))
 		for i, fe := range val {
 			fieldPath := fe.Field()
 
@@ -98,7 +98,7 @@ func constructValidationField(err error) (errorsData []response.BaseErrorValidat
 				fieldPath = extractNestedField(fe.StructNamespace())
 			}
 
-			errorsData[i] = response.BaseErrorValidationSchema{
+			errorsData[i] = response.BaseValidationErrorSchema{
 				Field:   fieldPath,
 				Message: getErrorMsg(fe),
 			}
