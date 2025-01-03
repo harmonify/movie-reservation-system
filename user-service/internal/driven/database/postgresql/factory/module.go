@@ -9,6 +9,7 @@ var (
 		"driven-postgresql-factory",
 		fx.Provide(
 			NewUserFactory,
+			NewUserSessionFactory,
 		),
 	)
 )

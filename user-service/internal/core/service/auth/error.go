@@ -8,29 +8,31 @@ import (
 )
 
 var (
-	DuplicateUsername     = "DUPLICATE_USERNAME"
-	DuplicateEmail        = "DUPLICATE_EMAIL"
-	DuplicatePhoneNumber  = "DUPLICATE_PHONE_NUMBER"
-	InvalidUsername       = "INVALID_USERNAME"
-	InvalidEmail          = "INVALID_EMAIL"
-	InvalidPhoneNumber    = "INVALID_PHONE_NUMBER"
-	UnverifiedEmail       = "UNVERIFIED_EMAIL"
-	UnverifiedPhoneNumber = "UNVERIFIED_PHONE_NUMBER"
-	AccountNotFound       = "ACCOUNT_NOT_FOUND"
-	IncorrectPassword     = "INCORRECT_PASSWORD"
-	InvalidRefreshToken   = "INVALID_REFRESH_TOKEN"
+	DuplicateUsername          = "DUPLICATE_USERNAME"
+	DuplicateEmail             = "DUPLICATE_EMAIL"
+	DuplicatePhoneNumber       = "DUPLICATE_PHONE_NUMBER"
+	InvalidUsername            = "INVALID_USERNAME"
+	InvalidEmail               = "INVALID_EMAIL"
+	InvalidPhoneNumber         = "INVALID_PHONE_NUMBER"
+	UnverifiedEmail            = "UNVERIFIED_EMAIL"
+	UnverifiedPhoneNumber      = "UNVERIFIED_PHONE_NUMBER"
+	AccountNotFound            = "ACCOUNT_NOT_FOUND"
+	IncorrectPassword          = "INCORRECT_PASSWORD"
+	InvalidRefreshToken        = "INVALID_REFRESH_TOKEN"
+	RefreshTokenAlreadyExpired = "REFRESH_TOKEN_ALREADY_EXPIRED"
 
-	ErrDuplicateUsername     = errors.New(DuplicateUsername)
-	ErrDuplicateEmail        = errors.New(DuplicateEmail)
-	ErrDuplicatePhoneNumber  = errors.New(DuplicatePhoneNumber)
-	ErrInvalidUsername       = errors.New(InvalidUsername)
-	ErrInvalidEmail          = errors.New(InvalidEmail)
-	ErrInvalidPhoneNumber    = errors.New(InvalidPhoneNumber)
-	ErrUnverifiedEmail       = errors.New(UnverifiedEmail)
-	ErrUnverifiedPhoneNumber = errors.New(UnverifiedPhoneNumber)
-	ErrAccountNotFound       = errors.New(AccountNotFound)
-	ErrIncorrectPassword     = errors.New(IncorrectPassword)
-	ErrInvalidRefreshToken   = errors.New(InvalidRefreshToken)
+	ErrDuplicateUsername          = errors.New(DuplicateUsername)
+	ErrDuplicateEmail             = errors.New(DuplicateEmail)
+	ErrDuplicatePhoneNumber       = errors.New(DuplicatePhoneNumber)
+	ErrInvalidUsername            = errors.New(InvalidUsername)
+	ErrInvalidEmail               = errors.New(InvalidEmail)
+	ErrInvalidPhoneNumber         = errors.New(InvalidPhoneNumber)
+	ErrUnverifiedEmail            = errors.New(UnverifiedEmail)
+	ErrUnverifiedPhoneNumber      = errors.New(UnverifiedPhoneNumber)
+	ErrAccountNotFound            = errors.New(AccountNotFound)
+	ErrIncorrectPassword          = errors.New(IncorrectPassword)
+	ErrInvalidRefreshToken        = errors.New(InvalidRefreshToken)
+	ErrRefreshTokenAlreadyExpired = errors.New(RefreshTokenAlreadyExpired)
 
 	AuthServiceErrorMap = error_constant.CustomErrorMap{
 		DuplicateUsername: {
@@ -76,6 +78,10 @@ var (
 		InvalidRefreshToken: {
 			HttpCode: http.StatusUnauthorized,
 			Message:  "Your session is expired. Please login again.",
+		},
+		RefreshTokenAlreadyExpired: {
+			HttpCode: http.StatusBadRequest,
+			Message:  "Your session is already expired.",
 		},
 	}
 )

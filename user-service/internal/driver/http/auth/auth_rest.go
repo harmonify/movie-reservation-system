@@ -1,12 +1,12 @@
 package auth_rest
 
 import (
+	"errors"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	auth_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/auth"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/middleware"
-	error_constant "github.com/harmonify/movie-reservation-system/user-service/lib/error/constant"
 	http_constant "github.com/harmonify/movie-reservation-system/user-service/lib/http/constant"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/http/response"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/http/validator"
@@ -56,7 +56,7 @@ func (h *authRestHandlerImpl) Register(g *gin.RouterGroup) {
 	g.POST("/register", h.PostRegister)
 	g.POST("/register/verify", h.PostVerifyEmail)
 	g.POST("/login", h.PostLogin)
-	g.POST("/logout", h.middleware.JwtHttpMiddleware.AuthenticateUser, h.PostLogout)
+	g.POST("/logout", h.PostLogout)
 	g.GET("/token", h.GetToken)
 }
 
@@ -151,7 +151,7 @@ func (h *authRestHandlerImpl) PostLogin(c *gin.Context) {
 	cookieDomain := "localhost"
 	cookiePath := "/user/token"
 	h.logger.Debug("Set refresh token cookie", zap.String("cookieName", cookieName), zap.Int("cookieMaxAge", cookieMaxAge), zap.String("cookieDomain", cookieDomain), zap.String("cookiePath", cookiePath), zap.String("username", params.Username))
-	c.SetCookie(cookieName, cookieValue, cookieMaxAge, cookiePath, cookieDomain, false, false)
+	c.SetCookie(cookieName, cookieValue, cookieMaxAge, cookiePath, cookieDomain, true, true)
 
 	h.response.Send(c, PostLoginRes{
 		AccessToken:         data.AccessToken,
@@ -188,7 +188,6 @@ func (h *authRestHandlerImpl) GetToken(c *gin.Context) {
 		AccessToken:         data.AccessToken,
 		AccessTokenDuration: data.AccessTokenDuration,
 	}, err)
-
 }
 
 func (h *authRestHandlerImpl) PostLogout(c *gin.Context) {
@@ -203,8 +202,7 @@ func (h *authRestHandlerImpl) PostLogout(c *gin.Context) {
 	cookieName := http_constant.HttpCookiePrefix + "token"
 	refreshToken, err := c.Cookie(cookieName)
 	if err != nil {
-		err = h.response.BuildError(error_constant.InvalidJwt, err)
-		h.response.Send(c, nil, err)
+		h.response.Send(c, nil, auth_service.ErrRefreshTokenAlreadyExpired)
 		return
 	}
 
@@ -215,9 +213,13 @@ func (h *authRestHandlerImpl) PostLogout(c *gin.Context) {
 	// Delete refresh token cookie
 	cookieValue := ""
 	cookieMaxAge := -1
-	cookieDomain := "*localhost"
+	cookieDomain := "localhost"
 	cookiePath := "/user/token"
 	c.SetCookie(cookieName, cookieValue, cookieMaxAge, cookiePath, cookieDomain, true, true)
 
-	h.response.Send(c, nil, err)
+	if err != nil && !errors.Is(err, auth_service.ErrRefreshTokenAlreadyExpired) {
+		h.response.Send(c, nil, err)
+	}
+
+	h.response.Send(c, nil, nil)
 }

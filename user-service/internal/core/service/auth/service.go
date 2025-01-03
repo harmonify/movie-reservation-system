@@ -322,6 +322,11 @@ func (s *authServiceImpl) Logout(ctx context.Context, p LogoutParam) error {
 	// Revoke user session if exists
 	err = s.userSessionStorage.RevokeSession(ctx, hashedRefreshToken)
 	if err != nil {
+		var terr *database.RecordNotFoundError
+		if errors.As(err, &terr) {
+			// Assume that the session is already expired
+			return ErrRefreshTokenAlreadyExpired
+		}
 		s.logger.WithCtx(ctx).Error(err.Error())
 		return err
 	}
