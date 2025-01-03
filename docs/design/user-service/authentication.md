@@ -48,11 +48,13 @@ If the passwords match, the service signs a JWT using the RS256 algorithm using 
 
 The service also generates a refresh token using random secure 32 bytes. The refresh token can be used to generate a new JWT when the current JWT expires.
 
-The refresh token will be hashed before storing it into the database. This ensures that the refresh token is secure even if the database is compromised.
+The refresh token will be hashed using SHA256 algorithm before storing it into the database. This ensures that the refresh token is secure even if the database is compromised.
+
+> For more information on SHA-256, see the [SHA-256](#sha-256) section.
 
 The service then returns the access token and access token validity duration in the response body, and sets the unhashed refresh token in the response header as a HTTPS only cookie.
 
-### Refresh token
+### Refreshing access token
 
 When the user's access token expires, the user can use the refresh token to generate a new access token.
 
@@ -149,6 +151,10 @@ To decrypt the private key, the service extracts the cipher, salt, nonce, and PB
 SHA256 or Secure Hash Algorithm 256, is a hashing algorithm that converts text of any length into a fixed-size string of 256 bits.
 
 See <https://en.wikipedia.org/wiki/SHA-2>.
+
+#### SHA-256 implementation
+
+The service uses SHA-256 to hash the user's refresh token before storing it in the database. This ensures that the refresh token is secure even if the database is compromised.
 
 ### RS256 (RSA signature with SHA-256)
 
