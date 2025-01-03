@@ -166,16 +166,17 @@ func (r *httpResponseImpl) logResponse(ctx context.Context, httpCode int, respon
 		})
 	}
 
-	// TODO: add conditionals parsing this to improve perf
-	byteResponse, _ := json.Marshal(response)
-	stringResponse := string(byteResponse)
+	if httpCode >= http.StatusInternalServerError || r.logger.Level() == zapcore.DebugLevel {
+		byteResponse, _ := json.Marshal(response)
+		stringResponse := string(byteResponse)
 
-	if httpCode >= http.StatusInternalServerError {
-		span.SetStatus(codes.Error, stringResponse)
-		span.RecordError(responseError)
+		if httpCode >= http.StatusInternalServerError {
+			span.SetStatus(codes.Error, stringResponse)
+			span.RecordError(responseError)
+		}
+
+		r.logger.WithCtx(ctx).Debug(stringResponse, fields...)
 	}
-
-	r.logger.WithCtx(ctx).Debug(stringResponse, fields...)
 }
 
 func (r *httpResponseImpl) BuildError(code string, err error) *HttpErrorHandlerImpl {

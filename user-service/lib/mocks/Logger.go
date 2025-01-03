@@ -217,6 +217,51 @@ func (_c *Logger_Info_Call) RunAndReturn(run func(string, ...zapcore.Field)) *Lo
 	return _c
 }
 
+// Level provides a mock function with given fields:
+func (_m *Logger) Level() zapcore.Level {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Level")
+	}
+
+	var r0 zapcore.Level
+	if rf, ok := ret.Get(0).(func() zapcore.Level); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(zapcore.Level)
+	}
+
+	return r0
+}
+
+// Logger_Level_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Level'
+type Logger_Level_Call struct {
+	*mock.Call
+}
+
+// Level is a helper method to define mock.On call
+func (_e *Logger_Expecter) Level() *Logger_Level_Call {
+	return &Logger_Level_Call{Call: _e.mock.On("Level")}
+}
+
+func (_c *Logger_Level_Call) Run(run func()) *Logger_Level_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Logger_Level_Call) Return(_a0 zapcore.Level) *Logger_Level_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Logger_Level_Call) RunAndReturn(run func() zapcore.Level) *Logger_Level_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Log provides a mock function with given fields: debugLevel, msg, fields
 func (_m *Logger) Log(debugLevel zapcore.Level, msg string, fields ...zapcore.Field) {
 	_va := make([]interface{}, len(fields))
