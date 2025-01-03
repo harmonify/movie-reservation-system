@@ -58,6 +58,13 @@ func NewRbacHttpMiddleware(p RbacHttpMiddlewareParam) RbacHttpMiddlewareResult {
 
 // CheckPermission checks the user/domain/method/path combination from the request.
 func (m *rbacHttpMiddlewareImpl) CheckPermission(c *gin.Context) {
+	var (
+		ctx = c.Request.Context()
+	)
+
+	_, span := m.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
 	authorized, err := m.checkPermission(c)
 
 	if err != nil {

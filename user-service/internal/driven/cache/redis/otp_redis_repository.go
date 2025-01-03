@@ -57,6 +57,9 @@ func NewOtpRedisRepository(p OtpRedisRepositoryParam) OtpRedisRepositoryResult {
 }
 
 func (r *otpRedisRepositoryImpl) constructCacheKey(ctx context.Context, otpType string, userIdentifier string) (string, error) {
+	ctx, span := r.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
 	userIdHash, err := r.util.EncryptionUtil.SHA256Hasher.Hash(userIdentifier)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error("Failed to hash user identifier", zap.Error(err))
@@ -68,6 +71,9 @@ func (r *otpRedisRepositoryImpl) SaveEmailVerificationToken(
 	ctx context.Context,
 	p shared_service.SaveEmailVerificationTokenParam,
 ) error {
+	ctx, span := r.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
 	cacheKey, err := r.constructCacheKey(ctx, "email", p.Email)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error("Failed to construct email verification token cache key", zap.Error(err))
@@ -84,6 +90,9 @@ func (r *otpRedisRepositoryImpl) SaveEmailVerificationToken(
 }
 
 func (r *otpRedisRepositoryImpl) GetEmailVerificationToken(ctx context.Context, email string) (string, error) {
+	ctx, span := r.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
 	cacheKey, err := r.constructCacheKey(ctx, "email", email)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error("Failed to construct email verification token cache key", zap.Error(err))
@@ -103,6 +112,9 @@ func (r *otpRedisRepositoryImpl) GetEmailVerificationToken(ctx context.Context, 
 }
 
 func (r *otpRedisRepositoryImpl) DeleteEmailVerificationToken(ctx context.Context, email string) (bool, error) {
+	ctx, span := r.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
 	cacheKey, err := r.constructCacheKey(ctx, "email", email)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error("Failed to construct email verification token cache key", zap.Error(err))
@@ -119,6 +131,9 @@ func (r *otpRedisRepositoryImpl) DeleteEmailVerificationToken(ctx context.Contex
 }
 
 func (r *otpRedisRepositoryImpl) SavePhoneOtp(ctx context.Context, p shared_service.SavePhoneOtpParam) error {
+	ctx, span := r.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
 	cacheKey, err := r.constructCacheKey(ctx, "phone", p.PhoneNumber)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error("Failed to construct phone OTP cache key", zap.Error(err))
@@ -135,6 +150,9 @@ func (r *otpRedisRepositoryImpl) SavePhoneOtp(ctx context.Context, p shared_serv
 }
 
 func (r *otpRedisRepositoryImpl) GetPhoneOtp(ctx context.Context, phoneNumber string) (string, error) {
+	ctx, span := r.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
 	cacheKey, err := r.constructCacheKey(ctx, "phone", phoneNumber)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error("Failed to construct phone OTP cache key", zap.Error(err))
@@ -154,6 +172,9 @@ func (r *otpRedisRepositoryImpl) GetPhoneOtp(ctx context.Context, phoneNumber st
 }
 
 func (r *otpRedisRepositoryImpl) DeletePhoneOtp(ctx context.Context, phoneNumber string) (bool, error) {
+	ctx, span := r.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
 	cacheKey, err := r.constructCacheKey(ctx, "phone", phoneNumber)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error("Failed to construct phone OTP cache key", zap.Error(err))
@@ -170,6 +191,9 @@ func (r *otpRedisRepositoryImpl) DeletePhoneOtp(ctx context.Context, phoneNumber
 }
 
 func (r *otpRedisRepositoryImpl) IncrementPhoneOtpAttempt(ctx context.Context, phoneNumber string) error {
+	ctx, span := r.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
 	cacheKey, err := r.constructCacheKey(ctx, "phone-attempt", phoneNumber)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error("Failed to construct phone OTP attempt cache key", zap.Error(err))
@@ -186,6 +210,9 @@ func (r *otpRedisRepositoryImpl) IncrementPhoneOtpAttempt(ctx context.Context, p
 }
 
 func (r *otpRedisRepositoryImpl) GetPhoneOtpAttempt(ctx context.Context, phoneNumber string) (int, error) {
+	ctx, span := r.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
 	cacheKey, err := r.constructCacheKey(ctx, "phone-attempt", phoneNumber)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error("Failed to construct phone OTP attempt cache key", zap.Error(err))
@@ -211,6 +238,9 @@ func (r *otpRedisRepositoryImpl) GetPhoneOtpAttempt(ctx context.Context, phoneNu
 }
 
 func (r *otpRedisRepositoryImpl) DeletePhoneOtpAttempt(ctx context.Context, phoneNumber string) (bool, error) {
+	ctx, span := r.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
 	cacheKey, err := r.constructCacheKey(ctx, "phone-attempt", phoneNumber)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error("Failed to construct phone OTP attempt cache key", zap.Error(err))
