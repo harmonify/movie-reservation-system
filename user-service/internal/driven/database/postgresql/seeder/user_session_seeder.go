@@ -1,9 +1,7 @@
 package seeder
 
 import (
-	"database/sql"
 	"errors"
-	"time"
 
 	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/model"
@@ -11,21 +9,9 @@ import (
 	"go.uber.org/fx"
 )
 
-var (
-	expiredAt, _    = time.Parse(time.RFC3339, "2025-01-30T03:02:30Z07:00")
-	TestUserSession = model.UserSession{
-		UserUUID:     "868b606b-26d5-4c8d-ba45-9587919e059f",
-		RefreshToken: "S1QVIM/yacA4Rw56O8BRqnjPZZ7kawuHhiS9mK0+XPY",
-		IsRevoked:    false,
-		ExpiredAt:    expiredAt,
-		IpAddress:    sql.NullString{String: "", Valid: false},
-		UserAgent:    sql.NullString{String: "", Valid: false},
-	}
-)
-
 type UserSessionSeeder interface {
-	CreateUserSession(user model.User) (*model.UserSession, error)
-	DeleteUserSession(user model.User) error
+	SaveUserSession(session model.UserSession) (*model.UserSession, error)
+	DeleteAllUserSessionsByUUID(uuidString string) error
 }
 
 type UserSessionSeederParam struct {
@@ -50,11 +36,11 @@ type userSessionSeederImpl struct {
 	userSessionStorage shared_service.UserSessionStorage
 }
 
-func (s *userSessionSeederImpl) CreateUserSession(user model.User) (*model.UserSession, error) {
+func (s *userSessionSeederImpl) SaveUserSession(session model.UserSession) (*model.UserSession, error) {
 	var notFoundError *database.RecordNotFoundError
 
 	newUserSession := model.UserSession{}
-	err := s.database.DB.Unscoped().Where(model.UserSession{UserUUID: user.UUID.String()}).Assign(TestUserSession).FirstOrCreate(&newUserSession).Error
+	err := s.database.DB.Unscoped().Where(model.UserSession{UserUUID: session.UserUUID}).Assign(session).FirstOrCreate(&newUserSession).Error
 	err = s.translator.Translate(err)
 	if err != nil && !errors.As(err, &notFoundError) {
 		return nil, err
@@ -63,8 +49,8 @@ func (s *userSessionSeederImpl) CreateUserSession(user model.User) (*model.UserS
 	return &newUserSession, nil
 }
 
-func (s *userSessionSeederImpl) DeleteUserSession(user model.User) error {
-	err := s.database.DB.Unscoped().Where(model.UserSession{UserUUID: user.UUID.String()}).Delete(&model.UserSession{}).Error
+func (s *userSessionSeederImpl) DeleteAllUserSessionsByUUID(uuidString string) error {
+	err := s.database.DB.Unscoped().Where(model.UserSession{UserUUID: uuidString}).Delete(&model.UserSession{}).Error
 	err = s.translator.Translate(err)
 	if err != nil {
 		var terr *database.RecordNotFoundError

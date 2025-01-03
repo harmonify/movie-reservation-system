@@ -48,7 +48,9 @@ type AuthRestTestSuite struct {
 	authService            auth_service.AuthService
 	testUser               *model.User
 	testUserHashedPassword *model.User
+	userSessionFactory     factory.UserSessionFactory
 	userSeeder             seeder.UserSeeder
+	userSessionSeeder      seeder.UserSessionSeeder
 	userStorage            shared_service.UserStorage
 	otpStorage             shared_service.OtpStorage
 }
@@ -64,7 +66,9 @@ func (s *AuthRestTestSuite) SetupSuite() {
 			handlers http_driver.RestHandlers,
 			authService auth_service.AuthService,
 			userFactory factory.UserFactory,
+			userSessionFactory factory.UserSessionFactory,
 			userSeeder seeder.UserSeeder,
+			userSessionSeeder seeder.UserSessionSeeder,
 			userStorage shared_service.UserStorage,
 			otpStorage shared_service.OtpStorage,
 		) {
@@ -76,6 +80,8 @@ func (s *AuthRestTestSuite) SetupSuite() {
 			s.testUser = userFactory.CreateTestUser(factory.CreateTestUserParam{HashPassword: false})
 			s.testUserHashedPassword = userFactory.CreateTestUser(factory.CreateTestUserParam{HashPassword: true})
 			s.userSeeder = userSeeder
+			s.userSessionFactory = userSessionFactory
+			s.userSessionSeeder = userSessionSeeder
 			s.userStorage = userStorage
 			s.otpStorage = otpStorage
 		}),
@@ -479,6 +485,230 @@ func (s *AuthRestTestSuite) TestAuthRest_PostLogin() {
 			}
 			if testCase.Expectation.ResponseBodyAccessTokenDurationExist.Valid {
 				s.Require().Equal(testCase.Expectation.ResponseBodyAccessTokenDurationExist.Bool, resultBody.Get("access_token_duration").Exists())
+			}
+			if testCase.Expectation.ResponseBodyErrorCode.Valid {
+				s.Require().Equal(testCase.Expectation.ResponseBodyErrorCode.String, responseError.Get("code").String())
+			}
+			if testCase.Expectation.ResponseBodyErrorMessage.Valid {
+				s.Require().Equal(testCase.Expectation.ResponseBodyErrorMessage.String, responseError.Get("message").String())
+			}
+			if testCase.Expectation.ResponseBodyErrorObject != nil {
+				s.Require().True(responseError.Get("errors").IsArray(), "Expected 'errors' to be an array")
+			}
+		})
+	}
+}
+
+func (s *AuthRestTestSuite) TestAuthRest_GetToken() {
+	var (
+		PATH                   = "/v1/token"
+		METHOD                 = "GET"
+		refreshTokenCookieName = http_constant.HttpCookiePrefix + "token"
+	)
+
+	testCases := []test_interface.HttpTestCase[any, getTokenTestExpectation]{
+		{
+			Description: "Refresh token exist should return a 200 OK response",
+			Expectation: test_interface.ResponseExpectation[getTokenTestExpectation]{
+				ResponseStatusCode: test_interface.NullInt{Int: http.StatusOK, Valid: true},
+				ResponseBodyStatus: test_interface.NullBool{Bool: true, Valid: true},
+				ResponseBodyResult: getTokenTestExpectation{
+					AccessTokenExist:         test_interface.NullBool{Bool: true, Valid: true},
+					AccessTokenDurationExist: test_interface.NullBool{Bool: true, Valid: true},
+				},
+			},
+			BeforeCall: func(req *http.Request) {
+				session, hashedRefreshToken := s.userSessionFactory.CreateUserSession(factory.CreateUserSessionParam{
+					UserUUID:         s.testUser.UUID.String(),
+					HashRefreshToken: false,
+				})
+				s.Require().Less(time.Now(), session.ExpiredAt)
+				unhashedRefreshToken := session.RefreshToken
+				session.RefreshToken = hashedRefreshToken
+				session, err := s.userSessionSeeder.SaveUserSession(*session)
+				s.Require().NoError(err)
+				req.AddCookie(&http.Cookie{
+					Name:     refreshTokenCookieName,
+					Value:    unhashedRefreshToken,
+					Path:     "/user/token",
+					Domain:   "localhost",
+					MaxAge:   2592000,
+					HttpOnly: true,
+					Secure:   true,
+				})
+			},
+		},
+		{
+			Description: "Refresh token not exist should return a 401 Unauthorized response",
+			Expectation: test_interface.ResponseExpectation[getTokenTestExpectation]{
+				ResponseStatusCode: test_interface.NullInt{Int: http.StatusUnauthorized, Valid: true},
+				ResponseBodyStatus: test_interface.NullBool{Bool: false, Valid: true},
+				ResponseBodyResult: getTokenTestExpectation{
+					AccessTokenExist:         test_interface.NullBool{Bool: false, Valid: true},
+					AccessTokenDurationExist: test_interface.NullBool{Bool: false, Valid: true},
+				},
+				ResponseBodyErrorCode:    test_interface.NullString{String: "INVALID_REFRESH_TOKEN", Valid: true},
+				ResponseBodyErrorMessage: test_interface.NullString{String: "Your session is expired. Please login again.", Valid: true},
+				ResponseBodyErrorObject:  make([]interface{}, 0),
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		s.Run(testCase.Description, func() {
+			if _, err := s.userSeeder.SaveUser(*s.testUserHashedPassword); err != nil {
+				s.T().Log("Failed to create test user before call")
+			}
+			defer func() {
+				if err := s.userSeeder.DeleteUser(s.testUser.Username); err != nil {
+					s.T().Log("Failed to delete test user before call")
+				}
+			}()
+
+			jsonPayload, err := json.Marshal(testCase.Config)
+			s.Require().NoError(err)
+
+			req, err := http.NewRequest(METHOD, PATH, bytes.NewBuffer(jsonPayload))
+			s.Require().NoError(err)
+
+			req.Header.Set("Content-Type", "application/json")
+
+			if testCase.BeforeCall != nil {
+				testCase.BeforeCall(req)
+			}
+
+			w := httptest.NewRecorder()
+			s.httpServer.Gin.ServeHTTP(w, req)
+
+			if testCase.AfterCall != nil {
+				testCase.AfterCall(w)
+			}
+			bodyString := w.Body.String()
+
+			s.Require().True(
+				gjson.Valid(bodyString),
+				fmt.Sprintf("response body should be a valid JSON, but got %s", bodyString),
+			)
+			body := gjson.Parse(bodyString)
+			status := body.Get("success").Bool()
+			responseError := body.Get("error")
+			resultBody := body.Get("result")
+
+			if testCase.Expectation.ResponseStatusCode.Valid {
+				s.Require().Equal(testCase.Expectation.ResponseStatusCode.Int, w.Result().StatusCode)
+			}
+			if testCase.Expectation.ResponseBodyStatus.Valid {
+				s.Require().Equal(testCase.Expectation.ResponseBodyStatus.Bool, status)
+			}
+			if testCase.Expectation.ResponseBodyResult.AccessTokenExist.Valid {
+				s.Require().Equal(testCase.Expectation.ResponseBodyResult.AccessTokenExist.Bool, resultBody.Get("access_token").Exists())
+			}
+			if testCase.Expectation.ResponseBodyResult.AccessTokenDurationExist.Valid {
+				s.Require().Equal(testCase.Expectation.ResponseBodyResult.AccessTokenDurationExist.Bool, resultBody.Get("access_token_duration").Exists())
+			}
+			if testCase.Expectation.ResponseBodyErrorCode.Valid {
+				s.Require().Equal(testCase.Expectation.ResponseBodyErrorCode.String, responseError.Get("code").String())
+			}
+			if testCase.Expectation.ResponseBodyErrorMessage.Valid {
+				s.Require().Equal(testCase.Expectation.ResponseBodyErrorMessage.String, responseError.Get("message").String())
+			}
+			if testCase.Expectation.ResponseBodyErrorObject != nil {
+				s.Require().True(responseError.Get("errors").IsArray(), "Expected 'errors' to be an array")
+			}
+		})
+	}
+}
+
+func (s *AuthRestTestSuite) TestAuthRest_PostLogout() {
+	var (
+		PATH                   = "/v1/logout"
+		METHOD                 = "POST"
+		refreshTokenCookieName = http_constant.HttpCookiePrefix + "token"
+	)
+
+	testCases := []test_interface.HttpTestCase[any, any]{
+		{
+			Description: "Refresh token exist should return a 200 OK response",
+			Expectation: test_interface.ResponseExpectation[any]{
+				ResponseStatusCode: test_interface.NullInt{Int: http.StatusOK, Valid: true},
+				ResponseBodyStatus: test_interface.NullBool{Bool: true, Valid: true},
+			},
+			BeforeCall: func(req *http.Request) {
+				session, hashedRefreshToken := s.userSessionFactory.CreateUserSession(factory.CreateUserSessionParam{
+					UserUUID:         s.testUser.UUID.String(),
+					HashRefreshToken: false,
+				})
+				unhashedRefreshToken := session.RefreshToken
+				session.RefreshToken = hashedRefreshToken
+				session, err := s.userSessionSeeder.SaveUserSession(*session)
+				s.Require().NoError(err)
+				req.AddCookie(&http.Cookie{
+					Name:     refreshTokenCookieName,
+					Value:    unhashedRefreshToken,
+					Path:     "/user/token",
+					Domain:   "localhost",
+					MaxAge:   86400,
+					HttpOnly: true,
+					Secure:   true,
+				})
+			},
+		},
+		{
+			Description: "Refresh token not exist should return a 400 Bad Request response",
+			Expectation: test_interface.ResponseExpectation[any]{
+				ResponseStatusCode:       test_interface.NullInt{Int: http.StatusBadRequest, Valid: true},
+				ResponseBodyStatus:       test_interface.NullBool{Bool: false, Valid: true},
+				ResponseBodyErrorCode:    test_interface.NullString{String: "REFRESH_TOKEN_ALREADY_EXPIRED", Valid: true},
+				ResponseBodyErrorMessage: test_interface.NullString{String: "Your session is already expired.", Valid: true},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		s.Run(testCase.Description, func() {
+			if _, err := s.userSeeder.SaveUser(*s.testUserHashedPassword); err != nil {
+				s.T().Log("Failed to create test user before call")
+			}
+			defer func() {
+				if err := s.userSeeder.DeleteUser(s.testUser.Username); err != nil {
+					s.T().Log("Failed to delete test user before call")
+				}
+			}()
+
+			jsonPayload, err := json.Marshal(testCase.Config)
+			s.Require().NoError(err)
+
+			req, err := http.NewRequest(METHOD, PATH, bytes.NewBuffer(jsonPayload))
+			s.Require().NoError(err)
+
+			req.Header.Set("Content-Type", "application/json")
+
+			if testCase.BeforeCall != nil {
+				testCase.BeforeCall(req)
+			}
+
+			w := httptest.NewRecorder()
+			s.httpServer.Gin.ServeHTTP(w, req)
+
+			if testCase.AfterCall != nil {
+				testCase.AfterCall(w)
+			}
+
+			bodyString := w.Body.String()
+
+			s.Require().True(
+				gjson.Valid(bodyString),
+				fmt.Sprintf("response body should be a valid JSON, but got %s", bodyString),
+			)
+			body := gjson.Parse(bodyString)
+			status := body.Get("success").Bool()
+			responseError := body.Get("error")
+
+			if testCase.Expectation.ResponseStatusCode.Valid {
+				s.Require().Equal(testCase.Expectation.ResponseStatusCode.Int, w.Result().StatusCode)
+			}
+			if testCase.Expectation.ResponseBodyStatus.Valid {
+				s.Require().Equal(testCase.Expectation.ResponseBodyStatus.Bool, status)
 			}
 			if testCase.Expectation.ResponseBodyErrorCode.Valid {
 				s.Require().Equal(testCase.Expectation.ResponseBodyErrorCode.String, responseError.Get("code").String())

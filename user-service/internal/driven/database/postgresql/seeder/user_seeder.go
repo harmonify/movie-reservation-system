@@ -91,7 +91,7 @@ func (s *userSeederImpl) DeleteUser(username string) error {
 		return err
 	}
 
-	err = s.userSessionSeeder.DeleteUserSession(user)
+	err = s.userSessionSeeder.DeleteAllUserSessionsByUUID(user.UUID.String())
 	if err != nil {
 		return err
 	}

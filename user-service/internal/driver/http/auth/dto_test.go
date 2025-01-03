@@ -40,4 +40,9 @@ type (
 	postLoginTestExpectation struct {
 		Result auth_rest.PostLoginRes
 	}
+
+	getTokenTestExpectation struct {
+		AccessTokenExist         test_interface.NullBool
+		AccessTokenDurationExist test_interface.NullBool
+	}
 )
