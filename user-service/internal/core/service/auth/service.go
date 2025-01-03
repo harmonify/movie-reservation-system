@@ -308,8 +308,14 @@ func (s *authServiceImpl) Logout(ctx context.Context, p LogoutParam) error {
 	ctx, span := s.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	// Revoke user session, if exists
-	err := s.userSessionStorage.RevokeSession(ctx, p.RefreshToken)
+	hashedRefreshToken, err := s.util.EncryptionUtil.SHA256Hasher.Hash(p.RefreshToken)
+	if err != nil {
+		s.logger.WithCtx(ctx).Error("Failed to hash refresh token with SHA256", zap.Error(err))
+		return err
+	}
+
+	// Revoke user session if exists
+	err = s.userSessionStorage.RevokeSession(ctx, hashedRefreshToken)
 	if err != nil {
 		s.logger.WithCtx(ctx).Error(err.Error())
 		return err
