@@ -1,15 +1,19 @@
 package jwt_util_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/harmonify/movie-reservation-system/user-service/lib/config"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/test"
 	test_interface "github.com/harmonify/movie-reservation-system/user-service/lib/test/interface"
+	"github.com/harmonify/movie-reservation-system/user-service/lib/util/encryption"
+	generator_util "github.com/harmonify/movie-reservation-system/user-service/lib/util/generator"
 	jwt_util "github.com/harmonify/movie-reservation-system/user-service/lib/util/jwt"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/fx"
 )
 
 var (
@@ -51,17 +55,19 @@ s9p4IL/SMg4wTe+lzvn19aM7s3W1MJnUNwIDAQAB
 -----END RSA PUBLIC KEY-----`
 )
 
-func TestJWTUtil(t *testing.T) {
+func TestJwtUtil(t *testing.T) {
 	if os.Getenv("CI") == "true" && os.Getenv("INTEGRATION_TEST") != "true" {
 		t.Skip("Skipping test")
 	}
 
-	suite.Run(t, new(JWTUtilTestSuite))
+	suite.Run(t, new(JwtUtilTestSuite))
 }
 
 type jwtSignTestConfig struct {
 	Data jwt_util.JWTSignParam
 }
+
+type jwtVerifyTestSetup func() jwt_util.JwtUtil
 
 type jwtVerifyTestConfig struct {
 	Data jwt_util.JWTSignParam
@@ -71,50 +77,54 @@ type jwtVerifyTestExpectation struct {
 	Result jwt_util.JWTBodyPayload
 }
 
-type JWTUtilTestSuite struct {
+type JwtUtilTestSuite struct {
 	suite.Suite
-	app     any
-	cfg     *config.Config
+	app     *fx.App
 	jwtUtil jwt_util.JwtUtil
 }
 
-func (s *JWTUtilTestSuite) SetupSuite() {
-	s.app = test.NewTestApp(s.invoker, s.mock()...)
+func (s *JwtUtilTestSuite) SetupSuite() {
+	s.app = fx.New(
+		fx.Provide(func() *config.Config {
+			return &config.Config{
+				AppSecret:       "1233334556905407",
+				ServiceBaseUrl:  "http://localhost:8080",
+				AppJwtAudiences: "http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084",
+			}
+		}),
+		generator_util.GeneratorUtilModule,
+		encryption.EncryptionModule,
+		fx.Invoke(func(config *config.Config, encryption *encryption.Encryption) {
+			s.jwtUtil, _ = jwt_util.NewJwtUtil(encryption, config)
+		}),
+	)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	if err := s.app.Start(ctx); err != nil {
+		s.T().Fatal(">> App failed to start. Error:", err)
+	}
 }
 
-func (t *JWTUtilTestSuite) invoker(
-	cfg *config.Config,
-	jwtUtil jwt_util.JwtUtil,
+func (t *JwtUtilTestSuite) invoker(
+	encryption encryption.Encryption,
 ) {
-	t.cfg = &config.Config{
-		AppName:   "JWT Util Tester",
-		AppSecret: "1234567891123456",
-	}
-	t.jwtUtil = jwtUtil
 }
 
-func (s *JWTUtilTestSuite) mock() []any {
-	// s.mockExample = mocks.NewExample(s.T())
-	return []any{
-		// func() interfaces.Example { return s.mockExample },
-	}
-}
-
-func (s *JWTUtilTestSuite) TestJWTSign() {
+func (s *JwtUtilTestSuite) TestJwtUtil_JWTSign() {
 	testCases := []test_interface.TestCase[jwtSignTestConfig, any]{
 		{
 			Description: "Should return no error",
 			Config: jwtSignTestConfig{
 				Data: jwt_util.JWTSignParam{
 					BodyPayload: jwt_util.JWTBodyPayload{
-						UUID:        "testUserID",
-						Username:    "test_user",
-						Email:       "test@example.com",
-						PhoneNumber: "081234567890",
+						UUID: "testUserID",
+						// Username:    "test_user",
+						// Email:       "test@example.com",
+						// PhoneNumber: "081234567890",
 					},
 					ExpInSeconds: 15,
 					PrivateKey:   []byte(TEST_PRIVATE_KEY),
-					SecretKey:    s.cfg.AppSecret,
 				},
 			},
 		},
@@ -141,29 +151,41 @@ func (s *JWTUtilTestSuite) TestJWTSign() {
 	}
 }
 
-func (s *JWTUtilTestSuite) TestJWTVerify() {
-	testCases := []test_interface.TestCase[jwtVerifyTestConfig, jwtVerifyTestExpectation]{
+func (s *JwtUtilTestSuite) TestJwtUtil_JWTVerify() {
+	testCases := []struct {
+		Description string
+		Setup       func() jwt_util.JwtUtil
+		Config      jwtVerifyTestConfig
+		Expectation jwtVerifyTestExpectation
+	}{
 		{
 			Description: "Should return no error",
+			Setup: func() jwt_util.JwtUtil {
+				jwtUtil, err := buildJwtUtil(&config.Config{
+					AppSecret:      "1233334556905407",
+					ServiceBaseUrl: "http://localhost:8080",
+				})
+				s.Require().Nil(err)
+				return jwtUtil
+			},
 			Config: jwtVerifyTestConfig{
 				Data: jwt_util.JWTSignParam{
 					BodyPayload: jwt_util.JWTBodyPayload{
-						UUID:        "testUserID",
-						Username:    "test_user",
-						Email:       "test@example.com",
-						PhoneNumber: "081234567890",
+						UUID: "testUserID",
+						// Username:    "test_user",
+						// Email:       "test@example.com",
+						// PhoneNumber: "081234567890",
 					},
-					ExpInSeconds: 15,
+					ExpInSeconds: 5,
 					PrivateKey:   []byte(TEST_PRIVATE_KEY),
-					SecretKey:    s.cfg.AppSecret,
 				},
 			},
 			Expectation: jwtVerifyTestExpectation{
 				Result: jwt_util.JWTBodyPayload{
-					UUID:        "testUserID",
-					Username:    "test_user",
-					Email:       "test@example.com",
-					PhoneNumber: "081234567890",
+					UUID: "testUserID",
+					// Username:    "test_user",
+					// Email:       "test@example.com",
+					// PhoneNumber: "081234567890",
 				},
 			},
 		},
@@ -171,10 +193,6 @@ func (s *JWTUtilTestSuite) TestJWTVerify() {
 
 	for _, testCase := range testCases {
 		s.Run(testCase.Description, func() {
-			if testCase.BeforeCall != nil {
-				testCase.BeforeCall(testCase.Config)
-			}
-
 			token, err := s.jwtUtil.JWTSign(testCase.Config.Data)
 
 			s.Assert().Nil(err)
@@ -185,10 +203,6 @@ func (s *JWTUtilTestSuite) TestJWTVerify() {
 
 			payload, err := s.jwtUtil.JWTVerify(token)
 
-			if testCase.AfterCall != nil {
-				testCase.AfterCall()
-			}
-
 			s.Assert().Nil(err)
 			if err != nil {
 				fmt.Println(err.Error())
@@ -196,9 +210,35 @@ func (s *JWTUtilTestSuite) TestJWTVerify() {
 			}
 
 			s.Require().Equal(testCase.Expectation.Result.UUID, payload.UUID)
-			s.Require().Equal(testCase.Expectation.Result.Username, payload.Username)
-			s.Require().Equal(testCase.Expectation.Result.Email, payload.Email)
-			s.Require().Equal(testCase.Expectation.Result.PhoneNumber, payload.PhoneNumber)
+			// s.Require().Equal(testCase.Expectation.Result.Username, payload.Username)
+			// s.Require().Equal(testCase.Expectation.Result.Email, payload.Email)
+			// s.Require().Equal(testCase.Expectation.Result.PhoneNumber, payload.PhoneNumber)
 		})
 	}
+}
+
+func buildJwtUtil(cfg *config.Config) (jwt_util.JwtUtil, error) {
+	var jwtUtil jwt_util.JwtUtil
+	var err error
+
+	app := fx.New(
+		fx.Provide(func() *config.Config {
+			return cfg // Use the provided configuration
+		}),
+		generator_util.GeneratorUtilModule,
+		encryption.EncryptionModule,
+		fx.Invoke(func(config *config.Config, encryption *encryption.Encryption) {
+			jwtUtil, err = jwt_util.NewJwtUtil(encryption, cfg)
+		}),
+	)
+
+	if err != nil {
+		return jwtUtil, err
+	}
+
+	if err := app.Start(context.Background()); err != nil {
+		return jwtUtil, err
+	}
+
+	return jwtUtil, nil
 }

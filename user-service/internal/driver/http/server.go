@@ -56,13 +56,13 @@ type httpMethodPath struct {
 func NewHttpServer(p HttpServerParam) (HttpServerResult, error) {
 	gin := gin.New()
 
-	readTimeout, err := time.ParseDuration(p.Config.HttpReadTimeOut)
+	readTimeout, err := time.ParseDuration(p.Config.ServiceHttpReadTimeOut)
 	if err != nil {
 		p.Logger.Error(fmt.Sprintf("HTTP: Failed to parse HTTP read timeout. Error: %v", err))
 		return HttpServerResult{}, err
 	}
 
-	writeTimeout, err := time.ParseDuration(p.Config.HttpWriteTimeOut)
+	writeTimeout, err := time.ParseDuration(p.Config.ServiceHttpWriteTimeOut)
 	if err != nil {
 		p.Logger.Error(fmt.Sprintf("HTTP: Failed to parse HTTP write timeout. Error: %v", err))
 		return HttpServerResult{}, err
@@ -71,7 +71,7 @@ func NewHttpServer(p HttpServerParam) (HttpServerResult, error) {
 	h := &HttpServer{
 		Gin: gin,
 		Server: &http.Server{
-			Addr:         ":" + p.Config.AppPort,
+			Addr:         ":" + p.Config.ServicePort,
 			Handler:      gin,
 			ReadTimeout:  time.Second * readTimeout,
 			WriteTimeout: time.Second * writeTimeout,
@@ -90,10 +90,10 @@ func NewHttpServer(p HttpServerParam) (HttpServerResult, error) {
 
 func (h *HttpServer) Start(ctx context.Context, handlers ...http_interface.RestHandler) error {
 	h.Configure(handlers...)
-	h.logger.WithCtx(ctx).Info(">> HTTP server run on port: " + h.cfg.AppPort)
+	h.logger.WithCtx(ctx).Info(">> HTTP server run on port: " + h.cfg.ServicePort)
 	var err error
 	if err = h.Server.ListenAndServe(); err == nil {
-		h.logger.WithCtx(ctx).Info(">> HTTP server started on port " + h.cfg.AppPort)
+		h.logger.WithCtx(ctx).Info(">> HTTP server started on port " + h.cfg.ServicePort)
 	} else {
 		h.logger.WithCtx(ctx).Error(">> HTTP server failed to start. Error: " + err.Error())
 	}
@@ -181,7 +181,7 @@ func (h *HttpServer) configureMiddlewares() {
 }
 
 func (h *HttpServer) configureCorsMiddleware(c *gin.Context) {
-	if h.cfg.EnableCors {
+	if h.cfg.ServiceEnableCors {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
@@ -197,7 +197,7 @@ func (h *HttpServer) configureCorsMiddleware(c *gin.Context) {
 }
 
 func (h *HttpServer) registerRoutes(handlers ...http_interface.RestHandler) {
-	baseGroup := h.Gin.Group(h.cfg.BasePath)
+	baseGroup := h.Gin.Group(h.cfg.ServiceBasePath)
 	groupMap := map[string]*gin.RouterGroup{}
 	for _, handler := range handlers {
 		version := "v" + handler.Version()

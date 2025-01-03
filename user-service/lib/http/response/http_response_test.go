@@ -15,6 +15,7 @@ import (
 	test_interface "github.com/harmonify/movie-reservation-system/user-service/lib/test/interface"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
 	struct_util "github.com/harmonify/movie-reservation-system/user-service/lib/util/struct"
+	"github.com/harmonify/movie-reservation-system/user-service/lib/util/validation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"go.opentelemetry.io/otel"
@@ -203,7 +204,7 @@ func (s *ResponseTestSuite) TestBuildError(t *testing.T) {
 func (s *ResponseTestSuite) TestBuildErrorValidation(t *testing.T) {
 	t.Run("Should build error correctly", func(t *testing.T) {
 		err := errors.New("test error")
-		handler := s.response.BuildValidationError("test_code", err, []response.BaseValidationErrorSchema{
+		handler := s.response.BuildValidationError("test_code", err, []validation.BaseValidationErrorSchema{
 			{
 				Field:   "error",
 				Message: "test error",

@@ -25,10 +25,6 @@ type (
 		AccessTokenDuration int    `json:"access_token_duration"` // in seconds
 	}
 
-	GetTokenReq struct {
-		RefreshToken string `json:"refresh_token" validate:"required"`
-	}
-
 	GetTokenRes struct {
 		AccessToken         string `json:"access_token"`
 		AccessTokenDuration int    `json:"access_token_duration"` // in seconds

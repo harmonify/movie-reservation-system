@@ -70,7 +70,7 @@ func (h *authRestHandlerImpl) PostRegister(c *gin.Context) {
 	ctx, span := h.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	if err = h.validator.Validate(c, &body); err != nil {
+	if err = h.validator.ValidateRequestBody(c, &body); err != nil {
 		h.response.Send(c, nil, err)
 		return
 	}
@@ -97,7 +97,7 @@ func (h *authRestHandlerImpl) PostVerifyEmail(c *gin.Context) {
 	ctx, span := h.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	if err = h.validator.Validate(c, &body); err != nil {
+	if err = h.validator.ValidateRequestBody(c, &body); err != nil {
 		h.response.Send(c, nil, err)
 		return
 	}
@@ -123,7 +123,7 @@ func (h *authRestHandlerImpl) PostLogin(c *gin.Context) {
 	ctx, span := h.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	if err = h.validator.Validate(c, &params); err != nil {
+	if err = h.validator.ValidateRequestBody(c, &params); err != nil {
 		h.response.Send(c, nil, err)
 		return
 	}
@@ -155,21 +155,23 @@ func (h *authRestHandlerImpl) PostLogin(c *gin.Context) {
 
 func (h *authRestHandlerImpl) GetToken(c *gin.Context) {
 	var (
-		ctx    = c.Request.Context()
-		params GetTokenReq
-		err    error
+		ctx = c.Request.Context()
+		err error
 	)
 
 	ctx, span := h.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	if err = h.validator.Validate(c, &params); err != nil {
+	cookieName := constant.HttpCookiePrefix + "token"
+	refreshToken, err := c.Cookie(cookieName)
+	if err != nil {
+		err = h.response.BuildError(auth_service.InvalidRefreshToken, err)
 		h.response.Send(c, nil, err)
 		return
 	}
 
 	data, err := h.authService.GetToken(ctx, auth_service.GetTokenParam{
-		RefreshToken: params.RefreshToken,
+		RefreshToken: refreshToken,
 	})
 	if err != nil {
 		h.response.Send(c, nil, err)

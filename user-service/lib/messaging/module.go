@@ -11,6 +11,6 @@ var MessagingModule = fx.Module(
 	),
 )
 
-func NewMessager(p MessagerParam) MessagerResult {
+func NewMessager(p MessagerParam) (MessagerResult, error) {
 	return NewTwilioMessager(p)
 }

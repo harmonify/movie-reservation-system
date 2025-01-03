@@ -105,13 +105,12 @@ func (s *tokenServiceImpl) GenerateAccessToken(ctx context.Context, p GenerateAc
 	}
 	accessToken, err := s.util.JWTUtil.JWTSign(jwt_util.JWTSignParam{
 		ExpInSeconds: s.AccessTokenDuration,
-		SecretKey:    s.config.AppSecret,
 		PrivateKey:   []byte(decryptedPrivateKey),
 		BodyPayload: jwt_util.JWTBodyPayload{
-			UUID:        p.UUID,
-			Username:    p.Username,
-			Email:       p.Email,
-			PhoneNumber: p.PhoneNumber,
+			UUID: p.UUID,
+			// Username:    p.Username,
+			// Email:       p.Email,
+			// PhoneNumber: p.PhoneNumber,
 		},
 	})
 	if err != nil {

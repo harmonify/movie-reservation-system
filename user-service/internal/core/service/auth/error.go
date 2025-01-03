@@ -8,23 +8,27 @@ import (
 )
 
 var (
-	DuplicateUsername    = "DUPLICATE_USERNAME"
-	DuplicateEmail       = "DUPLICATE_EMAIL"
-	DuplicatePhoneNumber = "DUPLICATE_PHONE_NUMBER"
-	InvalidUsername      = "INVALID_USERNAME"
-	InvalidEmail         = "INVALID_EMAIL"
-	InvalidPhoneNumber   = "INVALID_PHONE_NUMBER"
-	UnverifiedEmail      = "UNVERIFIED_EMAIL"
-	IncorrectPassword    = "INCORRECT_PASSWORD"
+	DuplicateUsername     = "DUPLICATE_USERNAME"
+	DuplicateEmail        = "DUPLICATE_EMAIL"
+	DuplicatePhoneNumber  = "DUPLICATE_PHONE_NUMBER"
+	InvalidUsername       = "INVALID_USERNAME"
+	InvalidEmail          = "INVALID_EMAIL"
+	InvalidPhoneNumber    = "INVALID_PHONE_NUMBER"
+	UnverifiedEmail       = "UNVERIFIED_EMAIL"
+	UnverifiedPhoneNumber = "UNVERIFIED_PHONE_NUMBER"
+	IncorrectPassword     = "INCORRECT_PASSWORD"
+	InvalidRefreshToken   = "INVALID_REFRESH_TOKEN"
 
-	ErrDuplicateUsername    = errors.New(DuplicateUsername)
-	ErrDuplicateEmail       = errors.New(DuplicateEmail)
-	ErrDuplicatePhoneNumber = errors.New(DuplicatePhoneNumber)
-	ErrInvalidUsername      = errors.New(InvalidUsername)
-	ErrInvalidEmail         = errors.New(InvalidEmail)
-	ErrInvalidPhoneNumber   = errors.New(InvalidPhoneNumber)
-	ErrUnverifiedEmail      = errors.New(UnverifiedEmail)
-	ErrIncorrectPassword    = errors.New(IncorrectPassword)
+	ErrDuplicateUsername     = errors.New(DuplicateUsername)
+	ErrDuplicateEmail        = errors.New(DuplicateEmail)
+	ErrDuplicatePhoneNumber  = errors.New(DuplicatePhoneNumber)
+	ErrInvalidUsername       = errors.New(InvalidUsername)
+	ErrInvalidEmail          = errors.New(InvalidEmail)
+	ErrInvalidPhoneNumber    = errors.New(InvalidPhoneNumber)
+	ErrUnverifiedEmail       = errors.New(UnverifiedEmail)
+	ErrUnverifiedPhoneNumber = errors.New(UnverifiedPhoneNumber)
+	ErrIncorrectPassword     = errors.New(IncorrectPassword)
+	ErrInvalidRefreshToken   = errors.New(InvalidRefreshToken)
 
 	AuthServiceErrorMap = error_constant.CustomErrorMap{
 		DuplicateUsername: {
@@ -39,6 +43,10 @@ var (
 			HttpCode: http.StatusBadRequest,
 			Message:  "The phone number is already registered. Please use a different phone number.",
 		},
+		InvalidUsername: {
+			HttpCode: http.StatusBadRequest,
+			Message:  "The provided username address is invalid. Please enter a valid username.",
+		},
 		InvalidEmail: {
 			HttpCode: http.StatusBadRequest,
 			Message:  "The provided email address is invalid. Please enter a valid email.",
@@ -51,9 +59,17 @@ var (
 			HttpCode: http.StatusBadRequest,
 			Message:  "Please check your email inbox to verify the account and try again.",
 		},
+		UnverifiedPhoneNumber: {
+			HttpCode: http.StatusBadRequest,
+			Message:  "Please verify your phone number and try again.",
+		},
 		IncorrectPassword: {
 			HttpCode: http.StatusBadRequest,
 			Message:  "The password you've entered is incorrect. Please try again.",
+		},
+		InvalidRefreshToken: {
+			HttpCode: http.StatusUnauthorized,
+			Message:  "Your session is expired. Please login again.",
 		},
 	}
 )

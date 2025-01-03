@@ -4,19 +4,19 @@ import (
 	"regexp"
 )
 
-type ValidationUtil interface {
+type Validator interface {
 	ValidatePhoneNumber(value string) bool
 	// Validate if the phone number is in E.164 format
 	ValidateE164PhoneNumber(value string) bool
 }
 
-type ValidationUtilImpl struct{}
+type validatorImpl struct{}
 
-func NewValidationUtil() ValidationUtil {
-	return &ValidationUtilImpl{}
+func NewValidator() Validator {
+	return &validatorImpl{}
 }
 
-func (v *ValidationUtilImpl) ValidatePhoneNumber(value string) bool {
+func (v *validatorImpl) ValidatePhoneNumber(value string) bool {
 	// Define an ultimate regex for phone numbers
 	// This regex allows for country codes, spaces, dashes, parentheses, and extensions
 	phoneRegex := `^(\+?[1-9]\d{0,2})?[-.●\s]?\(?\d{1,4}\)?[-.●\s]?\d{1,4}[-.●\s]?\d{1,9}(?:\s?(ext|x|extension)\s?\d{1,5})?$`
@@ -24,7 +24,7 @@ func (v *ValidationUtilImpl) ValidatePhoneNumber(value string) bool {
 	return re.MatchString(value)
 }
 
-func (v *ValidationUtilImpl) ValidateE164PhoneNumber(value string) bool {
+func (v *validatorImpl) ValidateE164PhoneNumber(value string) bool {
 	// E.164 regex: starts with a '+' followed by 1 to 15 digits
 	e164Regex := regexp.MustCompile(`^\+[1-9]\d{1,14}$`)
 	return e164Regex.MatchString(value)

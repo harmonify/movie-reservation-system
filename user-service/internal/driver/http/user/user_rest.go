@@ -102,7 +102,7 @@ func (h *userRestHandlerImpl) PatchUser(c *gin.Context) {
 	ctx, span := h.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	if err = h.validator.Validate(c, &body); err != nil {
+	if err = h.validator.ValidateRequestBody(c, &body); err != nil {
 		h.response.Send(c, nil, err)
 		return
 	}

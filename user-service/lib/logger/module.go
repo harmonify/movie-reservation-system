@@ -1,28 +1,22 @@
 package logger
 
 import (
-	"context"
-
 	"fmt"
 	"time"
 
 	"github.com/harmonify/movie-reservation-system/user-service/lib/config"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
-type Logger interface {
-	GetZapLogger() *zap.Logger
-	WithCtx(ctx context.Context) Logger
-	Error(msg string, fields ...zap.Field)
-	Warn(msg string, fields ...zap.Field)
-	Info(msg string, fields ...zap.Field)
-	Debug(msg string, fields ...zap.Field)
-	Log(debugLevel zapcore.Level, msg string, fields ...zap.Field)
-}
+func NewLogger(cfg *config.Config) (Logger, error) {
+	if cfg.LogLevel == "" {
+		return nil, fmt.Errorf("Log level is required")
+	}
+	if cfg.LogType == "" {
+		return nil, fmt.Errorf("Log type is required")
+	}
 
-func NewLogger(cfg *config.Config) Logger {
 	zapConfig := zap.NewProductionConfig()
 	// zapConfig.EncoderConfig.CallerKey = zapcore.OmitKey
 
@@ -36,10 +30,13 @@ func NewLogger(cfg *config.Config) Logger {
 	switch cfg.LogType {
 	case "console":
 		{
-			return NewConsoleLogger()
+			return NewConsoleLogger(), nil
 		}
 	default:
 		{
+			if cfg.LokiUrl == "" {
+				return nil, fmt.Errorf("Loki URL is required")
+			}
 			logger, err := NewLokiLogger(zapConfig, LokiConfig{
 				Url:          cfg.LokiUrl,
 				BatchMaxSize: 1000,
@@ -48,10 +45,10 @@ func NewLogger(cfg *config.Config) Logger {
 			})
 
 			if err != nil {
-				fmt.Printf("%s", err)
+				return nil, err
 			}
 
-			return logger
+			return logger, nil
 		}
 	}
 }

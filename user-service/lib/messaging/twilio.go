@@ -21,7 +21,14 @@ type twilioMessagerImpl struct {
 	util   *util.Util
 }
 
-func NewTwilioMessager(p MessagerParam) MessagerResult {
+func NewTwilioMessager(p MessagerParam) (MessagerResult, error) {
+	if p.Config.TwilioAccountSid == "" {
+		return MessagerResult{}, fmt.Errorf("TwilioAccountSid is empty")
+	}
+	if p.Config.TwilioAuthToken == "" {
+		return MessagerResult{}, fmt.Errorf("TwilioAuthToken is empty")
+	}
+
 	client := twilio.NewRestClientWithParams(twilio.ClientParams{
 		Username: p.Config.TwilioAccountSid,
 		Password: p.Config.TwilioAuthToken,
@@ -35,7 +42,7 @@ func NewTwilioMessager(p MessagerParam) MessagerResult {
 			tracer: p.Tracer,
 			util:   p.Util,
 		},
-	}
+	}, nil
 }
 
 func (s *twilioMessagerImpl) Send(ctx context.Context, message Message) (id string, err error) {

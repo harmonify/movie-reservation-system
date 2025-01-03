@@ -12,9 +12,8 @@ import (
 	"go.uber.org/fx"
 )
 
-// This is a function to initialize all services and invoke their functions.
-// It accepts a generic type of invoker, so you can specify some modules to be mocked in the test file
-func NewTestApp(invoker interface{}, overrideConstructors ...any) *fx.App {
+// This is a function to initialize all components of the library.
+func NewTestApp(p ...fx.Option) *fx.App {
 	options := []fx.Option{
 		fx.Provide(
 			func() *config.ConfigFile {
@@ -34,13 +33,12 @@ func NewTestApp(invoker interface{}, overrideConstructors ...any) *fx.App {
 		// Invoke the function
 		fx.Invoke(logger.NewLogger),
 		fx.Invoke(tracer.InitTracer),
-		fx.Invoke(invoker),
 	}
 
 	// Override dependencies
-	if len(overrideConstructors) > 0 {
-		for _, c := range overrideConstructors {
-			options = append(options, fx.Decorate(c))
+	if len(p) > 0 {
+		for _, c := range p {
+			options = append(options, c)
 		}
 	}
 
