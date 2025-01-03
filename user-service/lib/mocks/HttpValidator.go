@@ -20,12 +20,12 @@ func (_m *HttpValidator) EXPECT() *HttpValidator_Expecter {
 	return &HttpValidator_Expecter{mock: &_m.Mock}
 }
 
-// Validate provides a mock function with given fields: c, schema
-func (_m *HttpValidator) Validate(c *gin.Context, schema interface{}) error {
+// ValidateRequestBody provides a mock function with given fields: c, schema
+func (_m *HttpValidator) ValidateRequestBody(c *gin.Context, schema interface{}) error {
 	ret := _m.Called(c, schema)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Validate")
+		panic("no return value specified for ValidateRequestBody")
 	}
 
 	var r0 error
@@ -38,41 +38,41 @@ func (_m *HttpValidator) Validate(c *gin.Context, schema interface{}) error {
 	return r0
 }
 
-// HttpValidator_Validate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Validate'
-type HttpValidator_Validate_Call struct {
+// HttpValidator_ValidateRequestBody_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ValidateRequestBody'
+type HttpValidator_ValidateRequestBody_Call struct {
 	*mock.Call
 }
 
-// Validate is a helper method to define mock.On call
+// ValidateRequestBody is a helper method to define mock.On call
 //   - c *gin.Context
 //   - schema interface{}
-func (_e *HttpValidator_Expecter) Validate(c interface{}, schema interface{}) *HttpValidator_Validate_Call {
-	return &HttpValidator_Validate_Call{Call: _e.mock.On("Validate", c, schema)}
+func (_e *HttpValidator_Expecter) ValidateRequestBody(c interface{}, schema interface{}) *HttpValidator_ValidateRequestBody_Call {
+	return &HttpValidator_ValidateRequestBody_Call{Call: _e.mock.On("ValidateRequestBody", c, schema)}
 }
 
-func (_c *HttpValidator_Validate_Call) Run(run func(c *gin.Context, schema interface{})) *HttpValidator_Validate_Call {
+func (_c *HttpValidator_ValidateRequestBody_Call) Run(run func(c *gin.Context, schema interface{})) *HttpValidator_ValidateRequestBody_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(*gin.Context), args[1].(interface{}))
 	})
 	return _c
 }
 
-func (_c *HttpValidator_Validate_Call) Return(_a0 error) *HttpValidator_Validate_Call {
+func (_c *HttpValidator_ValidateRequestBody_Call) Return(_a0 error) *HttpValidator_ValidateRequestBody_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *HttpValidator_Validate_Call) RunAndReturn(run func(*gin.Context, interface{}) error) *HttpValidator_Validate_Call {
+func (_c *HttpValidator_ValidateRequestBody_Call) RunAndReturn(run func(*gin.Context, interface{}) error) *HttpValidator_ValidateRequestBody_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ValidateQueryParams provides a mock function with given fields: c, schema
-func (_m *HttpValidator) ValidateQueryParams(c *gin.Context, schema interface{}) error {
+// ValidateRequestQuery provides a mock function with given fields: c, schema
+func (_m *HttpValidator) ValidateRequestQuery(c *gin.Context, schema interface{}) error {
 	ret := _m.Called(c, schema)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ValidateQueryParams")
+		panic("no return value specified for ValidateRequestQuery")
 	}
 
 	var r0 error
@@ -85,31 +85,31 @@ func (_m *HttpValidator) ValidateQueryParams(c *gin.Context, schema interface{})
 	return r0
 }
 
-// HttpValidator_ValidateQueryParams_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ValidateQueryParams'
-type HttpValidator_ValidateQueryParams_Call struct {
+// HttpValidator_ValidateRequestQuery_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ValidateRequestQuery'
+type HttpValidator_ValidateRequestQuery_Call struct {
 	*mock.Call
 }
 
-// ValidateQueryParams is a helper method to define mock.On call
+// ValidateRequestQuery is a helper method to define mock.On call
 //   - c *gin.Context
 //   - schema interface{}
-func (_e *HttpValidator_Expecter) ValidateQueryParams(c interface{}, schema interface{}) *HttpValidator_ValidateQueryParams_Call {
-	return &HttpValidator_ValidateQueryParams_Call{Call: _e.mock.On("ValidateQueryParams", c, schema)}
+func (_e *HttpValidator_Expecter) ValidateRequestQuery(c interface{}, schema interface{}) *HttpValidator_ValidateRequestQuery_Call {
+	return &HttpValidator_ValidateRequestQuery_Call{Call: _e.mock.On("ValidateRequestQuery", c, schema)}
 }
 
-func (_c *HttpValidator_ValidateQueryParams_Call) Run(run func(c *gin.Context, schema interface{})) *HttpValidator_ValidateQueryParams_Call {
+func (_c *HttpValidator_ValidateRequestQuery_Call) Run(run func(c *gin.Context, schema interface{})) *HttpValidator_ValidateRequestQuery_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(*gin.Context), args[1].(interface{}))
 	})
 	return _c
 }
 
-func (_c *HttpValidator_ValidateQueryParams_Call) Return(_a0 error) *HttpValidator_ValidateQueryParams_Call {
+func (_c *HttpValidator_ValidateRequestQuery_Call) Return(_a0 error) *HttpValidator_ValidateRequestQuery_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *HttpValidator_ValidateQueryParams_Call) RunAndReturn(run func(*gin.Context, interface{}) error) *HttpValidator_ValidateQueryParams_Call {
+func (_c *HttpValidator_ValidateRequestQuery_Call) RunAndReturn(run func(*gin.Context, interface{}) error) *HttpValidator_ValidateRequestQuery_Call {
 	_c.Call.Return(run)
 	return _c
 }
