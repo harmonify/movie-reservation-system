@@ -1,163 +1,359 @@
 openapi: "3.0.3"
 
 info:
-  title: API Title
-  version: "1.0"
+    title: User Service API
+    version: "1.0.0"
+    description: User Service API for user registration, login, and profile management
+    license:
+        name: MIT
+        url: https://github.com/harmonify/movie-reservation-system/blob/main/LICENSE
 
 servers:
-  - url: http://localhost:8100
+    - url: http://localhost:8100
 
 paths:
-  /v1/register:
-    post:
-      summary: Register a new user
-      operationId: registerUser
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                username:
-                  type: string
-                  example: "john.doe"
-                password:
-                  type: string
-                  example: "password"
-                email:
-                  type: string
-                  example: "john.doe@example.com"
-                phone_number:
-                  type: string
-                  example: "+62891234567890"
-                first_name:
-                  type: string
-                  example: "John"
-                last_name:
-                  type: string
-                  example: "Doe"
-              required:
-                - username
-                - password
-                - email
-                - phone_number
-                - first_name
-                - last_name
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StandardHttpResponse"
-  /v1/login:
-    post:
-      summary: Login to the system
-      operationId: loginUser
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                username:
-                  type: string
-                  example: "john.doe"
-                password:
-                  type: string
-                  example: "password"
-              required:
-                - username
-                - password
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StandardHttpResponse"
-                properties:
-                  result:
+    /v1/register:
+        post:
+            summary: Register a new user
+            operationId: registerUser
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                username:
+                                    type: string
+                                    example: "john.doe"
+                                password:
+                                    type: string
+                                    example: "password"
+                                email:
+                                    type: string
+                                    example: "john.doe@example.com"
+                                phone_number:
+                                    type: string
+                                    example: "+62891234567890"
+                                first_name:
+                                    type: string
+                                    example: "John"
+                                last_name:
+                                    type: string
+                                    example: "Doe"
+                            required:
+                                - username
+                                - password
+                                - email
+                                - phone_number
+                                - first_name
+                                - last_name
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/StandardHttpResponse"
+
+    /v1/forgot-password:
+        post:
+            summary: Request a password reset
+            operationId: forgotPassword
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                username:
+                                    type: string
+                                    example: "john.doe"
+                            required:
+                                - username
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/StandardHttpResponse"
+
+    /v1/reset-password:
+        post:
+            summary: Reset user password
+            operationId: resetPassword
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                verification_code:
+                                    type: string
+                                    example: "123456"
+                                password:
+                                    type: string
+                                    example: "newpassword"
+                            required:
+                                - verification_code
+                                - password
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/StandardHttpResponse"
+
+    /v1/login:
+        post:
+            summary: Login to the system
+            operationId: loginUser
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                username:
+                                    type: string
+                                    example: "john.doe"
+                                password:
+                                    type: string
+                                    example: "password"
+                            required:
+                                - username
+                                - password
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/StandardHttpResponse"
+                                properties:
+                                    result:
+                                        type: object
+                                        properties:
+                                            access_token:
+                                                type: string
+                                                example: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJNb3ZpZSBSZXNlcnZhdGlvbiBTeXN0ZW0iLCJzdWIiOiI4NjhiNjA2Yi0yNmQ1LTRjOGQtYmE0NS05NTg3OTE5ZTA1OWYiLCJleHAiOjE3MzU3ODc4MzEsIm5iZiI6MTczNTc4NjkzMSwiaWF0IjoxNzM1Nzg2OTMxLCJkYXRhIjp7InV1aWQiOiI4NjhiNjA2Yi0yNmQ1LTRjOGQtYmE0NS05NTg3OTE5ZTA1OWYiLCJ1c2VybmFtZSI6InVzZXIxMjM0IiwiZW1haWwiOiJ1c2VyMTIzNEBleGFtcGxlLmNvbSIsInBob25lTnVtYmVyIjoiKzYyODEyMzQ1Njc4OTAifSwicHVibGljS2V5IjoiLS0tLS1CRUdJTiBSU0EgUFVCTElDIEtFWS0tLS0tXG5NSUlCQ2dLQ0FRRUFtSngzaUJkdWpDazM3Q0tIUG92R0ZtYXZzbk1BTEYzSVFDaVJxUm1UTXBIRzZpMzE3dUd4XG5sYW1FQVBtN3RmV3VWdW55MnZydWNKS0VYU2xpaFYycmZrRHZ2VFV2M3JVcXBkQmI2WmFGaGFwNm5qY1IzWjRvXG45dGJyQ1Z2MXVPcG42WGQvRVMvVmdkUjREb01EYW9NNm5NUVAwWlBwTmdGTjcxVy95b1BPcEtjUlo0c2txcWJTXG5jL1RUMWdmQUdpT0JSZkhsMmR3Sjl2bytGUHJLWEh0L2xVTUgwaDV6ZldSSGpTUVhCYXVNaHRZUjAwTjBwOU9lXG5xeHlHa2RiT3hRV2VhaUx6dEl0Zk1SQnNMckNBTkw3bXNRMEdDcTBNeHpRSFNUQXVmYzFtSEwwK2hrQXdEcFo1XG5DdHBLUGpHRjU0V1VHdWVPa2RGLzllS1J3YTQwWVhFajhRSURBUUFCXG4tLS0tLUVORCBSU0EgUFVCTElDIEtFWS0tLS0tXG4ifQ.lmP5gsVjZZTeifah-QVlzhA1luPrmjBcFKUfaZquix36GiXDTBRf1GgC6DvssPhNL3rX4wcgbkFtsnSyBjLeKE_6Epb2MNzu-sxIlIc4sXZSsVGj8gP3gbj4MlTdutiUXr_MPfoZQn9oC4N2qhST_UlXI5906u8KeDHumx99_wSJaSdS7Qf-mg_LaXHq5cF6fqKVpl7ZzaPSV4QT2TnPkyAWjZzh5rdXwW2C-wputFbBquYHm1MUqj84V7KdqDvZSVgd1yF4N2OAslX6Zgcn9GecFaX3P7rwPtp1SzzAWqNHmWoOS2zaDwrzpbMVlZyGyuGUje35HUlJz1_oJ-uADg"
+                                            access_token_duration:
+                                                type: integer
+                                                example: 900
+                    headers:
+                        Set-Cookie:
+                            description: Refresh token cookie
+                            schema:
+                                type: string
+                                description: "Set cookie with the name 'mvs_token', value of random 32 bytes length in base64, Max-Age of 30 days, Domain of the application host, Path of /user/token, Secure, and HttpOnly"
+                                example: "mvs_token=f0HDMhxvS9kI9pDUq2tbCg076to3ktAgXBVUSjOLSMM=; Max-Age=2592000; Domain=localhost; Path=/user/token; Secure; HttpOnly;"
+
+    /v1/register/verify:
+        get:
+            summary: Resend user registration verification link
+            operationId: resendUserRegistrationVerification
+            parameters:
+                - in: header
+                  name: X-username
+                  schema:
+                      type: string
+                - name: verification_code
+                  in: query
+                  required: true
+                  schema:
+                      type: string
+                      example: "123456"
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/StandardHttpResponse"
+        post:
+            summary: Verify user registration
+            operationId: verifyUserRegistration
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                verification_code:
+                                    type: string
+                                    example: "123456"
+                            required:
+                                - verification_code
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/StandardHttpResponse"
+
+    /v1/token:
+        post:
+            summary: Refresh access token
+            operationId: refreshToken
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                refresh_token:
+                                    type: string
+                                    example: "f0HDMhxvS9kI9pDUq2tbCg076to3ktAgXBVUSjOLSMM="
+                            required:
+                                - refresh_token
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/StandardHttpResponse"
+                                properties:
+                                    result:
+                                        type: object
+                                        properties:
+                                            access_token:
+                                                type: string
+                                                example: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJNb3ZpZSBSZXNlcnZhdGlvbiBTeXN0ZW0iLCJzdWIiOiI4NjhiNjA2Yi0yNmQ1LTRjOGQtYmE0NS05NTg3OTE5ZTA1OWYiLCJleHAiOjE3MzU3ODc4MzEsIm5iZiI6MTczNTc4NjkzMSwiaWF0IjoxNzM1Nzg2OTMxLCJkYXRhIjp7InV1aWQiOiI4NjhiNjA2Yi0yNmQ1LTRjOGQtYmE0NS05NTg3OTE5ZTA1OWYiLCJ1c2VybmFtZSI6InVzZXIxMjM0IiwiZW1haWwiOiJ1c2VyMTIzNEBleGFtcGxlLmNvbSIsInBob25lTnVtYmVyIjoiKzYyODEyMzQ1Njc4OTAifSwicHVibGljS2V5IjoiLS0tLS1CRUdJTiBSU0EgUFVCTElDIEtFWS0tLS0tXG5NSUlCQ2dLQ0FRRUFtSngzaU"
+
+    /v1/logout:
+        post:
+            summary: Logout from the system
+            operationId: logoutUser
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/StandardHttpResponse"
+
+    /v1/profile:
+        get:
+            summary: Get user profile
+            operationId: getUserProfile
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/StandardHttpResponse"
+                                properties:
+                                    result:
+                                        type: object
+                                        properties:
+                                            username:
+                                                type: string
+                                                example: "john.doe"
+                                            email:
+                                                type: string
+                                                example: "john.doe@example.com"
+        patch:
+            summary: Update user profile
+            operationId: updateUserProfile
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                email:
+                                    type: string
+                                    example: "john.doe@example.com"
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/StandardHttpResponse"
+                                properties:
+                                    result:
+                                        type: object
+                                        properties:
+                                            username:
+                                                type: string
+                                                example: "john.doe"
+                                            email:
+                                                type: string
+                                                example: "john.doe@example.com"
+components:
+    securitySchemes:
+        Authorization:
+            type: http
+            scheme: bearer
+            bearerFormat: JWT
+            description: JWT Authorization header
+    schemas:
+        StandardHttpResponse:
+            description: Standard HTTP Response
+            type: object
+            properties:
+                success:
+                    type: boolean
+                    example: true
+                traceId:
+                    type: string
+                    example: b9794da0-f46f-4810-b3bc-5cbba602d6b1
+                error:
                     type: object
                     properties:
-                      access_token:
-                        type: string
-                        example: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJNb3ZpZSBSZXNlcnZhdGlvbiBTeXN0ZW0iLCJzdWIiOiI4NjhiNjA2Yi0yNmQ1LTRjOGQtYmE0NS05NTg3OTE5ZTA1OWYiLCJleHAiOjE3MzU3ODc4MzEsIm5iZiI6MTczNTc4NjkzMSwiaWF0IjoxNzM1Nzg2OTMxLCJkYXRhIjp7InV1aWQiOiI4NjhiNjA2Yi0yNmQ1LTRjOGQtYmE0NS05NTg3OTE5ZTA1OWYiLCJ1c2VybmFtZSI6InVzZXIxMjM0IiwiZW1haWwiOiJ1c2VyMTIzNEBleGFtcGxlLmNvbSIsInBob25lTnVtYmVyIjoiKzYyODEyMzQ1Njc4OTAifSwicHVibGljS2V5IjoiLS0tLS1CRUdJTiBSU0EgUFVCTElDIEtFWS0tLS0tXG5NSUlCQ2dLQ0FRRUFtSngzaUJkdWpDazM3Q0tIUG92R0ZtYXZzbk1BTEYzSVFDaVJxUm1UTXBIRzZpMzE3dUd4XG5sYW1FQVBtN3RmV3VWdW55MnZydWNKS0VYU2xpaFYycmZrRHZ2VFV2M3JVcXBkQmI2WmFGaGFwNm5qY1IzWjRvXG45dGJyQ1Z2MXVPcG42WGQvRVMvVmdkUjREb01EYW9NNm5NUVAwWlBwTmdGTjcxVy95b1BPcEtjUlo0c2txcWJTXG5jL1RUMWdmQUdpT0JSZkhsMmR3Sjl2bytGUHJLWEh0L2xVTUgwaDV6ZldSSGpTUVhCYXVNaHRZUjAwTjBwOU9lXG5xeHlHa2RiT3hRV2VhaUx6dEl0Zk1SQnNMckNBTkw3bXNRMEdDcTBNeHpRSFNUQXVmYzFtSEwwK2hrQXdEcFo1XG5DdHBLUGpHRjU0V1VHdWVPa2RGLzllS1J3YTQwWVhFajhRSURBUUFCXG4tLS0tLUVORCBSU0EgUFVCTElDIEtFWS0tLS0tXG4ifQ.lmP5gsVjZZTeifah-QVlzhA1luPrmjBcFKUfaZquix36GiXDTBRf1GgC6DvssPhNL3rX4wcgbkFtsnSyBjLeKE_6Epb2MNzu-sxIlIc4sXZSsVGj8gP3gbj4MlTdutiUXr_MPfoZQn9oC4N2qhST_UlXI5906u8KeDHumx99_wSJaSdS7Qf-mg_LaXHq5cF6fqKVpl7ZzaPSV4QT2TnPkyAWjZzh5rdXwW2C-wputFbBquYHm1MUqj84V7KdqDvZSVgd1yF4N2OAslX6Zgcn9GecFaX3P7rwPtp1SzzAWqNHmWoOS2zaDwrzpbMVlZyGyuGUje35HUlJz1_oJ-uADg"
-                      access_token_duration:
-                        type: integer
-                        example: 900
-          headers:
-            Set-Cookie:
-              description: Refresh token cookie
-              schema:
-                type: string
-                description: "Set cookie with the name 'mvs_token', value of random 32 bytes length in base64, Max-Age of 30 days, Domain of the application host, Path of /user/token, Secure, and HttpOnly"
-                example: "mvs_token=f0HDMhxvS9kI9pDUq2tbCg076to3ktAgXBVUSjOLSMM=; Max-Age=2592000; Domain=localhost; Path=/user/token; Secure; HttpOnly;"
-
-components:
-  securitySchemes:
-    Authorization:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: JWT Authorization header
-  schemas:
-    StandardHttpResponse:
-      description: Standard HTTP Response
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        traceId:
-          type: string
-          example: b9794da0-f46f-4810-b3bc-5cbba602d6b1
-        error:
-          type: object
-          properties:
-            code:
-              type: string
-              example: INVALID_REQUEST_BODY
-            message:
-              type: string
-              example: "Please ensure you have filled all the information required and try again. If the problem persists, please contact our technical support."
-            errors:
-              type: array
-              items:
-                type: object
-                properties:
-                  field:
-                    type: string
-                    example: username
-                  message:
-                    type: string
-                    example: Username is required
-          example:
-            code: INVALID_REQUEST_BODY
-            message: "Please ensure you have filled all the information required and try again. If the problem persists, please contact our technical support."
-            errors:
-              - field: username
-                message: Username is required
-              - field: password
-                message: Password is required
-        metadata:
-          type: object
-          example:
-            page: 1
-            limit: 10
-            total: 0
-            totalPages: 0
-        result:
-          type: object
-          example: {}
-      required:
-        - success
-        - traceId
-      example:
-        success: true
-        traceId: b9794da0-f46f-4810-b3bc-5cbba602d6b1
-        error: {}
-        result: {}
-        metadata: {}
+                        code:
+                            type: string
+                            example: INVALID_REQUEST_BODY
+                        message:
+                            type: string
+                            example: "Please ensure you have filled all the information required and try again. If the problem persists, please contact our technical support."
+                        errors:
+                            type: array
+                            items:
+                                type: object
+                                properties:
+                                    field:
+                                        type: string
+                                        example: username
+                                    message:
+                                        type: string
+                                        example: Username is required
+                    example:
+                        code: INVALID_REQUEST_BODY
+                        message: "Please ensure you have filled all the information required and try again. If the problem persists, please contact our technical support."
+                        errors:
+                            - field: username
+                              message: Username is required
+                            - field: password
+                              message: Password is required
+                metadata:
+                    type: object
+                    example:
+                        page: 1
+                        limit: 10
+                        total: 0
+                        totalPages: 0
+                result:
+                    type: object
+                    example: {}
+            required:
+                - success
+                - traceId
+            example:
+                success: true
+                traceId: b9794da0-f46f-4810-b3bc-5cbba602d6b1
+                error: {}
+                result: {}
+                metadata: {}

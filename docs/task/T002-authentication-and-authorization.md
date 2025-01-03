@@ -8,10 +8,13 @@ Build authentication and authorization features on user service.
   - [x] JWT
   - [x] `POST /v1/register`
     - [ ] ~~OAuth and Google Idp?~~
-  - [x] `POST /v1/register/verify`
+  - [ ] `POST /v1/forgot-password`
+  - [ ] `POST /v1/reset-password`
   - [x] `POST /v1/login`
-  - [x] `POST /v1/logout`
+  - [ ] `GET /v1/register/verify`
+  - [x] `POST /v1/register/verify`
   - [x] `GET /v1/token`
+  - [x] `POST /v1/logout`
   - [ ] `GET /v1/profile`
   - [ ] `PATCH /v1/profile`
 - [x] Authorization

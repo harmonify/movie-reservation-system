@@ -2,28 +2,42 @@
 !theme plain
 skinparam style strictuml
 hide footbox
+
+title Sequence Diagram - Login
+
 actor User
-User -> AuthRest ++ : POST /auth/login
+boundary Client
+box "User Service"
+control AuthRest
+participant AuthService
+participant TokenService
+collections Util
+database Storage
+end box
+
+User -> Client ++ : Input username, password
+Client -> AuthRest ++ : POST /v1/login
+
 AuthRest -> AuthService ++ : Login(username, password)
 
 AuthService -> Storage ++ : Find user by username param
 return user, error (if exist)
 
-AuthService -> EncryptionUtil ++ : Compare password param with user hashed password
+AuthService -> Util ++ : Compare password param with user hashed password
 return match (bool), error (if exist)
 
 AuthService -> TokenService ++ : Generate access token
-TokenService -> JWTUtil ++ : Generate JWT
-JWTUtil -> JWTUtil : Decrypt AES-encrypted user private key
-JWTUtil -> JWTUtil : Parse user RSA private key from PEM
-JWTUtil -> JWTUtil : Decrypt user public key
-JWTUtil -> JWTUtil : Create new JWT with claims\niss=app URI\nsub=user UUID\naud=user RSA public key\nexp=15 minutes in the future in unix\nnbf=now in unix\niat=now in unix\njti=random hex string
+TokenService -> Util ++ : Generate JWT
+Util -> Util : Decrypt AES-encrypted user private key
+Util -> Util : Parse user RSA private key from PEM
+Util -> Util : Decrypt user public key
+Util -> Util : Create new JWT with claims\niss=app URI\nsub=user UUID\naud=user RSA public key\nexp=15 minutes in the future (unix)\nnbf=now (unix)\niat=now (unix)\njti=random hex string
 return jwt
 return access token
 
-AuthService -> GeneratorUtil ++ : Generate refresh token
+AuthService -> Util ++ : Generate refresh token
 return random base64
-AuthService -> EncryptionUtil ++ : Hash refresh token
+AuthService -> Util ++ : Hash refresh token
 return hashed refresh token
 
 AuthService -> Storage ++ : Store hashed refresh token
@@ -31,4 +45,4 @@ return error, if exist
 
 return login result\n- access token\n- access token duration\n- refresh token\n- refresh token expiry time
 
-return refresh token as HTTPS-only cookie & access token\n(and its duration) as HTTP response
+return - refresh token as HTTPS-only cookie\n- access token (and its duration)
