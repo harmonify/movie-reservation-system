@@ -2,10 +2,10 @@ package redis
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
-	"github.com/go-redis/redis"
 	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/cache"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/config"
@@ -13,6 +13,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/util"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -91,7 +92,7 @@ func (r *otpRedisRepositoryImpl) GetEmailVerificationToken(ctx context.Context, 
 
 	token, err := r.redis.Client.Get(ctx, cacheKey).Result()
 	if err != nil {
-		if err == redis.Nil {
+		if errors.Is(err, redis.Nil) {
 			return "", error_constant.ErrNotFound
 		}
 		r.logger.WithCtx(ctx).Error("Failed to generate email verification token", zap.Error(err))
@@ -142,7 +143,7 @@ func (r *otpRedisRepositoryImpl) GetPhoneOtp(ctx context.Context, phoneNumber st
 
 	otp, err := r.redis.Client.Get(ctx, cacheKey).Result()
 	if err != nil {
-		if err == redis.Nil {
+		if errors.Is(err, redis.Nil) {
 			return "", error_constant.ErrNotFound
 		}
 		r.logger.WithCtx(ctx).Error("Failed to generate phone OTP", zap.Error(err))
@@ -193,7 +194,7 @@ func (r *otpRedisRepositoryImpl) GetPhoneOtpAttempt(ctx context.Context, phoneNu
 
 	attempt, err := r.redis.Client.Get(ctx, cacheKey).Result()
 	if err != nil {
-		if err == redis.Nil {
+		if errors.Is(err, redis.Nil) {
 			return 0, error_constant.ErrNotFound
 		}
 		r.logger.WithCtx(ctx).Error("Failed to increment phone OTP attempt", zap.Error(err))

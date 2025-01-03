@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/harmonify/movie-reservation-system/user-service/lib/database"
+	test_interface "github.com/harmonify/movie-reservation-system/user-service/lib/test/interface"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
@@ -14,9 +15,11 @@ func TestPostgresqlErrorTranslator_Translate(t *testing.T) {
 	translator := database.NewPostgresqlErrorTranslator()
 
 	tests := []struct {
-		name        string
-		inputError  error
-		expectedErr error
+		name          string
+		inputError    error
+		expectedErr   error
+		expectedErrAs test_interface.NullBool
+		expectedErrIs test_interface.NullBool
 	}{
 		{
 			name: "ForeignKeyViolation",
@@ -32,6 +35,8 @@ func TestPostgresqlErrorTranslator_Translate(t *testing.T) {
 				ReferrerTableName:    "user_keys",
 				ConstraintName:       "user_keys_fk",
 			},
+			expectedErrAs: test_interface.NullBool{Bool: true, Valid: true},
+			expectedErrIs: test_interface.NullBool{Bool: true, Valid: true},
 		},
 		{
 			name: "UniqueViolation",
@@ -43,6 +48,8 @@ func TestPostgresqlErrorTranslator_Translate(t *testing.T) {
 				ColumnName: "phone_number",
 				Value:      "+6281234567890",
 			},
+			expectedErrAs: test_interface.NullBool{Bool: true, Valid: true},
+			expectedErrIs: test_interface.NullBool{Bool: true, Valid: true},
 		},
 		{
 			name: "InvalidField",
@@ -54,6 +61,8 @@ func TestPostgresqlErrorTranslator_Translate(t *testing.T) {
 				FieldName: "expired_atz",
 				TableName: "user_sessions",
 			},
+			expectedErrAs: test_interface.NullBool{Bool: true, Valid: true},
+			expectedErrIs: test_interface.NullBool{Bool: true, Valid: true},
 		},
 		{
 			name: "CheckViolation",
@@ -64,16 +73,22 @@ func TestPostgresqlErrorTranslator_Translate(t *testing.T) {
 			expectedErr: &database.CheckConstraintViolatedError{
 				ConstraintName: "age_positive",
 			},
+			expectedErrAs: test_interface.NullBool{Bool: true, Valid: true},
+			expectedErrIs: test_interface.NullBool{Bool: true, Valid: true},
 		},
 		{
-			name:        "RecordNotFound",
-			inputError:  gorm.ErrRecordNotFound,
-			expectedErr: &database.RecordNotFoundError{},
+			name:          "RecordNotFound",
+			inputError:    gorm.ErrRecordNotFound,
+			expectedErr:   &database.RecordNotFoundError{},
+			expectedErrAs: test_interface.NullBool{Bool: true, Valid: true},
+			expectedErrIs: test_interface.NullBool{Bool: true, Valid: true},
 		},
 		{
-			name:        "UnmatchedError",
-			inputError:  errors.New("generic error"),
-			expectedErr: errors.New("generic error"),
+			name:          "UnmatchedError",
+			inputError:    errors.New("generic error"),
+			expectedErr:   errors.New("generic error"),
+			expectedErrAs: test_interface.NullBool{Valid: false},
+			expectedErrIs: test_interface.NullBool{Valid: false},
 		},
 	}
 
@@ -81,8 +96,15 @@ func TestPostgresqlErrorTranslator_Translate(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := translator.Translate(test.inputError)
 
-			// Use testify's assert to validate the results
 			assert.IsType(t, test.expectedErr, result)
+
+			if test.expectedErrAs.Valid {
+				assert.ErrorAs(t, test.expectedErr, result)
+			}
+
+			if test.expectedErrIs.Valid {
+				assert.ErrorIs(t, test.expectedErr, result)
+			}
 
 			// Additional field validation for structured errors
 			switch e := result.(type) {

@@ -2,9 +2,7 @@ package seeder
 
 import (
 	"errors"
-	"time"
 
-	"github.com/google/uuid"
 	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/model"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/database"
@@ -12,28 +10,9 @@ import (
 	"gorm.io/gorm"
 )
 
-var (
-	TestUser = model.User{
-		UUID:                  uuid.MustParse("868b606b-26d5-4c8d-ba45-9587919e059f"),
-		Username:              "user1234",
-		Password:              "$argon2id$v=19$m=65536,t=1,p=8$idhUhR61RiIephSttaskBA$qVXDMG91UIJr5qduxs5CDO1FC4A8Y8F0QwJhuWOE+tw", // user1234
-		Email:                 "user1234@example.com",
-		PhoneNumber:           "+6281234567890",
-		FirstName:             "Example",
-		LastName:              "User",
-		IsEmailVerified:       true,
-		IsPhoneNumberVerified: true,
-		CreatedAt:             time.Now(),
-		UpdatedAt:             time.Now(),
-		DeletedAt:             gorm.DeletedAt{Time: time.Time{}, Valid: false},
-	}
-)
-
 type UserSeeder interface {
-	CreateUser(user model.User) (*model.User, error)
-	DeleteUser(uuidString string) error
-	CreateTestUser() (*model.User, error)
-	DeleteTestUser() error
+	SaveUser(user model.User) (*model.User, error)
+	DeleteUser(username string) error
 }
 
 type UserSeederParam struct {
@@ -64,11 +43,10 @@ type userSeederImpl struct {
 	userSessionSeeder UserSessionSeeder
 }
 
-func (s *userSeederImpl) CreateTestUser() (*model.User, error) {
-	return s.CreateUser(TestUser)
-}
-
-func (s *userSeederImpl) CreateUser(user model.User) (*model.User, error) {
+// SaveUser saves a user to the database
+// TODO: Including the user's keys and sessions, if provided
+// This function is idempotent, meaning that it will not return an error if the user already exists
+func (s *userSeederImpl) SaveUser(user model.User) (*model.User, error) {
 	var terr *database.DuplicatedKeyError
 
 	newUser := model.User{}
@@ -92,10 +70,9 @@ func (s *userSeederImpl) CreateUser(user model.User) (*model.User, error) {
 	return &newUser, nil
 }
 
-func (s *userSeederImpl) DeleteTestUser() error {
-	return s.DeleteUser(TestUser.Username)
-}
-
+// DeleteUser deletes a user from the database
+// Including the user's keys and sessions
+// This function is idempotent, meaning that it will not return an error if the user does not exist
 func (s *userSeederImpl) DeleteUser(username string) error {
 	user := model.User{}
 

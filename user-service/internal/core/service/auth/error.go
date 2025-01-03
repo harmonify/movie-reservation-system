@@ -16,6 +16,7 @@ var (
 	InvalidPhoneNumber    = "INVALID_PHONE_NUMBER"
 	UnverifiedEmail       = "UNVERIFIED_EMAIL"
 	UnverifiedPhoneNumber = "UNVERIFIED_PHONE_NUMBER"
+	AccountNotFound       = "ACCOUNT_NOT_FOUND"
 	IncorrectPassword     = "INCORRECT_PASSWORD"
 	InvalidRefreshToken   = "INVALID_REFRESH_TOKEN"
 
@@ -27,6 +28,7 @@ var (
 	ErrInvalidPhoneNumber    = errors.New(InvalidPhoneNumber)
 	ErrUnverifiedEmail       = errors.New(UnverifiedEmail)
 	ErrUnverifiedPhoneNumber = errors.New(UnverifiedPhoneNumber)
+	ErrAccountNotFound       = errors.New(AccountNotFound)
 	ErrIncorrectPassword     = errors.New(IncorrectPassword)
 	ErrInvalidRefreshToken   = errors.New(InvalidRefreshToken)
 
@@ -63,8 +65,12 @@ var (
 			HttpCode: http.StatusBadRequest,
 			Message:  "Please verify your phone number and try again.",
 		},
+		AccountNotFound: {
+			HttpCode: http.StatusNotFound,
+			Message:  "The account you're trying to access is not found. Please register an account or check the username you've entered.",
+		},
 		IncorrectPassword: {
-			HttpCode: http.StatusBadRequest,
+			HttpCode: http.StatusForbidden,
 			Message:  "The password you've entered is incorrect. Please try again.",
 		},
 		InvalidRefreshToken: {

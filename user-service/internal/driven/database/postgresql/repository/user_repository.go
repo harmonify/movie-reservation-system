@@ -12,6 +12,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/util"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -64,7 +65,7 @@ func (r *userRepositoryImpl) SaveUser(ctx context.Context, createModel entity.Sa
 		Create(userModel)
 	err := r.pgErrTl.Translate(result.Error)
 	if err != nil {
-		r.logger.WithCtx(ctx).Error(err.Error())
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		switch e := (err).(type) {
 		case *database.DuplicatedKeyError:
 			if e.ColumnName == "username" {
@@ -88,7 +89,7 @@ func (r *userRepositoryImpl) FindUser(ctx context.Context, findModel entity.Find
 
 	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(findModel)
 	if err != nil {
-		r.logger.WithCtx(ctx).Error(err.Error())
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
 	}
 
@@ -96,7 +97,7 @@ func (r *userRepositoryImpl) FindUser(ctx context.Context, findModel entity.Find
 	result := r.database.DB.WithContext(ctx).Where(findMap).First(&userModel)
 	err = r.pgErrTl.Translate(result.Error)
 	if err != nil {
-		r.logger.WithCtx(ctx).Error(err.Error())
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
 	}
 
@@ -109,13 +110,13 @@ func (r *userRepositoryImpl) UpdateUser(ctx context.Context, findModel entity.Fi
 
 	updateMap, err := r.util.StructUtil.ConvertSqlStructToMap(updateModel)
 	if err != nil {
-		r.logger.WithCtx(ctx).Error(err.Error())
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
 	}
 
 	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(findModel)
 	if err != nil {
-		r.logger.WithCtx(ctx).Error(err.Error())
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
 	}
 
@@ -129,14 +130,14 @@ func (r *userRepositoryImpl) UpdateUser(ctx context.Context, findModel entity.Fi
 
 	err = r.pgErrTl.Translate(result.Error)
 	if err != nil {
-		r.logger.WithCtx(ctx).Error(err.Error())
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
 	}
 
 	rowsAffected := result.RowsAffected
 	if rowsAffected <= 0 {
 		err := database.NewRecordNotFoundError(gorm.ErrRecordNotFound)
-		r.logger.WithCtx(ctx).Error(err.Error())
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
 	}
 
@@ -146,7 +147,7 @@ func (r *userRepositoryImpl) UpdateUser(ctx context.Context, findModel entity.Fi
 func (r *userRepositoryImpl) SoftDeleteUser(ctx context.Context, findModel entity.FindUser) error {
 	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(findModel)
 	if err != nil {
-		r.logger.WithCtx(ctx).Error(err.Error())
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return err
 	}
 
@@ -157,14 +158,14 @@ func (r *userRepositoryImpl) SoftDeleteUser(ctx context.Context, findModel entit
 
 	err = r.pgErrTl.Translate(result.Error)
 	if err != nil {
-		r.logger.WithCtx(ctx).Error(err.Error())
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return err
 	}
 
 	rowsAffected := result.RowsAffected
 	if rowsAffected <= 0 {
 		err := database.NewRecordNotFoundError(gorm.ErrRecordNotFound)
-		r.logger.WithCtx(ctx).Error(err.Error())
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return err
 	}
 

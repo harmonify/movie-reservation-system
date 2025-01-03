@@ -50,6 +50,7 @@ func (t *postgresqlErrorTranslatorImpl) Translate(err error) error {
 	if unmarshalErr != nil {
 		return err
 	}
+	errMsg.Original = err
 
 	if translatedErr, found := t.translateErrorCode(errMsg, errMsg.Code); found {
 		return translatedErr

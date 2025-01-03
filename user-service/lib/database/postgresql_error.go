@@ -31,6 +31,7 @@ var (
 // ------------------------
 
 type ErrMessage struct {
+	Original error  `json:"-"`
 	Code     string `json:"code"`
 	Severity string `json:"severity"`
 	Message  string `json:"message"`
@@ -38,6 +39,20 @@ type ErrMessage struct {
 
 func (e ErrMessage) Error() string {
 	return e.Message
+}
+
+func (e ErrMessage) Is(err error) bool {
+	_, ok := err.(*ErrMessage)
+	return ok
+}
+
+func (e ErrMessage) As(target interface{}) bool {
+	_, ok := target.(*ErrMessage)
+	return ok
+}
+
+func (e ErrMessage) Unwrap() error {
+	return e.Original
 }
 
 // ------------------------
@@ -51,7 +66,21 @@ func (e RecordNotFoundError) Error() string {
 	return "record not found"
 }
 
-func NewRecordNotFoundError(err error) *RecordNotFoundError {
+func (e RecordNotFoundError) Is(err error) bool {
+	_, ok := err.(*RecordNotFoundError)
+	return ok
+}
+
+func (e RecordNotFoundError) As(target interface{}) bool {
+	_, ok := target.(*RecordNotFoundError)
+	return ok
+}
+
+func (e RecordNotFoundError) Unwrap() error {
+	return e.Original
+}
+
+func NewRecordNotFoundError(err error) error {
 	return &RecordNotFoundError{
 		Original: err,
 	}
@@ -71,7 +100,21 @@ func (e DuplicatedKeyError) Error() string {
 	return "duplicated key not allowed"
 }
 
-func NewDuplicatedKeyError(err error) *DuplicatedKeyError {
+func (e DuplicatedKeyError) Is(err error) bool {
+	_, ok := err.(*DuplicatedKeyError)
+	return ok
+}
+
+func (e DuplicatedKeyError) As(target interface{}) bool {
+	_, ok := target.(*DuplicatedKeyError)
+	return ok
+}
+
+func (e DuplicatedKeyError) Unwrap() error {
+	return e.Original
+}
+
+func NewDuplicatedKeyError(err error) error {
 	if pgErr, ok := err.(*pgconn.PgError); ok {
 		// Compile the regex
 		// Example PgError.Detail: "Key (phone_number)=(+6281234567890) already exists."
@@ -112,7 +155,21 @@ func (e ForeignKeyViolatedError) Error() string {
 	return "violates foreign key constraint"
 }
 
-func NewForeignKeyViolatedError(err error) *ForeignKeyViolatedError {
+func (e ForeignKeyViolatedError) Is(err error) bool {
+	_, ok := err.(*ForeignKeyViolatedError)
+	return ok
+}
+
+func (e ForeignKeyViolatedError) As(target interface{}) bool {
+	_, ok := target.(*ForeignKeyViolatedError)
+	return ok
+}
+
+func (e ForeignKeyViolatedError) Unwrap() error {
+	return e.Original
+}
+
+func NewForeignKeyViolatedError(err error) error {
 	if pgErr, ok := err.(*pgconn.PgError); ok {
 		// Compile the regex
 		// "Key (uuid)=(55f39ef0-cc97-4f37-9efc-1d0af0ad89c8) is still referenced from table \"user_keys\"."
@@ -153,7 +210,21 @@ func (e InvalidFieldError) Error() string {
 	return "invalid field"
 }
 
-func NewInvalidFieldError(err error) *InvalidFieldError {
+func (e InvalidFieldError) Is(err error) bool {
+	_, ok := err.(*InvalidFieldError)
+	return ok
+}
+
+func (e InvalidFieldError) As(target interface{}) bool {
+	_, ok := target.(*InvalidFieldError)
+	return ok
+}
+
+func (e InvalidFieldError) Unwrap() error {
+	return e.Original
+}
+
+func NewInvalidFieldError(err error) error {
 	if pgErr, ok := err.(*pgconn.PgError); ok {
 		// Compile the regex
 		// "column \"expired_atz\" of relation \"user_sessions\" does not exist"
@@ -191,7 +262,21 @@ func (e CheckConstraintViolatedError) Error() string {
 	return "violates check constraint"
 }
 
-func NewCheckConstraintViolatedError(err error) *CheckConstraintViolatedError {
+func (e CheckConstraintViolatedError) Is(err error) bool {
+	_, ok := err.(*CheckConstraintViolatedError)
+	return ok
+}
+
+func (e CheckConstraintViolatedError) As(target interface{}) bool {
+	_, ok := target.(*CheckConstraintViolatedError)
+	return ok
+}
+
+func (e CheckConstraintViolatedError) Unwrap() error {
+	return e.Original
+}
+
+func NewCheckConstraintViolatedError(err error) error {
 	if pgErr, ok := err.(*pgconn.PgError); ok {
 		return &CheckConstraintViolatedError{
 			Original:       err,

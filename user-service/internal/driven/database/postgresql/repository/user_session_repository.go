@@ -10,6 +10,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/util"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -74,7 +75,7 @@ func (r *userSessionRepositoryImpl) FindSession(ctx context.Context, findModel e
 
 	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(findModel)
 	if err != nil {
-		r.logger.WithCtx(ctx).Error(err.Error())
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
 	}
 
@@ -100,14 +101,14 @@ func (r *userSessionRepositoryImpl) RevokeSession(ctx context.Context, refreshTo
 		Updates(model.UserSession{IsRevoked: true})
 	err := r.pgErrTl.Translate(result.Error)
 	if err != nil {
-		r.logger.WithCtx(ctx).Error(err.Error())
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return err
 	}
 
 	rowsAffected := result.RowsAffected
 	if rowsAffected <= 0 {
 		err := database.NewRecordNotFoundError(gorm.ErrRecordNotFound)
-		r.logger.WithCtx(ctx).Error(err.Error())
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return err
 	}
 
@@ -122,14 +123,14 @@ func (r *userSessionRepositoryImpl) RevokeManySession(ctx context.Context, refre
 
 	err := r.pgErrTl.Translate(result.Error)
 	if err != nil {
-		r.logger.WithCtx(ctx).Error(err.Error())
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return err
 	}
 
 	rowsAffected := result.RowsAffected
 	if rowsAffected <= 0 {
 		err := database.NewRecordNotFoundError(gorm.ErrRecordNotFound)
-		r.logger.WithCtx(ctx).Error(err.Error())
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return err
 	}
 

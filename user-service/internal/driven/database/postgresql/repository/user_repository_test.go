@@ -10,8 +10,10 @@ import (
 	"github.com/harmonify/movie-reservation-system/user-service/internal"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/factory"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/model"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/seeder"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/test/interface"
+	test_interface "github.com/harmonify/movie-reservation-system/user-service/lib/test/interface"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/fx"
 )
@@ -63,17 +65,21 @@ type UserRepositoryTestSuite struct {
 	suite.Suite
 	app         *fx.App
 	userStorage shared_service.UserStorage
+	testUser    *model.User
 	userSeeder  seeder.UserSeeder
 }
 
 func (s *UserRepositoryTestSuite) SetupSuite() {
 	s.app = internal.NewApp(
+		factory.DrivenPostgresqlFactoryModule,
 		seeder.DrivenPostgresqlSeederModule,
 		fx.Invoke(func(
 			userStorage shared_service.UserStorage,
+			userFactory factory.UserFactory,
 			userSeeder seeder.UserSeeder,
 		) {
 			s.userStorage = userStorage
+			s.testUser = userFactory.CreateTestUser(factory.CreateTestUserParam{HashPassword: true})
 			s.userSeeder = userSeeder
 		}),
 	)
@@ -87,12 +93,12 @@ func (s *UserRepositoryTestSuite) SetupSuite() {
 }
 
 func (s *UserRepositoryTestSuite) SetupSubTest() {
-	_, err := s.userSeeder.CreateTestUser()
+	_, err := s.userSeeder.SaveUser(*s.testUser)
 	s.Require().Nil(err, "Failed to setup test user")
 }
 
 func (s *UserRepositoryTestSuite) TearDownSubTest() {
-	err := s.userSeeder.DeleteTestUser()
+	err := s.userSeeder.DeleteUser(s.testUser.Username)
 	s.Require().Nil(err, "Failed to teardown test user")
 }
 
@@ -173,14 +179,14 @@ func (s *UserRepositoryTestSuite) TestUserRepository_FindUser() {
 			Config: findUserTestConfig{
 				Find: &entity.FindUser{
 					UUID: sql.NullString{
-						String: seeder.TestUser.UUID.String(),
+						String: s.testUser.UUID.String(),
 						Valid:  true,
 					},
 				},
 			},
 			Expectation: findUserTestExpectation{
 				Error: nil,
-				Data:  seeder.TestUser.ToEntity(),
+				Data:  s.testUser.ToEntity(),
 			},
 		},
 		{
@@ -188,14 +194,14 @@ func (s *UserRepositoryTestSuite) TestUserRepository_FindUser() {
 			Config: findUserTestConfig{
 				Find: &entity.FindUser{
 					Email: sql.NullString{
-						String: seeder.TestUser.Email,
+						String: s.testUser.Email,
 						Valid:  true,
 					},
 				},
 			},
 			Expectation: findUserTestExpectation{
 				Error: nil,
-				Data:  seeder.TestUser.ToEntity(),
+				Data:  s.testUser.ToEntity(),
 			},
 		},
 		{
@@ -203,14 +209,14 @@ func (s *UserRepositoryTestSuite) TestUserRepository_FindUser() {
 			Config: findUserTestConfig{
 				Find: &entity.FindUser{
 					Username: sql.NullString{
-						String: seeder.TestUser.Username,
+						String: s.testUser.Username,
 						Valid:  true,
 					},
 				},
 			},
 			Expectation: findUserTestExpectation{
 				Error: nil,
-				Data:  seeder.TestUser.ToEntity(),
+				Data:  s.testUser.ToEntity(),
 			},
 		},
 		{
@@ -218,14 +224,14 @@ func (s *UserRepositoryTestSuite) TestUserRepository_FindUser() {
 			Config: findUserTestConfig{
 				Find: &entity.FindUser{
 					PhoneNumber: sql.NullString{
-						String: seeder.TestUser.PhoneNumber,
+						String: s.testUser.PhoneNumber,
 						Valid:  true,
 					},
 				},
 			},
 			Expectation: findUserTestExpectation{
 				Error: nil,
-				Data:  seeder.TestUser.ToEntity(),
+				Data:  s.testUser.ToEntity(),
 			},
 		},
 	}
@@ -259,13 +265,13 @@ func (s *UserRepositoryTestSuite) TestUserRepository_FindUser() {
 }
 
 func (s *UserRepositoryTestSuite) TestUserRepository_UpdateUser() {
-	expectedUser1 := seeder.TestUser.ToEntity()
+	expectedUser1 := s.testUser.ToEntity()
 	expectedUser1.FirstName = "Testing"
 
-	expectedUser2 := seeder.TestUser.ToEntity()
+	expectedUser2 := s.testUser.ToEntity()
 	expectedUser2.Email = "test2@example.com"
 
-	expectedUser3 := seeder.TestUser.ToEntity()
+	expectedUser3 := s.testUser.ToEntity()
 	expectedUser3.PhoneNumber = "+62812345678922"
 	expectedUser3.LastName = "User3"
 	expectedUser3.IsEmailVerified = true
@@ -277,7 +283,7 @@ func (s *UserRepositoryTestSuite) TestUserRepository_UpdateUser() {
 			Config: updateUserTestConfig{
 				Find: &entity.FindUser{
 					UUID: sql.NullString{
-						String: seeder.TestUser.UUID.String(),
+						String: s.testUser.UUID.String(),
 						Valid:  true,
 					},
 				},
@@ -295,7 +301,7 @@ func (s *UserRepositoryTestSuite) TestUserRepository_UpdateUser() {
 			Config: updateUserTestConfig{
 				Find: &entity.FindUser{
 					Email: sql.NullString{
-						String: seeder.TestUser.Email,
+						String: s.testUser.Email,
 						Valid:  true,
 					},
 				},
@@ -313,7 +319,7 @@ func (s *UserRepositoryTestSuite) TestUserRepository_UpdateUser() {
 			Config: updateUserTestConfig{
 				Find: &entity.FindUser{
 					Username: sql.NullString{
-						String: seeder.TestUser.Username,
+						String: s.testUser.Username,
 						Valid:  true,
 					},
 				},
@@ -366,7 +372,7 @@ func (s *UserRepositoryTestSuite) TestUserRepository_SoftDeleteUser() {
 			Config: softDeleteUserTestConfig{
 				Find: &entity.FindUser{
 					UUID: sql.NullString{
-						String: seeder.TestUser.UUID.String(),
+						String: s.testUser.UUID.String(),
 						Valid:  true,
 					},
 				},
@@ -380,7 +386,7 @@ func (s *UserRepositoryTestSuite) TestUserRepository_SoftDeleteUser() {
 			Config: softDeleteUserTestConfig{
 				Find: &entity.FindUser{
 					Email: sql.NullString{
-						String: seeder.TestUser.Email,
+						String: s.testUser.Email,
 						Valid:  true,
 					},
 				},
@@ -394,7 +400,7 @@ func (s *UserRepositoryTestSuite) TestUserRepository_SoftDeleteUser() {
 			Config: softDeleteUserTestConfig{
 				Find: &entity.FindUser{
 					Username: sql.NullString{
-						String: seeder.TestUser.Username,
+						String: s.testUser.Username,
 						Valid:  true,
 					},
 				},

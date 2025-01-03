@@ -3,6 +3,7 @@ package auth_service
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	otp_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/otp"
@@ -195,6 +196,10 @@ func (s *authServiceImpl) Login(ctx context.Context, p LoginParam) (*LoginResult
 	// Get user record
 	user, err := s.userStorage.FindUser(ctx, entity.FindUser{Username: sql.NullString{String: p.Username, Valid: true}})
 	if err != nil {
+		var terr *database.RecordNotFoundError
+		if errors.As(err, &terr) {
+			return nil, ErrAccountNotFound
+		}
 		s.logger.WithCtx(ctx).Error(err.Error())
 		return nil, err
 	}
