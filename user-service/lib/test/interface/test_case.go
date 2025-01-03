@@ -41,12 +41,23 @@ type (
 	ResponseExpectation[ResponseBody any] struct {
 		ResponseStatusCode       int
 		ResponseBodyStatus       NullBool
-		ResponseBodyResult       any
+		ResponseBodyResult       ResponseBody
 		ResponseBodyErrorCode    string
 		ResponseBodyErrorMessage string
 		ResponseBodyErrorObject  []response.BaseValidationErrorSchema
 	}
 
+	// similar to [database/sql#NullInt]
+	NullInt struct {
+		Int   int
+		Valid bool
+	}
+
+	// similar to [database/sql#NullString]
+	NullString struct {
+		String   string
+		Valid bool
+	}
 	// similar to [database/sql#NullBool]
 	NullBool struct {
 		Bool  bool

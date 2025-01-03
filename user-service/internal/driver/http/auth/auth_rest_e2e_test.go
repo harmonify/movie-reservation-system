@@ -3,6 +3,7 @@ package auth_rest_test
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"github.com/harmonify/movie-reservation-system/user-service/internal"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	auth_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/auth"
 	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/seeder"
@@ -52,6 +54,7 @@ type AuthRestTestSuite struct {
 	authRest    auth_rest.AuthRestHandler
 	authService auth_service.AuthService
 	userSeeder  seeder.UserSeeder
+	userStorage shared_service.UserStorage
 	otpStorage  shared_service.OtpStorage
 }
 
@@ -65,6 +68,7 @@ func (s *AuthRestTestSuite) SetupSuite() {
 			handlers http_driver.RestHandlers,
 			authService auth_service.AuthService,
 			userSeeder seeder.UserSeeder,
+			userStorage shared_service.UserStorage,
 			otpStorage shared_service.OtpStorage,
 		) {
 			s.authRest = authRest
@@ -73,6 +77,7 @@ func (s *AuthRestTestSuite) SetupSuite() {
 			s.httpServer.Configure(handlers...)
 			s.authService = authService
 			s.userSeeder = userSeeder
+			s.userStorage = userStorage
 			s.otpStorage = otpStorage
 		}),
 	)
@@ -91,7 +96,7 @@ func (s *AuthRestTestSuite) TestAuthRest_PostRegister() {
 		METHOD = "POST"
 	)
 
-	testCases := []test_interface.HttpTestCase[auth_rest.PostRegisterReq, any]{
+	testCases := []test_interface.HttpTestCase[auth_rest.PostRegisterReq, interface{}]{
 		{
 			Description: "It should return a 200 OK response",
 			Config: test_interface.Request[auth_rest.PostRegisterReq]{
@@ -104,7 +109,7 @@ func (s *AuthRestTestSuite) TestAuthRest_PostRegister() {
 					LastName:    seeder.TestUser.LastName,
 				},
 			},
-			Expectation: test_interface.ResponseExpectation[any]{
+			Expectation: test_interface.ResponseExpectation[interface{}]{
 				ResponseStatusCode: http.StatusOK,
 				ResponseBodyStatus: test_interface.NullBool{Bool: true, Valid: true},
 			},
@@ -207,7 +212,7 @@ func (s *AuthRestTestSuite) TestAuthRest_PostLogin() {
 		METHOD = "POST"
 	)
 
-	testCases := []test_interface.HttpTestCase[auth_rest.PostLoginReq, any]{
+	testCases := []test_interface.HttpTestCase[auth_rest.PostLoginReq, interface{}]{
 		{
 			Description: "It should return a 200 OK response",
 			Config: test_interface.Request[auth_rest.PostLoginReq]{
@@ -216,7 +221,7 @@ func (s *AuthRestTestSuite) TestAuthRest_PostLogin() {
 					Password: "user1234",
 				},
 			},
-			Expectation: test_interface.ResponseExpectation[any]{
+			Expectation: test_interface.ResponseExpectation[interface{}]{
 				ResponseStatusCode: http.StatusOK,
 				ResponseBodyStatus: test_interface.NullBool{Bool: true, Valid: true},
 			},
@@ -301,6 +306,153 @@ func (s *AuthRestTestSuite) TestAuthRest_PostLogin() {
 					s.Equal(errData.Field, responseError.Get("errors").Array()[i].Get("field").String())
 					s.Equal(errData.Message, responseError.Get("errors").Array()[i].Get("message").String())
 				}
+			}
+		})
+	}
+}
+
+type postVerifyEmailTestConfig func() auth_rest.PostVerifyEmailReq
+type postVerifyEmailTestExpectation struct {
+	ResponseStatusCode       test_interface.NullInt
+	ResponseBodyStatus       test_interface.NullBool
+	ResponseBodyResult       interface{}
+	ResponseBodyErrorCode    test_interface.NullString
+	ResponseBodyErrorMessage test_interface.NullString
+	ResponseBodyErrorObject  []interface{}
+	IsEmailVerified          test_interface.NullBool
+}
+
+func (s *AuthRestTestSuite) TestAuthRest_PostVerifyEmail() {
+	var (
+		PATH   = "/v1/register/verify"
+		METHOD = "POST"
+	)
+
+	testCases := []test_interface.TestCase[postVerifyEmailTestConfig, postVerifyEmailTestExpectation]{
+		{
+			Description: "It should return a 200 OK response",
+			Config: func() auth_rest.PostVerifyEmailReq {
+				token := "123456"
+				err := s.otpStorage.SaveEmailVerificationToken(context.Background(), shared_service.SaveEmailVerificationTokenParam{
+					Email: seeder.TestUser.Email,
+					Token: token,
+					TTL:   time.Minute * 5,
+				})
+				s.Require().NoError(err)
+				return auth_rest.PostVerifyEmailReq{
+					Email: seeder.TestUser.Email,
+					Token: token,
+				}
+			},
+			Expectation: postVerifyEmailTestExpectation{
+				ResponseStatusCode:       test_interface.NullInt{Int: http.StatusOK, Valid: true},
+				ResponseBodyStatus:       test_interface.NullBool{Bool: true, Valid: true},
+				ResponseBodyResult:       make(map[string]interface{}, 0),
+				ResponseBodyErrorCode:    test_interface.NullString{String: "", Valid: false},
+				ResponseBodyErrorMessage: test_interface.NullString{String: "", Valid: false},
+				IsEmailVerified: test_interface.NullBool{
+					Bool:  true,
+					Valid: true,
+				},
+			},
+		},
+		{
+			Description: "It should return a 403 Forbidden response",
+			Config: func() auth_rest.PostVerifyEmailReq {
+				token := "123456"
+				err := s.otpStorage.SaveEmailVerificationToken(context.Background(), shared_service.SaveEmailVerificationTokenParam{
+					Email: seeder.TestUser.Email,
+					Token: token,
+					TTL:   time.Minute * 5,
+				})
+				s.Require().NoError(err)
+				return auth_rest.PostVerifyEmailReq{
+					Email: seeder.TestUser.Email,
+					Token: "INCORRECT",
+				}
+			},
+			Expectation: postVerifyEmailTestExpectation{
+				ResponseStatusCode:       test_interface.NullInt{Int: http.StatusForbidden, Valid: true},
+				ResponseBodyStatus:       test_interface.NullBool{Bool: false, Valid: true},
+				ResponseBodyResult:       make(map[string]interface{}, 0),
+				ResponseBodyErrorCode:    test_interface.NullString{String: "VERIFICATION_TOKEN_INVALID", Valid: false},
+				ResponseBodyErrorMessage: test_interface.NullString{String: "Failed to verify your email. Please try to request a new verification link.", Valid: false},
+				ResponseBodyErrorObject:  make([]interface{}, 0),
+				IsEmailVerified: test_interface.NullBool{
+					Bool:  true,
+					Valid: true,
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		s.Run(testCase.Description, func() {
+			if _, err := s.userSeeder.CreateTestUser(); err != nil {
+				s.T().Log("Failed to create test user before call")
+			}
+			defer func() {
+				if err := s.userSeeder.DeleteTestUser(); err != nil {
+					s.T().Log("Failed to delete test user before call")
+				}
+			}()
+
+			jsonPayload, err := json.Marshal(testCase.Config())
+			s.Require().NoError(err)
+
+			req, err := http.NewRequest(METHOD, PATH, bytes.NewBuffer(jsonPayload))
+			s.Require().NoError(err)
+
+			req.Header.Set("Content-Type", "application/json")
+
+			if testCase.BeforeCall != nil {
+				testCase.BeforeCall(testCase.Config)
+			}
+
+			w := httptest.NewRecorder()
+			s.httpServer.Gin.ServeHTTP(w, req)
+
+			if testCase.AfterCall != nil {
+				testCase.AfterCall()
+			}
+
+			bodyString := w.Body.String()
+
+			s.Require().True(
+				gjson.Valid(bodyString),
+				fmt.Sprintf("response body should be a valid JSON, but got %s", bodyString),
+			)
+			body := gjson.Parse(bodyString)
+			status := body.Get("success").Bool()
+			responseError := body.Get("error")
+			resultBody := body.Get("result")
+
+			if testCase.Expectation.ResponseStatusCode.Valid {
+				s.Assert().Equal(testCase.Expectation.ResponseStatusCode.Int, w.Result().StatusCode)
+			}
+			if testCase.Expectation.ResponseBodyStatus.Valid {
+				s.Assert().Equal(testCase.Expectation.ResponseBodyStatus.Bool, status)
+			}
+			if testCase.Expectation.ResponseBodyResult != nil {
+				expected, err := json.Marshal(testCase.Expectation.ResponseBodyResult)
+				s.Assert().NoError(err)
+				s.Assert().JSONEq(string(expected), resultBody.Raw)
+			}
+			if testCase.Expectation.ResponseBodyErrorCode.Valid {
+				s.Assert().Equal(testCase.Expectation.ResponseBodyErrorCode.String, responseError.Get("code").String())
+			}
+			if testCase.Expectation.ResponseBodyErrorMessage.Valid {
+				s.Assert().Equal(testCase.Expectation.ResponseBodyErrorMessage.String, responseError.Get("message").String())
+			}
+			if testCase.Expectation.ResponseBodyErrorObject != nil {
+				s.Assert().True(responseError.Get("errors").IsArray(), "Expected 'errors' to be an array but got %s", responseError.Get("errors").Raw)
+			}
+			if testCase.Expectation.IsEmailVerified.Valid {
+				user, err := s.userStorage.FindUser(context.Background(), entity.FindUser{
+					Email: sql.NullString{String: seeder.TestUser.Email, Valid: true},
+				})
+				s.Assert().NoError(err)
+				s.Assert().Equal(testCase.Expectation.IsEmailVerified.Bool, user.IsEmailVerified)
 			}
 		})
 	}

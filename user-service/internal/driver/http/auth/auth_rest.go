@@ -1,7 +1,6 @@
 package auth_rest
 
 import (
-	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -104,13 +103,14 @@ func (h *authRestHandlerImpl) PostVerifyEmail(c *gin.Context) {
 
 	err = h.authService.VerifyEmail(ctx, auth_service.VerifyEmailParam{
 		Email: body.Email,
+		Token: body.Token,
 	})
 	if err != nil {
 		h.response.Send(c, nil, err)
 		return
 	}
 
-	c.Status(http.StatusNoContent)
+	h.response.Send(c, nil, nil)
 }
 
 func (h *authRestHandlerImpl) PostLogin(c *gin.Context) {
