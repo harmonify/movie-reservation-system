@@ -30,6 +30,11 @@ var (
 	EncryptionModule = fx.Module(
 		"encryption",
 		fx.Provide(
+			func() *AesGcmPbkdf2EncryptionConfig {
+				return &AesGcmPbkdf2EncryptionConfig{
+					PBKDF2Iterations: int(15000),
+				}
+			},
 			NewAESEncryption,
 
 			func() Argon2HasherConfig {

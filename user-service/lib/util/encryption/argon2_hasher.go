@@ -84,7 +84,22 @@ type argon2HasherImpl struct {
 }
 
 // Create an Argon2 hasher with recommended parameters.
-func NewArgon2Hasher(p Argon2HasherParam, cfg Argon2HasherConfig) Argon2HasherResult {
+func NewArgon2Hasher(p Argon2HasherParam, cfg Argon2HasherConfig) (Argon2HasherResult, error) {
+	if cfg.Memory <= 0 {
+		return Argon2HasherResult{}, fmt.Errorf("Memory is required")
+	}
+	if cfg.Iterations <= 0 {
+		return Argon2HasherResult{}, fmt.Errorf("Iterations is required")
+	}
+	if cfg.Parallelism <= 0 {
+		return Argon2HasherResult{}, fmt.Errorf("Parallelism is required")
+	}
+	if cfg.SaltLength <= 0 {
+		return Argon2HasherResult{}, fmt.Errorf("SaltLength is required")
+	}
+	if cfg.KeyLength <= 0 {
+		return Argon2HasherResult{}, fmt.Errorf("KeyLength is required")
+	}
 	return Argon2HasherResult{
 		Argon2Hasher: &argon2HasherImpl{
 			Memory:      cfg.Memory,
@@ -95,7 +110,7 @@ func NewArgon2Hasher(p Argon2HasherParam, cfg Argon2HasherConfig) Argon2HasherRe
 
 			generatorUtil: p.GeneratorUtil,
 		},
-	}
+	}, nil
 }
 
 // CreateHash returns an Argon2id hash of a plain-text password using the

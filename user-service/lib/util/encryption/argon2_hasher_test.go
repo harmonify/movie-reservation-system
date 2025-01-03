@@ -1,14 +1,16 @@
 package encryption_test
 
 import (
+	"context"
 	"os"
 	"testing"
 
 	"github.com/harmonify/movie-reservation-system/user-service/lib/config"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/test"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/util/encryption"
+	generator_util "github.com/harmonify/movie-reservation-system/user-service/lib/util/generator"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/fx"
 )
 
 func TestArgon2Hasher(t *testing.T) {
@@ -21,30 +23,33 @@ func TestArgon2Hasher(t *testing.T) {
 
 type Argon2HasherTestSuite struct {
 	suite.Suite
-	app          any
-	cfg          *config.Config
+	app          *fx.App
 	argon2Hasher encryption.Argon2Hasher
 }
 
 func (s *Argon2HasherTestSuite) SetupSuite() {
-	s.app = test.NewTestApp(s.invoker, s.mock()...)
-}
+	s.app = fx.New(
+		generator_util.GeneratorUtilModule,
+		fx.Provide(
+			func() *config.Config {
+				return &config.Config{
+					AppSecret: "1234567891123456",
+				}
+			},
+			func() encryption.Argon2HasherConfig {
+				return *encryption.Argon2HasherDefaultConfig
+			},
+			encryption.NewArgon2Hasher,
+		),
+		fx.Invoke(func(argon2Hasher encryption.Argon2Hasher) {
+			s.argon2Hasher = argon2Hasher
+		}),
+	)
+	ctx, cancel := context.WithTimeout(context.Background(), fx.DefaultTimeout)
+	defer cancel()
 
-func (t *Argon2HasherTestSuite) invoker(
-	cfg *config.Config,
-	argon2Hasher encryption.Argon2Hasher,
-) {
-	t.cfg = &config.Config{
-		AppName:   "RSA Encryption Tester",
-		AppSecret: "1234567891123456",
-	}
-	t.argon2Hasher = argon2Hasher
-}
-
-func (s *Argon2HasherTestSuite) mock() []any {
-	// s.mockExample = mocks.NewExample(s.T())
-	return []any{
-		// func() interfaces.Example { return s.mockExample },
+	if err := s.app.Start(ctx); err != nil {
+		s.T().Fatal(">> App failed to start. Error:", err)
 	}
 }
 

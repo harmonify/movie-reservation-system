@@ -4,9 +4,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/harmonify/movie-reservation-system/user-service/lib/test"
 	generator_util "github.com/harmonify/movie-reservation-system/user-service/lib/util/generator"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/fx"
 )
 
 func TestGeneratorUtil(t *testing.T) {
@@ -24,20 +24,12 @@ type GeneratorUtilTestSuite struct {
 }
 
 func (s *GeneratorUtilTestSuite) SetupSuite() {
-	s.app = test.NewTestApp(s.invoker, s.mock()...)
-}
-
-func (t *GeneratorUtilTestSuite) invoker(
-	generatorUtil generator_util.GeneratorUtil,
-) {
-	t.generatorUtil = generatorUtil
-}
-
-func (s *GeneratorUtilTestSuite) mock() []any {
-	// s.mockExample = mocks.NewExample(s.T())
-	return []any{
-		// func() interfaces.Example { return s.mockExample },
-	}
+	s.app = fx.New(
+		fx.Provide(generator_util.NewGeneratorUtil),
+		fx.Invoke(func(generatorUtil generator_util.GeneratorUtil) {
+			s.generatorUtil = generatorUtil
+		}),
+	)
 }
 
 func (s *GeneratorUtilTestSuite) TestGenerateRandomBytes() {

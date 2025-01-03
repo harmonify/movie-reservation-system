@@ -15,20 +15,10 @@ import (
 	"golang.org/x/crypto/pbkdf2"
 )
 
+// AES encryption with AES-GCM and PBKDF2 key derivation.
 type AESEncryption interface {
 	Encrypt(text string) (string, error)
 	Decrypt(cipherTextCompleteBase64 string) (string, error)
-}
-
-type AESPayload struct {
-	Secret  string
-	Payload string
-}
-
-type AESEncryptionResult struct {
-	fx.Out
-
-	AESEncryption AESEncryption
 }
 
 type AESEncryptionParam struct {
@@ -38,10 +28,8 @@ type AESEncryptionParam struct {
 	GeneratorUtil generator_util.GeneratorUtil
 }
 
-type AesGcmPbkdf2EncryptionParam struct {
-	GeneratorUtil    generator_util.GeneratorUtil
+type AesGcmPbkdf2EncryptionConfig struct {
 	PBKDF2Iterations int
-	Secret           string
 }
 
 type AesGcmPbkdf2EncryptionImpl struct {
@@ -50,33 +38,25 @@ type AesGcmPbkdf2EncryptionImpl struct {
 	secret           string
 }
 
-func NewAESEncryption(p AESEncryptionParam) AESEncryptionResult {
-	return AESEncryptionResult{
-		AESEncryption: NewAesGcmPbkdf2Encryption(AesGcmPbkdf2EncryptionParam{
-			GeneratorUtil:    p.GeneratorUtil,
-			PBKDF2Iterations: int(15000),
-			Secret:           p.Config.AppSecret,
-		}),
-	}
+type AesGcmPbkdf2CipherParam struct {
+	Salt             []byte // 32 bytes salt
+	PBKDF2Iterations int    // using the class PBKDF2Iterations when encrypting, and the value from the cipher text when decrypting
 }
 
-func NewAesGcmPbkdf2Encryption(p AesGcmPbkdf2EncryptionParam) *AesGcmPbkdf2EncryptionImpl {
+func NewAESEncryption(p AESEncryptionParam, cfg *AesGcmPbkdf2EncryptionConfig) (AESEncryption, error) {
+	if p.Config.AppSecret == "" {
+		return nil, fmt.Errorf("app secret is required")
+	}
 	return &AesGcmPbkdf2EncryptionImpl{
 		generatorUtil:    p.GeneratorUtil,
-		PBKDF2Iterations: p.PBKDF2Iterations,
-		secret:           p.Secret,
-	}
-}
-
-type AesGcmPbkdf2CipherParam struct {
-	Secret           []byte
-	Salt             []byte // 32 bytes salt
-	PBKDF2Iterations int
+		secret:           p.Config.AppSecret,
+		PBKDF2Iterations: cfg.PBKDF2Iterations,
+	}, nil
 }
 
 func (i *AesGcmPbkdf2EncryptionImpl) buildAesGcmCipher(p AesGcmPbkdf2CipherParam) (cipher.AEAD, error) {
 	// Derive key with PBKDF2
-	key := []byte(pbkdf2.Key(p.Secret, p.Salt, p.PBKDF2Iterations, 32, sha256.New))
+	key := []byte(pbkdf2.Key([]byte(i.secret), p.Salt, p.PBKDF2Iterations, 32, sha256.New))
 
 	// Build block cipher wrapped in GCM
 	block, err := aes.NewCipher(key)
@@ -101,7 +81,6 @@ func (i *AesGcmPbkdf2EncryptionImpl) Encrypt(text string) (string, error) {
 
 	// Build cipher
 	aesGCM, err := i.buildAesGcmCipher(AesGcmPbkdf2CipherParam{
-		Secret:           []byte(i.secret),
 		Salt:             salt,
 		PBKDF2Iterations: i.PBKDF2Iterations,
 	})
@@ -154,7 +133,6 @@ func (i *AesGcmPbkdf2EncryptionImpl) Decrypt(cipherTextCompleteBase64 string) (s
 
 	// Build cipher
 	aesGCM, err := i.buildAesGcmCipher(AesGcmPbkdf2CipherParam{
-		Secret:           []byte(i.secret),
 		Salt:             salt,
 		PBKDF2Iterations: pbkdf2Iterations,
 	})
