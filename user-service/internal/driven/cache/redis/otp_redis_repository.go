@@ -8,6 +8,7 @@ import (
 	"github.com/go-redis/redis"
 	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/cache"
+	"github.com/harmonify/movie-reservation-system/user-service/lib/config"
 	error_constant "github.com/harmonify/movie-reservation-system/user-service/lib/error/constant"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
@@ -24,6 +25,7 @@ type (
 		Logger logger.Logger
 		Tracer tracer.Tracer
 		Util   *util.Util
+		Config *config.Config
 	}
 
 	OtpRedisRepositoryResult struct {
@@ -33,20 +35,22 @@ type (
 	}
 
 	otpRedisRepositoryImpl struct {
-		redis  *cache.Redis
-		logger logger.Logger
-		tracer tracer.Tracer
-		util   *util.Util
+		redis     *cache.Redis
+		logger    logger.Logger
+		tracer    tracer.Tracer
+		util      *util.Util
+		keyPrefix string
 	}
 )
 
 func NewOtpRedisRepository(p OtpRedisRepositoryParam) OtpRedisRepositoryResult {
 	return OtpRedisRepositoryResult{
 		OtpRedisRepository: &otpRedisRepositoryImpl{
-			redis:  p.Redis,
-			logger: p.Logger,
-			tracer: p.Tracer,
-			util:   p.Util,
+			redis:     p.Redis,
+			logger:    p.Logger,
+			tracer:    p.Tracer,
+			util:      p.Util,
+			keyPrefix: p.Config.ServiceIdentifier,
 		},
 	}
 }
@@ -56,7 +60,7 @@ func (r *otpRedisRepositoryImpl) constructCacheKey(ctx context.Context, otpType 
 	if err != nil {
 		r.logger.WithCtx(ctx).Error("Failed to hash user identifier", zap.Error(err))
 	}
-	return fmt.Sprintf("otp-%s-%s", otpType, userIdHash), err
+	return fmt.Sprintf("%s:otp:%s:%s", r.keyPrefix, otpType, userIdHash), err
 }
 
 func (r *otpRedisRepositoryImpl) SaveEmailVerificationToken(
@@ -69,7 +73,7 @@ func (r *otpRedisRepositoryImpl) SaveEmailVerificationToken(
 		return err
 	}
 
-	_, err = r.redis.Client.WithContext(ctx).Set(cacheKey, p.Token, p.TTL).Result()
+	_, err = r.redis.Client.Set(ctx, cacheKey, p.Token, p.TTL).Result()
 	if err != nil {
 		r.logger.WithCtx(ctx).Error("Failed to set email verification token", zap.Error(err))
 		return err
@@ -85,7 +89,7 @@ func (r *otpRedisRepositoryImpl) GetEmailVerificationToken(ctx context.Context, 
 		return "", err
 	}
 
-	token, err := r.redis.Client.WithContext(ctx).Get(cacheKey).Result()
+	token, err := r.redis.Client.Get(ctx, cacheKey).Result()
 	if err != nil {
 		if err == redis.Nil {
 			return "", error_constant.ErrNotFound
@@ -104,7 +108,7 @@ func (r *otpRedisRepositoryImpl) DeleteEmailVerificationToken(ctx context.Contex
 		return false, err
 	}
 
-	removed, err := r.redis.Client.WithContext(ctx).Del(cacheKey).Result()
+	removed, err := r.redis.Client.Del(ctx, cacheKey).Result()
 	if err != nil {
 		r.logger.WithCtx(ctx).Error("Failed to delete email verification token", zap.Error(err))
 		return false, err
@@ -120,7 +124,7 @@ func (r *otpRedisRepositoryImpl) SavePhoneOtp(ctx context.Context, p shared_serv
 		return err
 	}
 
-	_, err = r.redis.Client.WithContext(ctx).Set(cacheKey, p.Otp, p.TTL).Result()
+	_, err = r.redis.Client.Set(ctx, cacheKey, p.Otp, p.TTL).Result()
 	if err != nil {
 		r.logger.WithCtx(ctx).Error("Failed to set phone OTP", zap.Error(err))
 		return err
@@ -136,7 +140,7 @@ func (r *otpRedisRepositoryImpl) GetPhoneOtp(ctx context.Context, phoneNumber st
 		return "", err
 	}
 
-	otp, err := r.redis.Client.WithContext(ctx).Get(cacheKey).Result()
+	otp, err := r.redis.Client.Get(ctx, cacheKey).Result()
 	if err != nil {
 		if err == redis.Nil {
 			return "", error_constant.ErrNotFound
@@ -155,7 +159,7 @@ func (r *otpRedisRepositoryImpl) DeletePhoneOtp(ctx context.Context, phoneNumber
 		return false, err
 	}
 
-	removed, err := r.redis.Client.WithContext(ctx).Del(cacheKey).Result()
+	removed, err := r.redis.Client.Del(ctx, cacheKey).Result()
 	if err != nil {
 		r.logger.WithCtx(ctx).Error("Failed to delete phone OTP", zap.Error(err))
 		return false, err
@@ -171,7 +175,7 @@ func (r *otpRedisRepositoryImpl) IncrementPhoneOtpAttempt(ctx context.Context, p
 		return err
 	}
 
-	_, err = r.redis.Client.WithContext(ctx).Incr(cacheKey).Result()
+	_, err = r.redis.Client.Incr(ctx, cacheKey).Result()
 	if err != nil {
 		r.logger.WithCtx(ctx).Error("Failed to increment phone OTP attempt", zap.Error(err))
 		return err
@@ -187,7 +191,7 @@ func (r *otpRedisRepositoryImpl) GetPhoneOtpAttempt(ctx context.Context, phoneNu
 		return 0, err
 	}
 
-	attempt, err := r.redis.Client.WithContext(ctx).Get(cacheKey).Result()
+	attempt, err := r.redis.Client.Get(ctx, cacheKey).Result()
 	if err != nil {
 		if err == redis.Nil {
 			return 0, error_constant.ErrNotFound
@@ -212,7 +216,7 @@ func (r *otpRedisRepositoryImpl) DeletePhoneOtpAttempt(ctx context.Context, phon
 		return false, err
 	}
 
-	removed, err := r.redis.Client.WithContext(ctx).Del(cacheKey).Result()
+	removed, err := r.redis.Client.Del(ctx, cacheKey).Result()
 	if err != nil {
 		r.logger.WithCtx(ctx).Error("Failed to delete phone OTP attempt", zap.Error(err))
 		return false, err

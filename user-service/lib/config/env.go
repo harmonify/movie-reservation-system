@@ -6,16 +6,17 @@ type Config struct {
 	AppName                   string `mapstructure:"APP_NAME"`
 	AppDefaultCountryDialCode string `mapstructure:"APP_DEFAULT_COUNTRY_DIAL_CODE"`
 	AppSecret                 string `mapstructure:"APP_SECRET"`
-	AppPort                   string `mapstructure:"APP_PORT"`
-	FrontEndUrl               string `mapstructure:"FRONTEND_URL"`
+	AppJwtAudiences           string `mapstructure:"APP_JWT_AUDIENCES"`
 
-	ServiceIdentifier string `mapstructure:"SERVICE_IDENTIFIER"` // any identifier, used in RBAC
-	BaseUrl           string `mapstructure:"BASE_URL"`
-	BasePath          string `mapstructure:"BASE_PATH"`
-	EnableCors        bool   `mapstructure:"ENABLE_CORS"`
+	ServiceIdentifier       string `mapstructure:"SERVICE_IDENTIFIER"` // any identifier, used in RBAC
+	ServicePort             string `mapstructure:"SERVICE_PORT"`
+	ServiceBaseUrl          string `mapstructure:"SERVICE_BASE_URL"`
+	ServiceBasePath         string `mapstructure:"SERVICE_BASE_PATH"`
+	ServiceHttpReadTimeOut  string `mapstructure:"SERVICE_HTTP_READ_TIMEOUT"`
+	ServiceHttpWriteTimeOut string `mapstructure:"SERVICE_HTTP_WRITE_TIMEOUT"`
+	ServiceEnableCors       bool   `mapstructure:"SERVICE_ENABLE_CORS"`
 
-	HttpReadTimeOut  string `mapstructure:"HTTP_READ_TIMEOUT"`
-	HttpWriteTimeOut string `mapstructure:"HTTP_WRITE_TIMEOUT"`
+	FrontEndUrl string `mapstructure:"FRONTEND_URL"`
 
 	DbHost                string `mapstructure:"PG_HOST"`
 	DbPort                int    `mapstructure:"PG_PORT"`

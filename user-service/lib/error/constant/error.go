@@ -10,9 +10,9 @@ import (
 var (
 	InvalidRequestBody      = "INVALID_REQUEST_BODY"
 	Unauthorized            = "UNAUTHORIZED"
-	InvalidJwtSigningMethod = "INVALID_JWT_SIGNING_METHOD"
-	InvalidJwtFormat        = "INVALID_JWT_FORMAT"
 	InvalidJwt              = "INVALID_JWT"
+	InvalidJwtClaims        = "INVALID_JWT_CLAIMS"
+	InvalidJwtSigningMethod = "INVALID_JWT_SIGNING_METHOD"
 	Forbidden               = "FORBIDDEN"
 	NotFound                = "NOT_FOUND"
 	UnprocessableEntity     = "UNPROCESSABLE_ENTITY"
@@ -25,9 +25,9 @@ var (
 var (
 	ErrInvalidRequestBody      = errors.New(InvalidRequestBody)
 	ErrUnauthorized            = errors.New(Unauthorized)
-	ErrInvalidJwtFormat        = errors.New(InvalidJwtFormat)
-	ErrInvalidJwtSigningMethod = errors.New(InvalidJwtSigningMethod)
 	ErrInvalidJwt              = errors.New(InvalidJwt)
+	ErrInvalidJwtClaims        = errors.New(InvalidJwtClaims)
+	ErrInvalidJwtSigningMethod = errors.New(InvalidJwtSigningMethod)
 	ErrForbidden               = errors.New(Forbidden)
 	ErrNotFound                = errors.New(NotFound)
 	ErrUnprocessableEntity     = errors.New(UnprocessableEntity)
