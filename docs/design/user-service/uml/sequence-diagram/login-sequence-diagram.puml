@@ -46,3 +46,9 @@ return error, if exist
 return login result\n- access token\n- access token duration\n- refresh token\n- refresh token expiry time
 
 return - refresh token as HTTPS-only cookie\n- access token (and its duration)
+
+Client -> Client : Redirect user to homepage
+
+return homepage
+
+@enduml
