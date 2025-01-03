@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"reflect"
 	"testing"
 	"time"
 
@@ -23,6 +24,7 @@ import (
 	auth_rest "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/auth"
 	"github.com/harmonify/movie-reservation-system/user-service/lib/database"
 	http_constant "github.com/harmonify/movie-reservation-system/user-service/lib/http/constant"
+	"github.com/harmonify/movie-reservation-system/user-service/lib/http/response"
 	test_interface "github.com/harmonify/movie-reservation-system/user-service/lib/test/interface"
 	"github.com/stretchr/testify/suite"
 	"github.com/tidwall/gjson"
@@ -107,7 +109,7 @@ func (s *AuthRestTestSuite) TestAuthRest_PostRegister() {
 				},
 			},
 			Expectation: test_interface.ResponseExpectation[interface{}]{
-				ResponseStatusCode: http.StatusOK,
+				ResponseStatusCode: test_interface.NullInt{Int: http.StatusOK, Valid: true},
 				ResponseBodyStatus: test_interface.NullBool{Bool: true, Valid: true},
 			},
 			BeforeCall: func(req *http.Request) {
@@ -175,8 +177,8 @@ func (s *AuthRestTestSuite) TestAuthRest_PostRegister() {
 			responseError := body.Get("error")
 			resultBody := body.Get("result")
 
-			if testCase.Expectation.ResponseStatusCode != 0 {
-				s.Require().Equal(testCase.Expectation.ResponseStatusCode, w.Result().StatusCode)
+			if testCase.Expectation.ResponseStatusCode.Valid {
+				s.Require().Equal(testCase.Expectation.ResponseStatusCode.Int, w.Result().StatusCode)
 			}
 			if testCase.Expectation.ResponseBodyStatus.Valid {
 				s.Require().Equal(testCase.Expectation.ResponseBodyStatus.Bool, status)
@@ -186,17 +188,21 @@ func (s *AuthRestTestSuite) TestAuthRest_PostRegister() {
 				s.Require().NoError(err)
 				s.Require().JSONEq(string(expected), resultBody.Raw)
 			}
-			if testCase.Expectation.ResponseBodyErrorCode != "" {
-				s.Require().Equal(testCase.Expectation.ResponseBodyErrorCode, responseError.Get("code").String())
+			if testCase.Expectation.ResponseBodyErrorCode.Valid {
+				s.Require().Equal(testCase.Expectation.ResponseBodyErrorCode.String, responseError.Get("code").String())
 			}
-			if testCase.Expectation.ResponseBodyErrorMessage != "" {
-				s.Require().Equal(testCase.Expectation.ResponseBodyErrorMessage, responseError.Get("message").String())
+			if testCase.Expectation.ResponseBodyErrorMessage.Valid {
+				s.Require().Equal(testCase.Expectation.ResponseBodyErrorMessage.String, responseError.Get("message").String())
 			}
 			if testCase.Expectation.ResponseBodyErrorObject != nil {
 				s.Require().True(responseError.Get("errors").IsArray(), "Expected 'errors' to be an array")
 				for i, errData := range testCase.Expectation.ResponseBodyErrorObject {
-					s.Equal(errData.Field, responseError.Get("errors").Array()[i].Get("field").String())
-					s.Equal(errData.Message, responseError.Get("errors").Array()[i].Get("message").String())
+					if expectedErrorObject, ok := errData.(response.BaseValidationErrorSchema); ok {
+						s.Equal(expectedErrorObject.Field, responseError.Get("errors").Array()[i].Get("field").String())
+						s.Equal(expectedErrorObject.Message, responseError.Get("errors").Array()[i].Get("message").String())
+					} else {
+						s.T().Fatalf("Expected error object should be a response.BaseValidationErrorSchema, but got %s", reflect.TypeOf(errData))
+					}
 				}
 			}
 		})

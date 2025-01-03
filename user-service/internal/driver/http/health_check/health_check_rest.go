@@ -1,4 +1,4 @@
-package health_rest
+package health_check_rest
 
 import (
 	"github.com/gin-gonic/gin"

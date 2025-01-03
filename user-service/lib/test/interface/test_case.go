@@ -3,8 +3,6 @@ package test_interface
 import (
 	"net/http"
 	"net/http/httptest"
-
-	"github.com/harmonify/movie-reservation-system/user-service/lib/http/response"
 )
 
 type (
@@ -39,12 +37,12 @@ type (
 	}
 
 	ResponseExpectation[ResponseBody any] struct {
-		ResponseStatusCode       int
+		ResponseStatusCode       NullInt
 		ResponseBodyStatus       NullBool
 		ResponseBodyResult       ResponseBody
-		ResponseBodyErrorCode    string
-		ResponseBodyErrorMessage string
-		ResponseBodyErrorObject  []response.BaseValidationErrorSchema
+		ResponseBodyErrorCode    NullString
+		ResponseBodyErrorMessage NullString
+		ResponseBodyErrorObject  []interface{}
 	}
 
 	// similar to [database/sql#NullInt]
@@ -55,8 +53,8 @@ type (
 
 	// similar to [database/sql#NullString]
 	NullString struct {
-		String   string
-		Valid bool
+		String string
+		Valid  bool
 	}
 	// similar to [database/sql#NullBool]
 	NullBool struct {
