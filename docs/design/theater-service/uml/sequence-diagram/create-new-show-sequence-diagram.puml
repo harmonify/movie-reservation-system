@@ -1,0 +1,24 @@
+@startuml create new show sequence diagram
+
+actor Admin
+boundary Client
+participant TheaterService
+participant MovieService
+queue MessageBroker
+participant TicketService
+
+activate MessageBroker
+
+Admin -> Client ++: Request to create a new show
+Client -> TheaterService ++: POST /shows
+TheaterService -> MovieService ++: Get movie information
+return Movie information
+TheaterService -> TheaterService: Create a new show
+TheaterService -> MessageBroker: Publish "CreateTicketEvent" for\nevery seat the theater has
+return Show information
+return Display message that the operation is ongoing
+
+MessageBroker -> TicketService ++: Consume "CreateTicketEvent"
+TicketService -> TicketService ++: Create tickets for the show
+
+@enduml
