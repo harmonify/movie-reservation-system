@@ -23,24 +23,4 @@ return Payment information
 return Order, payment,\nand ticket information
 return Order, payment,\nand ticket information
 
-User -> PaymentGateway ++: Make payment
-PaymentGateway -> PaymentGateway: Process payment
-PaymentGateway -> OrderService ++: Update payment status\n(webhook)
-deactivate PaymentGateway
-
-alt Payment success
-    OrderService -> OrderService ++: Create the "OrderSuccessfulSaga"\norchestrator
-    OrderService -> MessageBroker ++: Publish "OrderCreatedEvent"
-    MessageBroker -> TicketService ++: Update ticket status
-    MessageBroker -> TheaterService ++: Update theater seat status
-else Payment failure
-    OrderService -> OrderService ++: Create the "OrderFailedSaga"\norchestrator
-    OrderService -> MessageBroker ++: Publish "OrderFailedEvent"
-    OrderService -> TicketService ++: Cancel the ticket
-    OrderService -> OrderService ++: Cancel the order
-    OrderService -> MessageBroker ++: Publish "OrderCancelledEvent"
-    MessageBroker -> Client ++: Send "OrderCancelledEvent"
-    Client -> User ++: Send "OrderCancelledEvent"
-end
-
 @enduml
