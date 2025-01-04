@@ -1,0 +1,46 @@
+@startuml ticket reservation sequence diagram
+
+actor User
+boundary Client
+participant OrderService
+queue MessageBroker
+participant TicketService
+participant MovieService
+participant TheaterService
+collections PaymentGateway
+
+User -> Client ++: Request to reserve a ticket
+Client -> OrderService ++: POST /orders
+OrderService -> MovieService ++: Get movie information
+return Movie information
+OrderService -> TheaterService ++: Get theater information
+return Theater information
+OrderService -> OrderService : Create a new order
+OrderService -> TicketService ++: Reserve ticket
+return Ticket information\nand order ID
+OrderService -> PaymentGateway ++: Initiate payment for the order
+return Payment information
+return Order, payment,\nand ticket information
+return Order, payment,\nand ticket information
+
+User -> PaymentGateway ++: Make payment
+PaymentGateway -> PaymentGateway: Process payment
+PaymentGateway -> OrderService ++: Update payment status\n(webhook)
+deactivate PaymentGateway
+
+alt Payment success
+    OrderService -> OrderService ++: Create the "OrderSuccessfulSaga"\norchestrator
+    OrderService -> MessageBroker ++: Publish "OrderCreatedEvent"
+    MessageBroker -> TicketService ++: Update ticket status
+    MessageBroker -> TheaterService ++: Update theater seat status
+else Payment failure
+    OrderService -> OrderService ++: Create the "OrderFailedSaga"\norchestrator
+    OrderService -> MessageBroker ++: Publish "OrderFailedEvent"
+    OrderService -> TicketService ++: Cancel the ticket
+    OrderService -> OrderService ++: Cancel the order
+    OrderService -> MessageBroker ++: Publish "OrderCancelledEvent"
+    MessageBroker -> Client ++: Send "OrderCancelledEvent"
+    Client -> User ++: Send "OrderCancelledEvent"
+end
+
+@enduml

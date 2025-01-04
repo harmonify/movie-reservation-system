@@ -1,0 +1,34 @@
+@startuml ticket reservation sequence diagram
+
+actor User
+collections PaymentGateway
+participant OrderService
+queue MessageBroker
+participant TicketService
+
+activate MessageBroker
+
+User -> PaymentGateway ++: Make payment
+PaymentGateway -> PaymentGateway: Process payment
+PaymentGateway -> OrderService ++: Update payment status\n(webhook)
+deactivate PaymentGateway
+
+alt Payment success
+    OrderService -> OrderService: Create the "OrderSuccessfulSaga"\norchestrator
+    OrderService -> MessageBroker: Publish "OccupyTicketEvent"
+
+    MessageBroker -> TicketService ++: Consumes "OccupyTicketEvent"
+    TicketService -> TicketService ++: Update ticket status to "OCCUPIED"
+    deactivate TicketService
+    deactivate TicketService
+else Payment failure
+    OrderService -> OrderService: Create the "OrderFailedSaga"\norchestrator
+    OrderService -> MessageBroker: Publish "ReleaseTicketEvent"
+
+    MessageBroker -> TicketService ++: Consumes "ReleaseTicketEvent"
+    TicketService -> TicketService ++: Update ticket status to "AVAILABLE"
+    deactivate TicketService
+    deactivate TicketService
+end
+
+@enduml
