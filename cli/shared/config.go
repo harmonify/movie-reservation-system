@@ -1,10 +1,17 @@
-package config
+package shared
 
 import (
 	"fmt"
 
 	"github.com/spf13/viper"
 )
+
+type Config struct {
+	Env string `mapstructure:"ENV"`
+
+	KafkaServerUrl string `mapstructure:"KAFKA_SERVER_URL"`
+	SqlitePath     string `mapstructure:"SQLITE_PATH"`
+}
 
 type ConfigFile struct {
 	Path string
