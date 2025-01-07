@@ -55,7 +55,7 @@ Steps Executed:
 
 #### Step 1: Create a New Migration
 
-Add a new migration by implementing the KafkaMigration interface. Example:
+Add a new Kafka topic migration version in the `migrations/kafka/vx.x.x/*.go` directory by implementing the `KafkaMigration` interface. Example:
 
 ```go
 type CreateTopicMigration struct {
@@ -75,7 +75,23 @@ func (m *CreateTopicMigration) Down(ctx context.Context) error {
 }
 ```
 
-#### Step 2: Run Migrations
+#### Step 2: Register the new migration
+
+Register the new migration in the `migrations/kafka/module.go` file by wrapping the constructor function with the `AsMigration` function. Example:
+
+```go
+var (
+    MigrationModule = fx.Module(
+        "migrations",
+        fx.Provide(
+            AsMigration(v_1_0_0.NewCreateNewOrderTopicMigration),
+            ...
+        ),
+    )
+)
+```
+
+#### Step 3: Run Migrations
 
 Apply all pending migrations:
 
@@ -83,7 +99,7 @@ Apply all pending migrations:
 mrs-cli kafka migrate:up
 ```
 
-#### Step 3: Rollback Migrations
+#### Step 4: Rollback Migrations
 
 Rollback the last migration:
 
