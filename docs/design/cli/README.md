@@ -50,3 +50,43 @@ Steps Executed:
 -   Rolls back migrations using the Down method, starting from the latest applied migration.
 -   Updates the SQLite database.
 -   Persists state to S3 storage upon successful completion. (TODO)
+
+### Example Workflow
+
+#### Step 1: Create a New Migration
+
+Add a new migration by implementing the KafkaMigration interface. Example:
+
+```go
+type CreateTopicMigration struct {
+    // ...
+}
+
+func (m *CreateTopicMigration) GetIdentifier() string {
+    return "create-new-topic"
+}
+
+func (m *CreateTopicMigration) Up(ctx context.Context) error {
+    // Logic to create Kafka topic
+}
+
+func (m *CreateTopicMigration) Down(ctx context.Context) error {
+    // Logic to delete Kafka topic
+}
+```
+
+#### Step 2: Run Migrations
+
+Apply all pending migrations:
+
+```bash
+mrs-cli kafka migrate:up
+```
+
+#### Step 3: Rollback Migrations
+
+Rollback the last migration:
+
+```bash
+mrs-cli kafka migrate:down 1
+```
