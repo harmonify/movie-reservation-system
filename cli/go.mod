@@ -1,4 +1,4 @@
-module kafka-playground
+module github.com/harmonify/movie-reservation-system/cli
 
 go 1.22.0
 

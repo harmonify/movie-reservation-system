@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"kafka-playground/shared"
+	"github.com/harmonify/movie-reservation-system/cli/shared"
 
 	"github.com/spf13/cobra"
 

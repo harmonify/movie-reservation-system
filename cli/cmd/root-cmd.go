@@ -3,10 +3,11 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"kafka-playground/shared"
 	"os"
 	"slices"
 	"strings"
+
+	"github.com/harmonify/movie-reservation-system/cli/shared"
 
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"

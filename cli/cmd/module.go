@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"kafka-playground/cmd/kafka"
-	"kafka-playground/shared"
+	"github.com/harmonify/movie-reservation-system/cli/cmd/kafka"
+	"github.com/harmonify/movie-reservation-system/cli/shared"
 
 	"go.uber.org/fx"
 )

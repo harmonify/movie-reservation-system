@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
-	"kafka-playground/cmd"
-	"kafka-playground/migrations/kafka"
-	"kafka-playground/shared"
 	"log"
 	"time"
+
+	"github.com/harmonify/movie-reservation-system/cli/cmd"
+	"github.com/harmonify/movie-reservation-system/cli/migrations/kafka"
+	"github.com/harmonify/movie-reservation-system/cli/shared"
 
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"

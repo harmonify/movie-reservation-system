@@ -1,8 +1,8 @@
 package kafka
 
 import (
-	v_1_0_0 "kafka-playground/migrations/kafka/v1.0.0"
-	"kafka-playground/shared"
+	v_1_0_0 "github.com/harmonify/movie-reservation-system/cli/migrations/kafka/v1.0.0"
+	"github.com/harmonify/movie-reservation-system/cli/shared"
 
 	"go.uber.org/fx"
 )

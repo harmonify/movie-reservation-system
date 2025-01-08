@@ -2,12 +2,23 @@ package v_1_0_0
 
 import (
 	"context"
-	"kafka-playground/shared"
 	"log"
 	"time"
 
+	"github.com/harmonify/movie-reservation-system/cli/shared"
+
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
+
+var NewOrderTopic = kafka.TopicSpecification{
+	Topic:             shared.NewOrderTopic.String(),
+	NumPartitions:     3,
+	ReplicationFactor: 3,
+	// Topic config reference: <https://kafka.apache.org/documentation/#topicconfigs>
+	// Config: map[string]string{
+	// 	"retention.ms": strconv.Itoa(7 * 24 * 60 * 60), // 7 days
+	// },
+}
 
 type CreateNewOrderTopicMigration struct {
 	client *kafka.AdminClient
@@ -28,27 +39,22 @@ func (m *CreateNewOrderTopicMigration) GetIdentifier() string {
 func (m *CreateNewOrderTopicMigration) Up(ctx context.Context) error {
 	topics, err := m.client.DescribeTopics(
 		ctx,
-		kafka.NewTopicCollectionOfTopicNames([]string{shared.NewOrderTopic.String()}),
+		kafka.NewTopicCollectionOfTopicNames([]string{NewOrderTopic.Topic}),
 		kafka.SetAdminRequestTimeout(time.Second*15),
 	)
 	if err != nil {
-		m.logger.Printf("Failed to describe topic: \"%s\"\n", shared.NewOrderTopic.String())
+		m.logger.Printf("Failed to describe topic: \"%s\"\n", NewOrderTopic.Topic)
 		return err
 	}
 	if len(topics.TopicDescriptions) < 1 {
 		_, err := m.client.CreateTopics(
 			ctx,
-			[]kafka.TopicSpecification{
-				{
-					Topic:         shared.NewOrderTopic.String(),
-					NumPartitions: 3,
-				},
-			},
+			[]kafka.TopicSpecification{NewOrderTopic},
 			kafka.SetAdminRequestTimeout(time.Second*15),
 			kafka.SetAdminOperationTimeout(time.Minute),
 		)
 		if err != nil {
-			m.logger.Printf("Failed to create topic: \"%s\"\n", shared.NewOrderTopic.String())
+			m.logger.Printf("Failed to create topic: \"%s\"\n", NewOrderTopic.Topic)
 			return err
 		}
 	}
@@ -59,12 +65,12 @@ func (m *CreateNewOrderTopicMigration) Up(ctx context.Context) error {
 func (m *CreateNewOrderTopicMigration) Down(ctx context.Context) error {
 	_, err := m.client.DeleteTopics(
 		ctx,
-		[]string{shared.NewOrderTopic.String()},
+		[]string{NewOrderTopic.Topic},
 		kafka.SetAdminRequestTimeout(time.Second*15),
 		kafka.SetAdminOperationTimeout(time.Minute),
 	)
 	if err != nil {
-		m.logger.Printf("Failed to delete topic: \"%s\"\n", shared.NewOrderTopic.String())
+		m.logger.Printf("Failed to delete topic: \"%s\"\n", NewOrderTopic.Topic)
 		return err
 	}
 	return nil

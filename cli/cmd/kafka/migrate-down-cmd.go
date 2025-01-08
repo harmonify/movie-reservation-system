@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"kafka-playground/shared"
+	"github.com/harmonify/movie-reservation-system/cli/shared"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/spf13/cobra"

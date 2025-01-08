@@ -1,7 +1,5 @@
 package shared
 
-type Topic int
-
 var (
 	topics = [...]string{
 		"new-order",
@@ -11,6 +9,8 @@ var (
 const (
 	NewOrderTopic Topic = iota
 )
+
+type Topic int
 
 func (t Topic) String() string {
 	return topics[t]
