@@ -1,3 +1,7 @@
-# Tasks
+# Task
 
-Task documents are prefixed with the letter `T`, followed by 3 numbers. Backlog task docs are prefixed with `TB`, followed by 3 numbers.
+## Filename
+
+The documents' filename are prefixed with the letter `T`, followed by 3 numbers.
+
+Backlogs are prefixed with `Z`.

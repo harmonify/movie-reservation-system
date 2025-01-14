@@ -1,0 +1,39 @@
+# Kafka
+
+## Golang SDK examples
+
+Resource: <https://github.com/confluentinc/confluent-kafka-go/tree/master/examples>
+
+## Topic name
+
+General rules used to design topic name:
+
+- Descriptive, general rule is the event's domain name followed by a past verb.
+- Semantic version, in cases where the event schema changes.
+
+The following is an example that satisfies both rules:
+
+```txt
+[domain name]-[past verb]-[semantic version]
+```
+
+Examples:
+
+- `order-created-v1.0.0`, start.
+- `order-paid-v1.0.0`, business flow succeed.
+- `order-not-paid-v1.0.0`, business error.
+- `order-failed-v1.0.0`, system errors.
+- `order-completed-v1.0.0`, end.
+
+## Topic ordering
+
+For a ticket reservation process in a movie reservation system, maintaining correct event ordering is crucial. Kafka guarantees message order within a partition but not across partitions.
+
+For ticket reservation process in this system, we can ensure ordering using movie `showtime_id`.
+
+## Event message
+
+Ensure that event messages have a consistent and extensible schema:
+
+- Protobuf: For strong typing, schema evolution, and compact message sizes.
+- Schema Registry: Confluent Schema Registry to enforce schema validation and versioning for event messages.
