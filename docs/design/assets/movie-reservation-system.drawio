@@ -1,0 +1,211 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" version="26.0.5" pages="1">
+  <diagram id="vfE-g2H6PVnhEn2jICJz" name="Use Case">
+    <mxGraphModel dx="1793" dy="951" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-49" value="TheaterService" style="shape=folder;fontStyle=1;spacingTop=10;tabWidth=95;tabHeight=20;tabPosition=left;html=1;whiteSpace=wrap;verticalAlign=bottom;align=left;labelPosition=center;verticalLabelPosition=top;textDirection=ltr;spacingBottom=-16;" vertex="1" parent="1">
+          <mxGeometry x="280" y="1110" width="350" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-2" value="Admin" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="860" y="882.5" width="30" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-3" value="Customer" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="970" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-13" value="MovieService" style="shape=folder;fontStyle=1;spacingTop=10;tabWidth=90;tabHeight=20;tabPosition=left;html=1;whiteSpace=wrap;verticalAlign=bottom;align=left;labelPosition=center;verticalLabelPosition=top;textDirection=ltr;spacingBottom=-16;" vertex="1" parent="1">
+          <mxGeometry x="280" y="750" width="350" height="330" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-14" value="Manage Movies" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="460" y="800" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-15" value="Search Movies" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="310" y="800" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-16" value="Get Movie Showtimes" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="310" y="890" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-17" value="Get Showtime Seats" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="310" y="980" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-27" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.992;entryY=0.485;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="ZX2wrtlt-cWwv0UfnGJo-2" target="ZX2wrtlt-cWwv0UfnGJo-19">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-28" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0;entryDx=0;entryDy=75;entryPerimeter=0;" edge="1" parent="1" source="ZX2wrtlt-cWwv0UfnGJo-3" target="ZX2wrtlt-cWwv0UfnGJo-19">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="765" y="250" as="sourcePoint" />
+            <mxPoint x="637" y="251" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-29" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="ZX2wrtlt-cWwv0UfnGJo-2" target="ZX2wrtlt-cWwv0UfnGJo-12">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="775" y="260" as="sourcePoint" />
+            <mxPoint x="647" y="261" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-30" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="ZX2wrtlt-cWwv0UfnGJo-3" target="ZX2wrtlt-cWwv0UfnGJo-12">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="785" y="270" as="sourcePoint" />
+            <mxPoint x="657" y="271" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-31" value="" style="group" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="280" y="190" width="350" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-19" value="NotificationService" style="shape=folder;fontStyle=1;spacingTop=10;tabWidth=120;tabHeight=25;tabPosition=left;html=1;whiteSpace=wrap;verticalAlign=bottom;align=left;labelPosition=center;verticalLabelPosition=top;textDirection=ltr;spacingBottom=-16;" vertex="1" parent="ZX2wrtlt-cWwv0UfnGJo-31">
+          <mxGeometry width="350" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-20" value="Get Email Notification" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="ZX2wrtlt-cWwv0UfnGJo-31">
+          <mxGeometry x="29.99945945945946" y="40" width="132.43243243243242" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-32" value="" style="group" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="280" y="350" width="350" height="370" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-12" value="UserService" style="shape=folder;fontStyle=1;spacingTop=10;tabWidth=90;tabHeight=20;tabPosition=left;html=1;whiteSpace=wrap;verticalAlign=bottom;align=left;labelPosition=center;verticalLabelPosition=top;textDirection=ltr;spacingBottom=-16;" vertex="1" parent="ZX2wrtlt-cWwv0UfnGJo-32">
+          <mxGeometry width="350" height="370" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-4" value="Verify Email" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="ZX2wrtlt-cWwv0UfnGJo-32">
+          <mxGeometry x="30" y="200" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-5" value="Forgot Password" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="ZX2wrtlt-cWwv0UfnGJo-32">
+          <mxGeometry x="30" y="280" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-6" value="Login" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="ZX2wrtlt-cWwv0UfnGJo-32">
+          <mxGeometry x="30" y="120" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-7" value="Refresh Token" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="ZX2wrtlt-cWwv0UfnGJo-32">
+          <mxGeometry x="180" y="40" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-8" value="View Profile" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="ZX2wrtlt-cWwv0UfnGJo-32">
+          <mxGeometry x="180" y="120" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-9" value="Update Profile" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="ZX2wrtlt-cWwv0UfnGJo-32">
+          <mxGeometry x="180" y="200" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-10" value="Logout" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="ZX2wrtlt-cWwv0UfnGJo-32">
+          <mxGeometry x="180" y="280" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-11" value="Register" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="ZX2wrtlt-cWwv0UfnGJo-32">
+          <mxGeometry x="30" y="40" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-33" value="" style="group" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="470" y="1360" width="200" height="340" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-18" value="ReportService" style="shape=folder;fontStyle=1;spacingTop=10;tabWidth=90;tabHeight=20;tabPosition=left;html=1;whiteSpace=wrap;verticalAlign=bottom;align=left;labelPosition=center;verticalLabelPosition=top;textDirection=ltr;spacingBottom=-16;" vertex="1" parent="ZX2wrtlt-cWwv0UfnGJo-33">
+          <mxGeometry width="160" height="330" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-21" value="Get Reservations Report" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="ZX2wrtlt-cWwv0UfnGJo-33">
+          <mxGeometry x="10" y="50" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-22" value="Get Showtimes Capacity Report" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="ZX2wrtlt-cWwv0UfnGJo-33">
+          <mxGeometry x="10" y="140" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-23" value="Get Revenue Report" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="ZX2wrtlt-cWwv0UfnGJo-33">
+          <mxGeometry x="10" y="230" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-38" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="ZX2wrtlt-cWwv0UfnGJo-3" target="ZX2wrtlt-cWwv0UfnGJo-15">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="100" y="703" as="sourcePoint" />
+            <mxPoint x="290" y="621" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-39" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="ZX2wrtlt-cWwv0UfnGJo-3" target="ZX2wrtlt-cWwv0UfnGJo-16">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="110" y="713" as="sourcePoint" />
+            <mxPoint x="300" y="631" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-40" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="ZX2wrtlt-cWwv0UfnGJo-3" target="ZX2wrtlt-cWwv0UfnGJo-17">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="120" y="723" as="sourcePoint" />
+            <mxPoint x="310" y="641" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-41" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0;entryDx=0;entryDy=175;entryPerimeter=0;" edge="1" parent="1" source="ZX2wrtlt-cWwv0UfnGJo-3" target="ZX2wrtlt-cWwv0UfnGJo-34">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="130" y="733" as="sourcePoint" />
+            <mxPoint x="320" y="651" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-42" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="ZX2wrtlt-cWwv0UfnGJo-2" target="ZX2wrtlt-cWwv0UfnGJo-14">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="140" y="743" as="sourcePoint" />
+            <mxPoint x="330" y="661" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-43" value="" style="group" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="280" y="1360" width="210" height="330" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-34" value="ReservationService" style="shape=folder;fontStyle=1;spacingTop=10;tabWidth=120;tabHeight=20;tabPosition=left;html=1;whiteSpace=wrap;verticalAlign=bottom;align=left;labelPosition=center;verticalLabelPosition=top;textDirection=ltr;spacingBottom=-16;" vertex="1" parent="ZX2wrtlt-cWwv0UfnGJo-43">
+          <mxGeometry width="170" height="330" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-35" value="Reserve Seats" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="ZX2wrtlt-cWwv0UfnGJo-43">
+          <mxGeometry x="15" y="50" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-36" value="Get Past Reservations" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="ZX2wrtlt-cWwv0UfnGJo-43">
+          <mxGeometry x="15" y="140" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-37" value="Cancel Reservation" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="ZX2wrtlt-cWwv0UfnGJo-43">
+          <mxGeometry x="15" y="230" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-47" value="Manage Showtimes" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="460" y="890" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-52" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="ZX2wrtlt-cWwv0UfnGJo-3" target="ZX2wrtlt-cWwv0UfnGJo-45">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="100" y="730" as="sourcePoint" />
+            <mxPoint x="320" y="1025" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-53" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="ZX2wrtlt-cWwv0UfnGJo-3" target="ZX2wrtlt-cWwv0UfnGJo-46">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="110" y="740" as="sourcePoint" />
+            <mxPoint x="330" y="1035" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-54" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="ZX2wrtlt-cWwv0UfnGJo-2" target="ZX2wrtlt-cWwv0UfnGJo-44">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="120" y="750" as="sourcePoint" />
+            <mxPoint x="340" y="1045" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-58" value="Ticket Attendant" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="860" y="1240" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-44" value="Manage Theater" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="460" y="1150" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-45" value="Search Theater" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="310" y="1150" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-46" value="Get Ticket&lt;div&gt;in UI / PDF&lt;/div&gt;" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="310" y="1240" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-60" value="Verify Ticket" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="460" y="1240" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-62" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="ZX2wrtlt-cWwv0UfnGJo-2" target="ZX2wrtlt-cWwv0UfnGJo-47">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1030" y="925" as="sourcePoint" />
+            <mxPoint x="610" y="845" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-63" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="ZX2wrtlt-cWwv0UfnGJo-58" target="ZX2wrtlt-cWwv0UfnGJo-60">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1030" y="937" as="sourcePoint" />
+            <mxPoint x="610" y="1195" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-66" value="Business" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="860" y="1500" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ZX2wrtlt-cWwv0UfnGJo-67" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="ZX2wrtlt-cWwv0UfnGJo-66" target="ZX2wrtlt-cWwv0UfnGJo-18">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1030" y="1285" as="sourcePoint" />
+            <mxPoint x="610" y="1285" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

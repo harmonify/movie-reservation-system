@@ -2,7 +2,7 @@
 
 Evolving design of the movie reservation system.
 
-![alt text](initial-architecture-design.png)
+![alt text](./assets/initial-architecture-design.png)
 
 ## Requirements
 

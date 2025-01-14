@@ -1,0 +1,45 @@
+@startuml movie shows report
+
+actor Admin
+boundary Client
+participant ReportService
+queue MessageBroker
+participant MovieService
+participant TheaterService
+participant TicketService
+participant NotificationService
+
+Admin -> Client ++ : Make movie shows report
+Client -> ReportService ++ : GET /reports/movie
+ReportService -> ReportService : Start Movie Shows Report Pipeline
+ReportService -> MessageBroker ++ : Publish "MovieShowsReportPipeline_Start" event
+ReportService -> Client : Movie shows report is in progress
+deactivate ReportService
+Client -> Admin : Display that the movie shows report is in progress
+deactivate Client
+
+MessageBroker -> MovieService ++ : Consume "MovieShowsReportPipeline_Start" event
+MovieService -> MovieService : Add movie information
+MovieService -> MessageBroker : Publish "MovieShowsReportPipeline_MovieInformation" event
+deactivate MovieService
+
+MessageBroker -> TheaterService ++: Consume "MovieShowsReportPipeline_MovieInformation" event
+TheaterService -> TheaterService : Add theater information
+TheaterService -> MessageBroker : Publish "MovieShowsReportPipeline_TheaterInformation" event
+deactivate TheaterService
+
+
+MessageBroker -> TicketService ++: Consume "MovieShowsReportPipeline_TheaterInformation" event
+TicketService -> TicketService : Add ticket sales information
+TicketService -> MessageBroker : Publish "MovieShowsReportPipeline_TicketInformation" event
+deactivate TicketService
+
+MessageBroker -> ReportService ++: Consume "MovieShowsReportPipeline_TicketInformation" event
+ReportService -> ReportService : Process the movie shows report
+ReportService -> MessageBroker : Publish "MovieShowsReportPipeline_Done" event
+deactivate ReportService
+
+MessageBroker -> NotificationService ++ : Consume "MovieShowsReportPipeline_Done" event
+NotificationService -> NotificationService : Send movie shows report to admin's email
+
+@enduml
