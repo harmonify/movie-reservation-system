@@ -1,0 +1,15 @@
+include:
+    - path: "./deploy/local/kafka.docker-compose.yaml"
+    - path: "./deploy/local/loki.docker-compose.yaml"
+    - path: "./deploy/local/jaeger.docker-compose.yaml"
+    - path: "./deploy/local/prometheus.docker-compose.yaml"
+    - path: "./deploy/local/grafana.docker-compose.yaml"
+    - path: "./user-service/deploy/local/run/docker-compose.yaml"
+    # - path: "./movie-service/deploy/local/run/docker-compose.yaml"
+    # - path: "./theater-service/deploy/local/run/docker-compose.yaml"
+    # - path: "./ticket-service/deploy/local/run/docker-compose.yaml"
+    # - path: "./order-service/deploy/local/run/docker-compose.yaml"
+
+networks:
+    core-net:
+    monitoring-net:

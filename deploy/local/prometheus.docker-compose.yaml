@@ -1,0 +1,18 @@
+services:
+    prometheus:
+        image: prom/prometheus:latest
+        volumes:
+            - ./.data/prometheus:/prometheus # Persistent storage
+            - ./config/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+        ports:
+            - "9090:9090"
+        command:
+            - --config.file=/etc/prometheus/prometheus.yml
+            - "--storage.tsdb.retention.time=30d" # Retain data for 30 days
+            - "--storage.tsdb.path=/prometheus" # Ensure correct path
+        networks:
+            - monitoring-net
+        logging:
+            driver: loki
+            options:
+                loki-url: "http://loki:3100/api/prom/push"

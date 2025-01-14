@@ -1,0 +1,12 @@
+# Run: `git config --global core.excludesfile .gitignore.local` if you need local gitignore
+.gitignore.local
+
+**/.data/*
+!**/.data/.gitkeep
+
+.env
+.env.*
+!.env.example
+
+.vscode
+**/*.DS_Store

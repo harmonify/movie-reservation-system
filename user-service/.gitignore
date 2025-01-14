@@ -4,8 +4,8 @@
 .output/*
 !.output/.gitkeep
 
-.test/*
-!.test/.gitkeep
+.coverage/*
+!.coverage/.gitkeep
 
 .env
 .env.*

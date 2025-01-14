@@ -1,0 +1,63 @@
+services:
+    loki:
+        image: grafana/loki:latest
+        volumes:
+            - ./config/loki.yaml:/etc/loki/loki.yaml:ro
+        ports:
+            - 3100:3100
+        command: -config.file=/etc/loki/loki.yaml
+        depends_on:
+            - minio
+        networks:
+            - monitoring-net
+        # send Loki traces to Jaeger
+        environment:
+            - JAEGER_AGENT_HOST=jaeger-agent
+            - JAEGER_AGENT_PORT=6831
+            - JAEGER_SAMPLER_TYPE=const
+            - JAEGER_SAMPLER_PARAM=1
+        # logging:
+        #     driver: loki
+        #     options:
+        #         loki-url: "http://loki:3100/api/prom/push"
+        #         # Prevent container from being stuck when shutting down
+        #         # https://github.com/grafana/loki/issues/2361#issuecomment-718024318
+        #         loki-timeout: 1s
+        #         loki-max-backoff: 1s
+        #         loki-retries: 1
+
+    promtail:
+        image: grafana/promtail:latest
+        volumes:
+            - /var/log:/var/log
+            - ./config/promtail.yaml:/etc/promtail/promtail.yaml:ro
+        command: -config.file=/etc/promtail/promtail.yaml
+        depends_on:
+            - loki
+        networks:
+            - monitoring-net
+
+    minio:
+        image: minio/minio:latest
+        entrypoint:
+            - sh
+            - -euc
+            - |
+                mkdir -p /data/loki-data && \
+                mkdir -p /data/loki-ruler &&
+                minio server /data
+        environment:
+            - MINIO_ROOT_USER=loki
+            - MINIO_ROOT_PASSWORD=supersecret
+            - MINIO_PROMETHEUS_AUTH_TYPE=public
+            - MINIO_UPDATE=off
+        ports:
+            - "9000:9000"
+        volumes:
+            - ./.data/minio:/data
+        networks:
+            - monitoring-net
+        # logging:
+        #     driver: loki
+        #     options:
+        #         loki-url: "http://loki:3100/api/prom/push"

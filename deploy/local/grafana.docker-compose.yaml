@@ -1,0 +1,23 @@
+services:
+    grafana:
+        image: grafana/grafana:latest
+        ports:
+            - 3111:3000
+        restart: unless-stopped
+        environment:
+            - GF_AUTH_ANONYMOUS_ENABLED=true
+            - GF_AUTH_DISABLE_LOGIN_FORM=true
+            - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+            - GF_INSTALL_PLUGINS=
+        volumes:
+            - ./config/grafana.yaml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+        depends_on:
+            - loki
+            - jaeger-query
+            - prometheus
+        networks:
+            - monitoring-net
+        logging:
+            driver: loki
+            options:
+                loki-url: "http://loki:3100/api/prom/push"
