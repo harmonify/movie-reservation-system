@@ -1,6 +1,6 @@
 apiVersion: 1
 datasources:
-    - name: loki
+    - name: Loki
       type: loki
       uid: loki
       url: http://loki:3100
@@ -14,7 +14,7 @@ datasources:
               # Field with internal link pointing to data source in Grafana.
               # datasourceUid value can be anything, but it should be unique across all defined data source uids.
               - datasourceUid: my_jaeger_uid
-                matcherRegex: "traceID=(\\w+)"
+                matcherRegex: "trace_id=(\\w+)"
                 name: TraceID
                 # url will be interpreted as query for the datasource
                 url: "$${__value.raw}"
@@ -22,7 +22,7 @@ datasources:
                 urlDisplayLabel: "View Trace"
 
               # Field with external link.
-              - matcherRegex: "traceID=(\\w+)"
+              - matcherRegex: "trace_id=(\\w+)"
                 name: TraceID
                 url: "http://jaeger-query:16688/trace/$${__value.raw}"
       secureJsonData:
@@ -88,8 +88,8 @@ datasources:
               # Field with internal link pointing to data source in Grafana.
               # datasourceUid value can be anything, but it should be unique across all defined data source uids.
               - datasourceUid: my_jaeger_uid
-                name: traceID
+                name: trace_id
 
               # Field with external link.
-              - name: traceID
+              - name: trace_id
                 url: "http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Jaeger%22,%7B%22query%22:%22$${__value.raw}%22%7D%5D"

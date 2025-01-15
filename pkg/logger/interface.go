@@ -11,6 +11,7 @@ import (
 
 type Logger interface {
 	GetZapLogger() *zap.Logger
+	With(fields ...zap.Field) Logger 
 	WithCtx(ctx context.Context) Logger
 	Level() zapcore.Level
 	Error(msg string, fields ...zap.Field)

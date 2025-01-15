@@ -57,6 +57,13 @@ func (l *ConsoleLoggerImpl) GetZapLogger() *zap.Logger {
 	return l.Logger
 }
 
+func (l *ConsoleLoggerImpl) With(fields ...zap.Field) Logger {
+	return &ConsoleLoggerImpl{
+		Logger: l.Logger.With(fields...),
+		span: l.span,
+	}
+}
+
 func (l *ConsoleLoggerImpl) WithCtx(ctx context.Context) Logger {
 	var log *zap.Logger = l.Logger
 	span := trace.SpanFromContext(ctx)

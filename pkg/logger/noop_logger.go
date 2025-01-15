@@ -11,6 +11,11 @@ func NewNopLogger() Logger {
 	return &NopLoggerImpl{logger, nil}
 }
 
+
+func (l *NopLoggerImpl) With(fields ...zap.Field) Logger {
+	return l
+}
+
 func (l *NopLoggerImpl) GetZapLogger() *zap.Logger {
 	return l.Logger
 }

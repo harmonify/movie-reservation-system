@@ -21,21 +21,27 @@ func (l *LokiLoggerImpl) GetZapLogger() *zap.Logger {
 	return l.Logger
 }
 
+func (l *LokiLoggerImpl) With(fields ...zap.Field) Logger {
+	return &LokiLoggerImpl{
+		Logger: l.Logger.With(fields...),
+		span: l.span,
+	}
+}
+
 func (l *LokiLoggerImpl) WithCtx(ctx context.Context) Logger {
-	var log *zap.Logger = l.Logger
+	var logger *zap.Logger = l.Logger
 	span := trace.SpanFromContext(ctx)
 
 	// Extract the trace ID from the span's context
 	spanContext := span.SpanContext()
 
 	if spanContext.TraceID().IsValid() {
-		traceID := spanContext.TraceID().String()
-		traceId := zap.String("traceID", traceID)
-		log = l.Logger.With(traceId)
+		traceId := zap.String("trace_id", spanContext.TraceID().String())
+		logger = l.Logger.With(traceId)
 	}
 
 	return &LokiLoggerImpl{
-		Logger: log,
+		Logger: logger,
 		span:   span,
 	}
 }
