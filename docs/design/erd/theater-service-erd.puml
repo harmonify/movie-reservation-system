@@ -1,0 +1,44 @@
+@startuml theater-service-erd
+
+entity Theaters {
+    theater_id : UUID PRIMARY KEY
+    trace_id: UUID NOT NULL UNIQUE
+    name : string NOT NULL
+    location : string NOT NULL
+}
+
+entity Seats {
+    seat_id : UUID PRIMARY KEY
+    theater_id : UUID NOT NULL
+    row : char NOT NULL
+    column : int NOT NULL
+    unique_constraint(theater_id, row, column)
+}
+
+entity Showtimes {
+    showtime_id : UUID PRIMARY KEY
+    movie_id : UUID NOT NULL
+    theater_id : UUID NOT NULL
+    trace_id: UUID NOT NULL UNIQUE
+    start_time : datetime NOT NULL
+    end_time : datetime NOT NULL
+    ' available_seats : int // should be generated from querying seats and tickets entity (correlated by theather_id)'
+    ' total_seats : int // should be generated from query'
+}
+
+entity Tickets {
+    ticket_id : UUID PRIMARY KEY
+    reservation_id : UUID NOT NULL
+    theater_id : UUID NOT NULL
+    showtime_id : UUID NOT NULL
+    seat_id : UUID NOT NULL
+    trace_id: UUID NOT NULL UNIQUE
+    status : enum (reserved, available) NOT NULL
+    unique_constraint(seat_id, showtime_id)
+}
+
+Theaters ||--o{ Showtimes : "hosts"
+Theaters ||--o{ Seats : "has"
+Showtimes ||--o{ Seats : "has"
+Showtimes ||--o{ Tickets : "has"
+Tickets ||--|| Seats : "assigned to"

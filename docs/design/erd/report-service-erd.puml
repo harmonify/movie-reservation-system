@@ -1,0 +1,8 @@
+@startuml report-service-erd
+
+entity Reports {
+    report_id : UUID PRIMARY KEY
+    report_type : enum(reservations, revenue, capacity) NOT NULL
+    generated_at : datetime NOT NULL
+    content_url : text NOT NULL
+}

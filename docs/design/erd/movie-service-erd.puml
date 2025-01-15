@@ -1,0 +1,27 @@
+@startuml movie-service-erd
+
+entity Movies {
+    movie_id : UUID PRIMARY KEY
+    trace_id: UUID NOT NULL UNIQUE
+    title : string NOT NULL
+    description : text NOT NULL
+    poster_image_url : text NOT NULL
+    genre : string NOT NULL
+    release_date : date NOT NULL
+    duration_minutes : int NOT NULL
+    dub_language_code : string NOT NULL
+    age_rating : string NOT NULL 'E.g., G, PG, PG-13, R, etc.'
+    director : string NOT NULL
+    rating : float 'Average rating from user reviews'
+}
+
+entity MovieSubtitles {
+    language_code : string NOT NULL
+}
+
+entity Actors {
+    name : string NOT NULL
+}
+
+Movies ||-o{ MovieSubtitles : "has"
+Movies ||-o{ Actors : "casts"

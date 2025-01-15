@@ -307,7 +307,7 @@ components:
                 success:
                     type: boolean
                     example: true
-                traceId:
+                trace_id:
                     type: string
                     example: b9794da0-f46f-4810-b3bc-5cbba602d6b1
                 error:
@@ -350,10 +350,10 @@ components:
                     example: {}
             required:
                 - success
-                - traceId
+                - trace_id
             example:
                 success: true
-                traceId: b9794da0-f46f-4810-b3bc-5cbba602d6b1
+                trace_id: b9794da0-f46f-4810-b3bc-5cbba602d6b1
                 error: {}
                 result: {}
                 metadata: {}

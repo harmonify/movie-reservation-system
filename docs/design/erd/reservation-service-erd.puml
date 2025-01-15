@@ -1,0 +1,35 @@
+@startuml reservation-service-erd
+
+entity Reservations {
+    reservation_id : UUID PRIMARY KEY
+    user_id : UUID NOT NULL
+    showtime_id : UUID NOT NULL
+    trace_id: UUID NOT NULL UNIQUE
+    status : enum(pending, active, cancelled, failed) NOT NULL
+    total_price : float NOT NULL
+    payment_method: string NOT NULL
+    created_at : datetime NOT NULL
+}
+
+entity ReservationItems {
+    item_id : UUID PRIMARY KEY
+    reservation_id : UUID NOT NULL
+    type : enum(ticket, sales_tax, service_charge) NOT NULL
+    description : string NOT NULL
+    price : float NOT NULL
+}
+
+entity PaymentHistories {
+    history_id: UUID PRIMARY KEY
+    reservation_id: UUID NOT NULL
+    trace_id: UUID NOT NULL UNIQUE
+    ' enum("deny", "authorize", "capture", "settlement", "pending", "cancel", "refund", "partial_refund", "chargeback", "partial_chargeback", "expire", "failure")'
+    old_status: string NOT NULL DEFAULT "pending"
+    new_status: string NOT NULL
+    ' request payload from the payment gateway '
+    created_at: datetime NOT NULL
+    request_payload: JSONB NOT NULL
+}
+
+Reservations ||-o{ ReservationItems : "has"
+Reservations ||-o{ PaymentHistories : "has"

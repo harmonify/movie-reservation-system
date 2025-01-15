@@ -1,55 +1,57 @@
 @startuml user-service-erd
 
-entity users {
-    uuid string PRIMARY_KEY
-    username string NOT NULL UNIQUE INDEX
-    password string NOT NULL
-    email string NOT NULL UNIQUE INDEX
-    phone_number string NOT NULL UNIQUE INDEX
-    first_name string NOT NULL
-    last_name string NOT NULL
-    is_email_verified bool NOT NULL DEFAULT false
-    is_phone_number_verified bool NOT NULL DEFAULT false
-    created_at datetime(6) NOT NULL
-    updated_at datetime(6) NOT NULL
-    deleted_at datetime(6) INDEX
+entity Users {
+    uuid: string PRIMARY_KEY
+    trace_id: UUID NOT NULL UNIQUE
+    username: string NOT NULL UNIQUE INDEX
+    password: string NOT NULL
+    email: string NOT NULL UNIQUE INDEX
+    phone_number: string NOT NULL UNIQUE INDEX
+    first_name: string NOT NULL
+    last_name: string NOT NULL
+    is_email_verified: bool NOT NULL DEFAULT false
+    is_phone_number_verified: bool NOT NULL DEFAULT false
+    created_at: datetime(6) NOT NULL
+    updated_at: datetime(6) NOT NULL
+    deleted_at: datetime(6) INDEX
 }
 
-entity user_keys {
-    user_uuid string PRIMARY_KEY
-    public_key string NOT NULL
-    private_key string NOT NULL
-    created_at datetime(6) NOT NULL
-    updated_at datetime(6) NOT NULL
-    deleted_at datetime(6)
+entity UserKeys {
+    user_uuid: string PRIMARY_KEY
+    public_key: string NOT NULL
+    private_key: string NOT NULL
+    created_at: datetime(6) NOT NULL
+    updated_at: datetime(6) NOT NULL
+    deleted_at: datetime(6)
 }
 
-entity user_sessions {
-    id int PRIMARY_KEY
-    user_uuid string NOT NULL INDEX
-    refresh_token string NOT NULL
-    is_revoked bool NOT NULL DEFAULT false
-    expired_at datetime(6) NOT NULL
-    ip_address string
-    user_agent string
-    created_at datetime(6) NOT NULL
-    updated_at datetime(6) NOT NULL
-    deleted_at datetime(6)
+entity UserSessions {
+    id: int PRIMARY_KEY
+    user_uuid: string NOT NULL INDEX
+    trace_id: UUID NOT NULL UNIQUE
+    refresh_token: string NOT NULL
+    is_revoked: bool NOT NULL DEFAULT false
+    expired_at: datetime(6) NOT NULL
+    ip_address: string
+    user_agent: string
+    created_at: datetime(6) NOT NULL
+    updated_at: datetime(6) NOT NULL
+    deleted_at: datetime(6)
 }
 
-entity casbin {
-    id int PRIMARY_KEY
-    p_type string NOT NULL
-    v0 string COMMENT "user uuid"
-    v1 string COMMENT "role"
-    v2 string COMMENT "domain"
-    v3 string COMMENT "resource"
-    v4 string COMMENT "action"
-    v5 string
+entity Casbin {
+    id : int PRIMARY_KEY
+    p_type : string NOT NULL
+    v0 : string COMMENT "user uuid"
+    v1 : string COMMENT "role"
+    v2 : string COMMENT "domain"
+    v3 : string COMMENT "resource"
+    v4 : string COMMENT "action"
+    v5 : string
 }
 
-users ||--o| user_keys
-users ||--o{ user_sessions
-users ||--o{ casbin
+Users ||--o| UserKeys : "has"
+Users ||--o{UserSessions : "has"
+Users ||--o{Casbin : "has"
 
 @enduml
