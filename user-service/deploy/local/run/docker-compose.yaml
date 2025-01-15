@@ -9,10 +9,30 @@ services:
         ports:
             - 5432:5432
         volumes:
-            - ./config/postgresql:/docker-entrypoint-initdb.d
             - ../../../.data/postgres:/data
         networks:
-            - core
+            - user-service-net
+
+    connect:
+        image: quay.io/debezium/connect:3.0
+        environment:
+            BOOTSTRAP_SERVERS: kafka:9092
+            GROUP_ID: "1"
+            CONFIG_STORAGE_TOPIC: user_connect_configs
+            OFFSET_STORAGE_TOPIC: user_connect_offsets
+            STATUS_STORAGE_TOPIC: user_connect_statuses
+            # https://kafka.apache.org/documentation/#connect_running
+            CONNECT_REST_ADVERTISED_LISTENER: http://localhost:8083
+            CONNECT_REST_PORT: 8083
+        ports:
+            - "8083:8083"
+        depends_on:
+            - kafka
+            - postgres
+        volumes:
+          - "./config/debezium-connector-postgres:/kafka/connect/debezium-connector-postgres"
+        networks:
+            - user-service-net
 
     postgres-exporter:
         image: prometheuscommunity/postgres-exporter:latest
@@ -25,8 +45,8 @@ services:
         depends_on:
             - postgres
         networks:
-            - core
-            - monitoring
+            - user-service-net
+            - monitoring-net
 
     redis:
         image: redis:latest
@@ -34,7 +54,7 @@ services:
         ports:
             - "6379:6379"
         networks:
-            - core
+            - user-service-net
 
     redis-exporter:
         image: oliver006/redis_exporter:latest
@@ -45,9 +65,8 @@ services:
         depends_on:
             - redis
         networks:
-            - core
-            - monitoring
+            - user-service-net
+            - monitoring-net
 
 networks:
-    core:
-    monitoring:
+    user-service-net:

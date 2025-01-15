@@ -19,11 +19,11 @@ The following is an example that satisfies both rules:
 
 Examples:
 
-- `order-created-v1.0.0`, start.
-- `order-paid-v1.0.0`, business flow succeed.
-- `order-not-paid-v1.0.0`, business error.
-- `order-failed-v1.0.0`, system errors.
-- `order-completed-v1.0.0`, end.
+- `order_created_v1.0.0`, start.
+- `order_paid_v1.0.0`, business flow succeed.
+- `order_unpaid_v1.0.0`, business error.
+- `order_failed_v1.0.0`, system errors.
+- `order_completed_v1.0.0`, end.
 
 ## Topic ordering
 

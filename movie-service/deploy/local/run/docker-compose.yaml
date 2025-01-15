@@ -1,0 +1,16 @@
+services:
+    mongodb:
+        # If you are using a Raspberry Pi, use mongo:4.4.18
+        image: mongo:7.0
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: root
+            MONGO_INITDB_ROOT_PASSWORD: root
+        volumes:
+            - ../../../.data/mongodb:/data/db
+        ports:
+            - 27017:27017
+        networks:
+            - movie-service-net
+
+networks:
+    movie-service-net:
