@@ -1,8 +1,0 @@
-syntax = "proto3";
-
-package harmonify.shared;
-
-message ErrorResponse {
-  string code = 1;
-  string message = 2;
-}

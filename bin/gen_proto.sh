@@ -2,8 +2,7 @@
 
 root="$(realpath "$(dirname "$(dirname "$0")")")"
 source_dir_path="$root/proto/harmonify/movie_reservation_system"
-output_dir_paths=("$root/user-service/internal/driven/proto")
-# output_dir_paths=("$root/user-service/internal/driven/proto" "$root/movie-service/internal/driven/proto" "$root/reservation-service/internal/driven/proto")
+output_dir_paths=("$root/user-service/internal/driven/proto" "$root/movie-service/internal/driven/proto" "$root/reservation-service/internal/driven/proto")
 
 proto_files_path=("$source_dir_path"/**/*.proto)
 go_opt_args="--go_opt=paths=source_relative"
@@ -14,7 +13,7 @@ for proto_file_path in "${proto_files_path[@]}"; do
 	proto_file_name="$(basename "$proto_file_path")"
 
 	source_relative_proto_file_path=""$proto_dir_name"/"$proto_file_name""
-	go_pkg_name=""$proto_dir_name""
+	go_pkg_name=""$proto_dir_name"_proto"
 
 	go_opt_args+=",M"$source_relative_proto_file_path"=./"$go_pkg_name""
 	go_grpc_opt_args+=",M"$source_relative_proto_file_path"=./"$go_pkg_name""
@@ -23,6 +22,7 @@ done
 # clear
 
 for output_dir_path in ${output_dir_paths[@]}; do
+	rm -rf "$output_dir_path"
 	mkdir -p "$output_dir_path"
 
 	echo -e "Executing: protoc \n \

@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package harmonify.movie_reservation_system.user;
+
+message UserCreated {
+    string traceId = 1;
+    string userUuid = 2;
+}
