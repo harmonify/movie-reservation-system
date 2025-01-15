@@ -39,7 +39,9 @@ type Config struct {
 	GrpcTicketServiceUrl      string `mapstructure:"GRPC_TICKET_SERVICE_URL"`
 	GrpcUserServiceUrl        string `mapstructure:"GRPC_USER_SERVICE_URL"`
 
-	KafkaProducerPort string `mapstructure:"KAFKA_PRODUCER_PORT"`
+	KafkaBrokers       string `mapstructure:"KAFKA_BROKERS"`
+	KafkaVersion       string `mapstructure:"KAFKA_VERSION"`
+	KafkaConsumerGroup string `mapstructure:"KAFKA_CONSUMER_GROUP"`
 
 	LogType  string `mapstructure:"LOG_TYPE"`
 	LogLevel string `mapstructure:"LOG_LEVEL"`

@@ -2,7 +2,7 @@
 
 ## Golang SDK examples
 
-Resource: <https://github.com/confluentinc/confluent-kafka-go/tree/master/examples>
+Resource: <https://github.com/IBM/sarama/tree/main/examples>
 
 ## Topic name
 
