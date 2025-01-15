@@ -1,6 +1,9 @@
 # Run: `git config --global core.excludesfile .gitignore.local` if you need local gitignore
 .gitignore.local
 
+bin/*
+!bin/*.sh
+
 **/.data/*
 !**/.data/.gitkeep
 
