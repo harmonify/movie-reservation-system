@@ -12,7 +12,3 @@ services:
             - "--storage.tsdb.path=/prometheus" # Ensure correct path
         networks:
             - monitoring-net
-        logging:
-            driver: loki
-            options:
-                loki-url: "http://loki:3100/api/prom/push"

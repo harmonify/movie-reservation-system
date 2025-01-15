@@ -10,7 +10,6 @@ services:
             - node.name=elasticsearch
         volumes:
             - ../../../.data/elasticsearch:/usr/share/elasticsearch/data
-        restart: "on-failure:3"
 
     mongodb:
         # If you are using a Raspberry Pi, use mongo:4.4.18
@@ -22,4 +21,3 @@ services:
             - ../../../.data/mongodb:/data/db
         ports:
             - 27017:27017
-        restart: "on-failure:3"

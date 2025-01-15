@@ -15,16 +15,12 @@ services:
             - "14268:14268"
             - "14250:14250"
             - "9411:9411"
-            - "4317:4317"
-        restart: on-failure
+            - "4318:4317"
+        restart: "on-failure:5"
         depends_on:
             - cassandra-schema
         networks:
             - monitoring-net
-        logging:
-            driver: loki
-            options:
-                loki-url: "http://loki:3100/api/prom/push"
 
     jaeger-query:
         image: jaegertracing/jaeger-query:latest
@@ -34,17 +30,13 @@ services:
                 "--cassandra.servers=cassandra",
             ]
         ports:
-            - "16688:16686"
+            - "16686:16686"
             - "16687"
-        restart: on-failure
+        restart: "on-failure:5"
         depends_on:
             - cassandra-schema
         networks:
             - monitoring-net
-        logging:
-            driver: loki
-            options:
-                loki-url: "http://loki:3100/api/prom/push"
 
     jaeger-agent:
         image: jaegertracing/jaeger-agent:latest
@@ -54,18 +46,15 @@ services:
             - "6831:6831/udp"
             - "6832:6832/udp"
             - "5778:5778"
-        restart: on-failure
+        restart: "on-failure:5"
         depends_on:
             - jaeger-collector
         networks:
             - monitoring-net
-        logging:
-            driver: loki
-            options:
-                loki-url: "http://loki:3100/api/prom/push"
 
     cassandra:
         image: cassandra:latest
+        restart: "on-failure:5"
         ports:
             - 7001:7000
             - 9042:9042
@@ -76,10 +65,6 @@ services:
             - HEAP_NEWSIZE=100M
         volumes:
             - ./.data/cassandra:/var/lib/cassandra:rw
-        logging:
-            driver: loki
-            options:
-                loki-url: "http://loki:3100/api/prom/push"
         healthcheck:
             test: ["CMD-SHELL", "nodetool status"]
             interval: 2m
@@ -89,11 +74,8 @@ services:
 
     cassandra-schema:
         image: jaegertracing/jaeger-cassandra-schema:latest
+        restart: "on-failure:5"
         depends_on:
             - cassandra
         networks:
             - monitoring-net
-        logging:
-            driver: loki
-            options:
-                loki-url: "http://loki:3100/api/prom/push"

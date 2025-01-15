@@ -1,69 +1,53 @@
 services:
-  postgres:
-    image: postgres:latest
-    restart: always
-    environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: root
-      POSTGRES_DB: mvs-user-service
-    ports:
-      - 5432:5432
-    volumes:
-      - ./config/postgresql:/docker-entrypoint-initdb.d
-      - ../../../.data/postgres:/data
-    networks:
-      - core
-    logging:
-      driver: loki
-      options:
-        loki-url: "http://loki:3100/api/prom/push"
+    postgres:
+        image: postgres:latest
+        restart: "on-failure:5"
+        environment:
+            POSTGRES_USER: root
+            POSTGRES_PASSWORD: root
+            POSTGRES_DB: mvs-user-service
+        ports:
+            - 5432:5432
+        volumes:
+            - ./config/postgresql:/docker-entrypoint-initdb.d
+            - ../../../.data/postgres:/data
+        networks:
+            - core
 
-  postgres-exporter:
-    image: prometheuscommunity/postgres-exporter:latest
-    environment:
-      DATA_SOURCE_URI: "postgres:5432/mvs-user-service?sslmode=disable"
-      DATA_SOURCE_USER: "root"
-      DATA_SOURCE_PASS: "root"
-    ports:
-      - "9187:9187"
-    depends_on:
-      - postgres
-    networks:
-      - core
-      - monitoring
-    logging:
-      driver: loki
-      options:
-        loki-url: "http://loki:3100/api/prom/push"
+    postgres-exporter:
+        image: prometheuscommunity/postgres-exporter:latest
+        environment:
+            DATA_SOURCE_URI: "postgres:5432/mvs-user-service?sslmode=disable"
+            DATA_SOURCE_USER: "root"
+            DATA_SOURCE_PASS: "root"
+        ports:
+            - "9187:9187"
+        depends_on:
+            - postgres
+        networks:
+            - core
+            - monitoring
 
-  redis:
-    image: redis:latest
-    command: ["redis-server", "--requirepass", "secret"]
-    ports:
-      - "6379:6379"
-    networks:
-      - core
-    logging:
-      driver: loki
-      options:
-        loki-url: "http://loki:3100/api/prom/push"
+    redis:
+        image: redis:latest
+        command: ["redis-server", "--requirepass", "secret"]
+        ports:
+            - "6379:6379"
+        networks:
+            - core
 
-  redis-exporter:
-    image: oliver006/redis_exporter:latest
-    environment:
-      REDIS_PASSWORD: "secret"
-    ports:
-      - "9121:9121"
-    depends_on:
-      - redis
-    networks:
-      - core
-      - monitoring
-    logging:
-      driver: loki
-      options:
-        loki-url: "http://loki:3100/api/prom/push"
+    redis-exporter:
+        image: oliver006/redis_exporter:latest
+        environment:
+            REDIS_PASSWORD: "secret"
+        ports:
+            - "9121:9121"
+        depends_on:
+            - redis
+        networks:
+            - core
+            - monitoring
 
 networks:
-  core:
-  monitoring:
+    core:
+    monitoring:
