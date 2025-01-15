@@ -5,15 +5,15 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	http_constant "github.com/harmonify/movie-reservation-system/pkg/http/constant"
+	"github.com/harmonify/movie-reservation-system/pkg/http/response"
+	"github.com/harmonify/movie-reservation-system/pkg/http/validator"
+	http_validator "github.com/harmonify/movie-reservation-system/pkg/http/validator"
+	"github.com/harmonify/movie-reservation-system/pkg/logger"
+	"github.com/harmonify/movie-reservation-system/pkg/tracer"
+	"github.com/harmonify/movie-reservation-system/pkg/util"
 	auth_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/auth"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/middleware"
-	http_constant "github.com/harmonify/movie-reservation-system/user-service/lib/http/constant"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/http/response"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/http/validator"
-	http_validator "github.com/harmonify/movie-reservation-system/user-service/lib/http/validator"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/util"
 	"go.uber.org/zap"
 )
 

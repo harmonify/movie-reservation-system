@@ -6,15 +6,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/harmonify/movie-reservation-system/pkg/config"
+	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
+	"github.com/harmonify/movie-reservation-system/pkg/logger"
+	"github.com/harmonify/movie-reservation-system/pkg/mail"
 	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/config"
-	error_constant "github.com/harmonify/movie-reservation-system/user-service/lib/error/constant"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/mail"
 
-	"github.com/harmonify/movie-reservation-system/user-service/lib/messaging"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/util"
+	"github.com/harmonify/movie-reservation-system/pkg/messaging"
+	"github.com/harmonify/movie-reservation-system/pkg/tracer"
+	"github.com/harmonify/movie-reservation-system/pkg/util"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )

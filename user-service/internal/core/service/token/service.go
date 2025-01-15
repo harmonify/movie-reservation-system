@@ -6,13 +6,13 @@ import (
 	"encoding/base64"
 	"time"
 
+	"github.com/harmonify/movie-reservation-system/pkg/config"
+	"github.com/harmonify/movie-reservation-system/pkg/logger"
+	"github.com/harmonify/movie-reservation-system/pkg/tracer"
+	"github.com/harmonify/movie-reservation-system/pkg/util"
+	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/config"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/util"
-	jwt_util "github.com/harmonify/movie-reservation-system/user-service/lib/util/jwt"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )

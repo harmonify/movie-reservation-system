@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	error_constant "github.com/harmonify/movie-reservation-system/user-service/lib/error/constant"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/http/response"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/util"
+	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
+	"github.com/harmonify/movie-reservation-system/pkg/http/response"
+	"github.com/harmonify/movie-reservation-system/pkg/tracer"
+	"github.com/harmonify/movie-reservation-system/pkg/util"
 )
 
 type (

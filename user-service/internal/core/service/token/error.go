@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	error_constant "github.com/harmonify/movie-reservation-system/user-service/lib/error/constant"
-	grpc_constant "github.com/harmonify/movie-reservation-system/user-service/lib/grpc/constant"
+	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
+	grpc_constant "github.com/harmonify/movie-reservation-system/pkg/grpc/constant"
 )
 
 var (

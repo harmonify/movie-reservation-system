@@ -2,8 +2,8 @@ package health_check_rest
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/http/response"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
+	"github.com/harmonify/movie-reservation-system/pkg/http/response"
+	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"go.uber.org/fx"
 )
 

@@ -7,11 +7,11 @@ import (
 
 	"github.com/casbin/casbin/v2"
 	gormadapter "github.com/casbin/gorm-adapter/v3"
+	"github.com/harmonify/movie-reservation-system/pkg/config"
+	"github.com/harmonify/movie-reservation-system/pkg/database"
+	"github.com/harmonify/movie-reservation-system/pkg/logger"
+	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/config"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/database"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
 	"go.uber.org/fx"
 )
 

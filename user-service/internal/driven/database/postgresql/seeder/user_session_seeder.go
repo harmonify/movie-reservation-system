@@ -3,9 +3,9 @@ package seeder
 import (
 	"errors"
 
+	"github.com/harmonify/movie-reservation-system/pkg/database"
 	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/model"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/database"
 	"go.uber.org/fx"
 )
 

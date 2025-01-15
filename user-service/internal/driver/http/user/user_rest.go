@@ -2,11 +2,11 @@ package user_rest
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/http/response"
-	http_validator "github.com/harmonify/movie-reservation-system/user-service/lib/http/validator"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
-	jwt_util "github.com/harmonify/movie-reservation-system/user-service/lib/util/jwt"
+	"github.com/harmonify/movie-reservation-system/pkg/http/response"
+	http_validator "github.com/harmonify/movie-reservation-system/pkg/http/validator"
+	"github.com/harmonify/movie-reservation-system/pkg/logger"
+	"github.com/harmonify/movie-reservation-system/pkg/tracer"
+	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
 	"go.uber.org/fx"
 
 	user_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/user"

@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/harmonify/movie-reservation-system/pkg/logger"
+	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
 	"go.uber.org/fx"
 )
 

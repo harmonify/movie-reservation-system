@@ -6,7 +6,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/middleware"
 
 	// user_rest "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/user"
-	http_interface "github.com/harmonify/movie-reservation-system/user-service/lib/http/interface"
+	http_interface "github.com/harmonify/movie-reservation-system/pkg/http/interface"
 	"go.uber.org/fx"
 )
 

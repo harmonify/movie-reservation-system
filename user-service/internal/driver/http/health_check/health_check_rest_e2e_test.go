@@ -12,11 +12,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/harmonify/movie-reservation-system/pkg/http/response"
+	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
 	"github.com/harmonify/movie-reservation-system/user-service/internal"
 	http_driver "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http"
 	health_rest "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/health_check"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/http/response"
-	test_interface "github.com/harmonify/movie-reservation-system/user-service/lib/test/interface"
 	"github.com/stretchr/testify/suite"
 	"github.com/tidwall/gjson"
 	"go.uber.org/fx"

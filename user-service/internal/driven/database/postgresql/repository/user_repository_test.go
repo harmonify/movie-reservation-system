@@ -7,13 +7,13 @@ import (
 	"testing"
 	"time"
 
+	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
 	"github.com/harmonify/movie-reservation-system/user-service/internal"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/factory"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/model"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/seeder"
-	test_interface "github.com/harmonify/movie-reservation-system/user-service/lib/test/interface"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/fx"
 )

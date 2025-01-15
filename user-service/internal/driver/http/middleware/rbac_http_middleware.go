@@ -4,13 +4,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/harmonify/movie-reservation-system/pkg/config"
+	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
+	"github.com/harmonify/movie-reservation-system/pkg/http/response"
+	"github.com/harmonify/movie-reservation-system/pkg/logger"
+	"github.com/harmonify/movie-reservation-system/pkg/tracer"
+	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
 	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/config"
-	error_constant "github.com/harmonify/movie-reservation-system/user-service/lib/error/constant"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/http/response"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/logger"
-	"github.com/harmonify/movie-reservation-system/user-service/lib/tracer"
-	jwt_util "github.com/harmonify/movie-reservation-system/user-service/lib/util/jwt"
 	"go.uber.org/fx"
 )
 

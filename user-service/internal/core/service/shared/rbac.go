@@ -3,7 +3,7 @@ package shared_service
 import (
 	"context"
 
-	"github.com/harmonify/movie-reservation-system/user-service/lib/database"
+	"github.com/harmonify/movie-reservation-system/pkg/database"
 )
 
 var (
