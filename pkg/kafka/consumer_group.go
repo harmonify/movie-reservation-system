@@ -2,7 +2,6 @@ package kafka
 
 import (
 	"context"
-	"log"
 	"strings"
 
 	"github.com/IBM/sarama"
@@ -33,7 +32,7 @@ func NewKafkaConsumerGroup(lc fx.Lifecycle, cfg *config.Config, logger logger.Lo
 
 	lc.Append(fx.Hook{
 		OnStop: func(ctx context.Context) error {
-			log.Println("Closing Kafka consumer")
+			logger.Info("Closing Kafka consumer")
 			return client.Close()
 		},
 	})
@@ -50,7 +49,7 @@ func (kc *KafkaConsumerGroup) StartConsumer(ctx context.Context, topics []string
 	go func() {
 		for {
 			if err := kc.Client.Consume(ctx, topics, handler); err != nil {
-				kc.logger.WithCtx(ctx).Error("Error consuming messages", zap.Error(err))
+				kc.logger.WithCtx(ctx).Warn("Consumer session is closed", zap.Error(err))
 			}
 		}
 	}()

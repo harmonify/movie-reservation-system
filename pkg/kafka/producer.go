@@ -18,7 +18,7 @@ type KafkaProducer struct {
 	logger logger.Logger
 }
 
-// ProvideKafkaProducer initializes the Kafka producer.
+// NewKafkaProducer initializes the Kafka producer.
 func NewKafkaProducer(lc fx.Lifecycle, cfg *config.Config, logger logger.Logger) (*KafkaProducer, error) {
 	kafkaConfig, err := buildKafkaConfig(cfg)
 	if err != nil {
