@@ -31,6 +31,7 @@ func (f *userFactoryImpl) CreateTestUser(p CreateTestUserParam) *model.User {
 
 	return &model.User{
 		UUID:                  uuid.MustParse("868b606b-26d5-4c8d-ba45-9587919e059f"),
+		TraceID:               uuid.NewString(),
 		Username:              "user1234",
 		Password:              pass,
 		Email:                 "user1234@example.com",

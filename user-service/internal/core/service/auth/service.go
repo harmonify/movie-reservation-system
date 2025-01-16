@@ -7,6 +7,7 @@ import (
 
 	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/database"
+	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/mail"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
@@ -90,6 +91,11 @@ func (s *authServiceImpl) Register(ctx context.Context, p RegisterParam) error {
 	ctx, span := s.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
+	if !span.SpanContext().TraceID().IsValid() {
+		s.logger.WithCtx(ctx).Error("Failed to get valid trace id", zap.String("email", p.Email), zap.String("phone_number", p.PhoneNumber))
+		return error_constant.ErrInternalServerError
+	}
+
 	// Hash user password
 	hashedPassword, err := s.util.EncryptionUtil.Argon2Hasher.Hash(p.Password)
 	if err != nil {
@@ -114,6 +120,7 @@ func (s *authServiceImpl) Register(ctx context.Context, p RegisterParam) error {
 			PhoneNumber: p.PhoneNumber,
 			FirstName:   p.FirstName,
 			LastName:    p.LastName,
+			TraceID:     span.SpanContext().TraceID().String(),
 		})
 		s.logger.WithCtx(ctx).Debug("User record", zap.Any("param", p), zap.Any("user", user))
 
@@ -193,6 +200,11 @@ func (s *authServiceImpl) Login(ctx context.Context, p LoginParam) (*LoginResult
 	ctx, span := s.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
+	if !span.SpanContext().TraceID().IsValid() {
+		s.logger.WithCtx(ctx).Error("Failed to get valid trace id", zap.String("username", p.Username), zap.String("ip_address", p.IpAddress), zap.String("user_agent", p.UserAgent))
+		return nil, error_constant.ErrInternalServerError
+	}
+
 	// Get user record
 	user, err := s.userStorage.FindUser(ctx, entity.FindUser{Username: sql.NullString{String: p.Username, Valid: true}})
 	if err != nil {
@@ -248,6 +260,7 @@ func (s *authServiceImpl) Login(ctx context.Context, p LoginParam) (*LoginResult
 		IpAddress:    sql.NullString{String: p.IpAddress, Valid: true},
 		UserAgent:    sql.NullString{String: p.UserAgent, Valid: true},
 		ExpiredAt:    refreshToken.RefreshTokenExpiredAt,
+		TraceID:      span.SpanContext().TraceID().String(),
 	})
 	if err != nil {
 		s.logger.WithCtx(ctx).Error("Failed to save user session", zap.Error(err))

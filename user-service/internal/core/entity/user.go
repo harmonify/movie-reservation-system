@@ -9,6 +9,7 @@ import (
 
 type User struct {
 	UUID                  uuid.UUID    `json:"uuid"`
+	TraceID               string       `json:"trace_id"`
 	Username              string       `json:"username"`
 	Password              string       `json:"-"` // hashed
 	Email                 string       `json:"email"`
@@ -41,6 +42,7 @@ type FindUser struct {
 }
 
 type SaveUser struct {
+	TraceID     string
 	Username    string
 	Password    string
 	Email       string

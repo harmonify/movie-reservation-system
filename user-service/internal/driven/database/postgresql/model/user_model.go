@@ -11,6 +11,7 @@ import (
 
 type User struct {
 	UUID                  uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"` // For pg14+
+	TraceID               string    `gorm:"uniqueIndex:idx_user_trace_id;unique"`
 	Username              string    `gorm:"uniqueIndex:idx_user_username;unique"`
 	Password              string    `json:"-"`
 	Email                 string    `gorm:"uniqueIndex:idx_user_email;unique"`
@@ -30,25 +31,10 @@ func (m *User) TableName() string {
 	return "users"
 }
 
-func (m *User) FromEntity(e entity.User) *User {
-	return &User{
-		UUID:                  e.UUID,
-		Username:              e.Username,
-		Email:                 e.Email,
-		PhoneNumber:           e.PhoneNumber,
-		FirstName:             e.FirstName,
-		LastName:              e.LastName,
-		IsEmailVerified:       e.IsEmailVerified,
-		IsPhoneNumberVerified: e.IsPhoneNumberVerified,
-		CreatedAt:             e.CreatedAt,
-		UpdatedAt:             e.UpdatedAt,
-		DeletedAt:             gorm.DeletedAt(e.DeletedAt),
-	}
-}
-
 func (m *User) ToEntity() *entity.User {
 	return &entity.User{
 		UUID:                  m.UUID,
+		TraceID:               m.TraceID,
 		Username:              m.Username,
 		Password:              m.Password,
 		Email:                 m.Email,
@@ -63,9 +49,10 @@ func (m *User) ToEntity() *entity.User {
 	}
 }
 
-func (m *User) FromSaveEntity(e entity.SaveUser) *User {
+func NewUser(e entity.SaveUser) *User {
 	return &User{
 		Username:              e.Username,
+		TraceID:               e.TraceID,
 		Password:              e.Password,
 		Email:                 e.Email,
 		PhoneNumber:           e.PhoneNumber,
@@ -73,16 +60,5 @@ func (m *User) FromSaveEntity(e entity.SaveUser) *User {
 		LastName:              e.LastName,
 		IsEmailVerified:       false,
 		IsPhoneNumberVerified: false,
-	}
-}
-
-func (m *User) ToSaveEntity() *entity.SaveUser {
-	return &entity.SaveUser{
-		Username:    m.Username,
-		Password:    m.Password,
-		Email:       m.Email,
-		PhoneNumber: m.PhoneNumber,
-		FirstName:   m.FirstName,
-		LastName:    m.LastName,
 	}
 }

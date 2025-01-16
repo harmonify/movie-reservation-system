@@ -56,7 +56,7 @@ func (r *userKeyRepositoryImpl) SaveUserKey(ctx context.Context, createModel ent
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	userKeyModel := (&model.UserKey{}).FromSaveEntity(createModel)
+	userKeyModel := model.NewUserKey(createModel)
 
 	result := r.database.DB.
 		WithContext(ctx).

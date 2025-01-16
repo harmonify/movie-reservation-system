@@ -42,5 +42,6 @@ type (
 
 	LogoutParam struct {
 		RefreshToken string
+		TraceId      string
 	}
 )

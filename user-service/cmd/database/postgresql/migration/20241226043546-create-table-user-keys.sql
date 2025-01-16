@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS public.user_keys (
 CREATE INDEX idx_user_keys_deleted_at ON public.user_keys USING btree (deleted_at);
 
 ALTER TABLE
-    public.user_sessions
+    public.user_keys
 ADD
     CONSTRAINT fk_users_tokens FOREIGN KEY (user_uuid) REFERENCES public.users("uuid");
 

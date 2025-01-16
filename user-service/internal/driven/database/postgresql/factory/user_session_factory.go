@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/model"
 )
 
@@ -32,6 +33,7 @@ func (f *userSessionFactoryImpl) CreateUserSession(p CreateUserSessionParam) (*m
 	}
 	return &model.UserSession{
 		UserUUID:     p.UserUUID,
+		TraceID:      uuid.NewString(),
 		RefreshToken: refreshToken,
 		IsRevoked:    false,
 		ExpiredAt:    expiredAt,

@@ -58,7 +58,7 @@ func (r *userRepositoryImpl) SaveUser(ctx context.Context, createModel entity.Sa
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	userModel := (&model.User{}).FromSaveEntity(createModel)
+	userModel := model.NewUser(createModel)
 
 	result := r.database.DB.
 		WithContext(ctx).

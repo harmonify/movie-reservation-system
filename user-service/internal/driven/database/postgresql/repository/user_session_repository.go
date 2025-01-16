@@ -56,7 +56,7 @@ func (r *userSessionRepositoryImpl) SaveSession(ctx context.Context, createModel
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	userSessionModel := (&model.UserSession{}).FromSaveEntity(createModel)
+	userSessionModel := model.NewUserSession(createModel)
 
 	result := r.database.DB.
 		WithContext(ctx).

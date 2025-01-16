@@ -9,6 +9,7 @@ type (
 	UserSession struct {
 		ID           uint64         `json:"id"`
 		UserUUID     string         `json:"user_uuid"`
+		TraceID      string         `json:"trace_id"`
 		RefreshToken string         `json:"refresh_token"` // hashed
 		IsRevoked    bool           `json:"is_revoked"`
 		ExpiredAt    time.Time      `json:"expired_at"`
@@ -38,6 +39,7 @@ type (
 		ExpiredAt    time.Time
 		IpAddress    sql.NullString
 		UserAgent    sql.NullString
+		TraceID      string
 	}
 
 	UpdateUserSession struct {

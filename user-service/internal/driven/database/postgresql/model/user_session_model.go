@@ -12,6 +12,7 @@ type UserSession struct {
 	gorm.Model
 
 	UserUUID     string `gorm:"index"`
+	TraceID      string `gorm:"uniqueIndex:idx_user_trace_id;unique"`
 	RefreshToken string // hashed
 	IsRevoked    bool   `gorm:"default:false"`
 	ExpiredAt    time.Time
@@ -40,9 +41,10 @@ func (m *UserSession) ToEntity() *entity.UserSession {
 	}
 }
 
-func (m *UserSession) FromSaveEntity(e entity.SaveUserSession) *UserSession {
+func NewUserSession(e entity.SaveUserSession) *UserSession {
 	return &UserSession{
 		UserUUID:     e.UserUUID,
+		TraceID:      e.TraceID,
 		RefreshToken: e.RefreshToken,
 		IsRevoked:    false,
 		ExpiredAt:    e.ExpiredAt,
