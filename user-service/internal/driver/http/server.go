@@ -36,6 +36,7 @@ type HttpServerParam struct {
 	Config            *config.Config
 	Logger            logger.Logger
 	MetricsMiddleware metrics.PrometheusHttpMiddleware
+	Routes            []http_interface.RestHandler `group:"http_routes"`
 }
 
 type HttpServerResult struct {
@@ -83,13 +84,14 @@ func NewHttpServer(p HttpServerParam) (HttpServerResult, error) {
 		},
 	}
 
+	h.configure(p.Routes...)
+
 	return HttpServerResult{
 		HttpServer: h,
 	}, nil
 }
 
-func (h *HttpServer) Start(ctx context.Context, handlers ...http_interface.RestHandler) error {
-	h.Configure(handlers...)
+func (h *HttpServer) Start(ctx context.Context) error {
 	h.logger.WithCtx(ctx).Info(">> HTTP server run on port: " + h.cfg.ServicePort)
 	var err error
 	if err = h.Server.ListenAndServe(); err == nil {
@@ -110,7 +112,7 @@ func (h *HttpServer) Shutdown(ctx context.Context) error {
 	return err
 }
 
-func (h *HttpServer) Configure(handlers ...http_interface.RestHandler) {
+func (h *HttpServer) configure(handlers ...http_interface.RestHandler) {
 	h.configureMiddlewares()
 
 	if h.cfg.Env == constant.EnvironmentProduction {

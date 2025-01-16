@@ -44,8 +44,6 @@ type AuthRestTestSuite struct {
 	app                    *fx.App
 	database               *database.Database
 	httpServer             *http_driver.HttpServer
-	authRest               auth_rest.AuthRestHandler
-	authService            auth_service.AuthService
 	testUser               *model.User
 	testUserHashedPassword *model.User
 	userSessionFactory     factory.UserSessionFactory
@@ -60,10 +58,8 @@ func (s *AuthRestTestSuite) SetupSuite() {
 		seeder.DrivenPostgresqlSeederModule,
 		factory.DrivenPostgresqlFactoryModule,
 		fx.Invoke(func(
-			authRest auth_rest.AuthRestHandler,
 			database *database.Database,
 			httpServer *http_driver.HttpServer,
-			handlers http_driver.RestHandlers,
 			authService auth_service.AuthService,
 			userFactory factory.UserFactory,
 			userSessionFactory factory.UserSessionFactory,
@@ -72,11 +68,8 @@ func (s *AuthRestTestSuite) SetupSuite() {
 			userStorage shared_service.UserStorage,
 			otpStorage shared_service.OtpStorage,
 		) {
-			s.authRest = authRest
 			s.database = database
 			s.httpServer = httpServer
-			s.httpServer.Configure(handlers...)
-			s.authService = authService
 			s.testUser = userFactory.CreateTestUser(factory.CreateTestUserParam{HashPassword: false})
 			s.testUserHashedPassword = userFactory.CreateTestUser(factory.CreateTestUserParam{HashPassword: true})
 			s.userSeeder = userSeeder
@@ -85,6 +78,7 @@ func (s *AuthRestTestSuite) SetupSuite() {
 			s.userStorage = userStorage
 			s.otpStorage = otpStorage
 		}),
+		fx.NopLogger,
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*105)

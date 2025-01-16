@@ -2,6 +2,7 @@ package user_rest
 
 import (
 	"github.com/gin-gonic/gin"
+	http_interface "github.com/harmonify/movie-reservation-system/pkg/http/interface"
 	"github.com/harmonify/movie-reservation-system/pkg/http/response"
 	http_validator "github.com/harmonify/movie-reservation-system/pkg/http/validator"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
@@ -31,7 +32,7 @@ type UserRestHandlerParam struct {
 type UserRestHandlerResult struct {
 	fx.Out
 
-	UserRestHandler UserRestHandler
+	UserRestHandler http_interface.RestHandler `group:"http_routes"`
 }
 
 type userRestHandlerImpl struct {
@@ -64,6 +65,10 @@ func (h *userRestHandlerImpl) Register(g *gin.RouterGroup) {
 	// g.POST("/profile/email/verify", h.PostVerifyUpdateEmail)
 	// g.GET("/profile/phone/verify", h.middleware.JwtHttpMiddleware.AuthenticateUser, h.GetVerifyUpdatePhoneNumber)
 	// g.POST("/profile/phone/verify", h.PostVerifyUpdatePhoneNumber)
+}
+
+func (h *userRestHandlerImpl) Version() string {
+	return "1"
 }
 
 func (h *userRestHandlerImpl) GetUser(c *gin.Context) {

@@ -95,10 +95,10 @@ func NewApp(p ...fx.Option) *fx.App {
 	return fx.New(options...)
 }
 
-func Bootstrap(lc fx.Lifecycle, l logger.Logger, h *http_driver.HttpServer, t tracer.Tracer, handlers http_driver.RestHandlers) {
+func Bootstrap(lc fx.Lifecycle, l logger.Logger, h *http_driver.HttpServer, t tracer.Tracer) {
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			err := h.Start(ctx, handlers...)
+			err := h.Start(ctx)
 			if err != nil {
 				l.WithCtx(ctx).Error(err.Error())
 				return err

@@ -32,22 +32,18 @@ func TestHealthCheckRest(t *testing.T) {
 
 type HealthCheckRestTestSuite struct {
 	suite.Suite
-	app             *fx.App
-	httpServer      *http_driver.HttpServer
-	healthCheckRest health_rest.HealthCheckRestHandler
+	app        *fx.App
+	httpServer *http_driver.HttpServer
 }
 
 func (s *HealthCheckRestTestSuite) SetupSuite() {
 	s.app = internal.NewApp(
 		fx.Invoke(func(
-			healthCheckRest health_rest.HealthCheckRestHandler,
 			httpServer *http_driver.HttpServer,
-			handlers http_driver.RestHandlers,
 		) {
-			s.healthCheckRest = healthCheckRest
 			s.httpServer = httpServer
-			s.httpServer.Configure(handlers...)
 		}),
+		fx.NopLogger,
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*105)

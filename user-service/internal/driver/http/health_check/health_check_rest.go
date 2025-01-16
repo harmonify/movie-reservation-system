@@ -2,6 +2,7 @@ package health_check_rest
 
 import (
 	"github.com/gin-gonic/gin"
+	http_interface "github.com/harmonify/movie-reservation-system/pkg/http/interface"
 	"github.com/harmonify/movie-reservation-system/pkg/http/response"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"go.uber.org/fx"
@@ -23,7 +24,7 @@ type HealthCheckRestHandlerParam struct {
 type HealthCheckRestHandlerResult struct {
 	fx.Out
 
-	HealthCheckRestHandler HealthCheckRestHandler
+	HealthCheckRestHandler http_interface.RestHandler `group:"http_routes"`
 }
 
 type healthCheckRestHandlerImpl struct {

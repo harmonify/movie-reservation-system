@@ -6,20 +6,39 @@ import (
 
 	"github.com/gin-gonic/gin"
 	http_constant "github.com/harmonify/movie-reservation-system/pkg/http/constant"
+	http_interface "github.com/harmonify/movie-reservation-system/pkg/http/interface"
 	"github.com/harmonify/movie-reservation-system/pkg/http/response"
-	"github.com/harmonify/movie-reservation-system/pkg/http/validator"
 	http_validator "github.com/harmonify/movie-reservation-system/pkg/http/validator"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
 	auth_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/auth"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/middleware"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 type AuthRestHandler interface {
 	Register(g *gin.RouterGroup)
 	Version() string
+}
+
+type AuthRestHandlerParam struct {
+	fx.In
+
+	AuthService auth_service.AuthService
+	Validator   http_validator.HttpValidator
+	Response    response.HttpResponse
+	Logger      logger.Logger
+	Tracer      tracer.Tracer
+	Util        *util.Util
+	Middleware  *middleware.HttpMiddleware
+}
+
+type AuthRestHandlerResult struct {
+	fx.Out
+
+	AuthRestHandler http_interface.RestHandler `group:"http_routes"`
 }
 
 type authRestHandlerImpl struct {
@@ -32,23 +51,17 @@ type authRestHandlerImpl struct {
 	middleware  *middleware.HttpMiddleware
 }
 
-func NewAuthRestHandler(
-	authService auth_service.AuthService,
-	logger logger.Logger,
-	tracer tracer.Tracer,
-	response response.HttpResponse,
-	validator validator.HttpValidator,
-	util *util.Util,
-	middleware *middleware.HttpMiddleware,
-) AuthRestHandler {
-	return &authRestHandlerImpl{
-		authService: authService,
-		logger:      logger,
-		tracer:      tracer,
-		response:    response,
-		validator:   validator,
-		util:        util,
-		middleware:  middleware,
+func NewAuthRestHandler(p AuthRestHandlerParam) AuthRestHandlerResult {
+	return AuthRestHandlerResult{
+		AuthRestHandler: &authRestHandlerImpl{
+			authService: p.AuthService,
+			logger:      p.Logger,
+			tracer:      p.Tracer,
+			response:    p.Response,
+			validator:   p.Validator,
+			util:        p.Util,
+			middleware:  p.Middleware,
+		},
 	}
 }
 
