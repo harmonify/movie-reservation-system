@@ -1,8 +1,8 @@
 .data/*
 !.data/.gitkeep
 
-.output/*
-!.output/.gitkeep
+.dist/*
+!.dist/.gitkeep
 
 .coverage/*
 !.coverage/.gitkeep

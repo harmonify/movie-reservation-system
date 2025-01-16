@@ -147,6 +147,8 @@ github.com/grpc-ecosystem/grpc-gateway/v2 v2.24.0 h1:TmHmbvxPmaegwhDubVz0lICL0J5
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.24.0/go.mod h1:qztMSjm835F2bXf+5HKAPIS5qsmQDqZna/PgVt4rWtI=
 github.com/harmonify/movie-reservation-system/pkg v0.0.0-20250115055823-e385a897c785 h1:ScnwpXk8wHtDFeUjDKLPv+L0lMHIn5yx5xnQtP/YgDY=
 github.com/harmonify/movie-reservation-system/pkg v0.0.0-20250115055823-e385a897c785/go.mod h1:+f+NWhmmzq2HYuI8ktTLoAyUDJi39Xat6H9n3X7ytiE=
+github.com/harmonify/movie-reservation-system/pkg v0.0.0-20250116102304-532ae995eb0f h1:vl3TjNt4Fz03O1bfJogKEeGbSZcMf7PIe6V8tfRr2vo=
+github.com/harmonify/movie-reservation-system/pkg v0.0.0-20250116102304-532ae995eb0f/go.mod h1:+f+NWhmmzq2HYuI8ktTLoAyUDJi39Xat6H9n3X7ytiE=
 github.com/hashicorp/go-uuid v1.0.2/go.mod h1:6SBZvOh/SIDV7/2o3Jml5SYk/TvGqwFJ/bN7x4byOro=
 github.com/hashicorp/go-uuid v1.0.3/go.mod h1:6SBZvOh/SIDV7/2o3Jml5SYk/TvGqwFJ/bN7x4byOro=
 github.com/hashicorp/hcl v1.0.0 h1:0Anlzjpi4vEasTeNFn2mLJgTSwt0+6sfsiTG8qcWGx4=
