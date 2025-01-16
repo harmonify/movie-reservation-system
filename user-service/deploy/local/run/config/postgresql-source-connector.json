@@ -1,0 +1,14 @@
+{
+    "name": "users-connector",
+    "config": {
+        "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+        "tasks.max": "1",
+        "database.hostname": "postgres",
+        "database.port": "5432",
+        "database.user": "root",
+        "database.password": "root",
+        "database.dbname" : "mvs-user-service",
+        "topic.prefix": "user_connect",
+        "table.include.list": "public.users"
+    }
+}

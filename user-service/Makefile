@@ -83,3 +83,15 @@ migration\:postgresql\:up: ## Run migrations up
 migration\:postgresql\:down: ## Run migrations down
 	@ENV=$$(grep '^ENV=' .env | cut -d '=' -f2); \
 	godotenv -f .env sql-migrate down -config=./cmd/database/postgresql/migration-config.yml -env=$$ENV
+
+.PHONY: debezium\:register-postgresql-source-connector
+debezium\:register-postgresql-source-connector: ## Register PostgreSQL source connector
+	curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @./deploy/local/run/config/postgresql-source-connector.json
+
+.PHONY: debezium\:deregister-postgresql-source-connector
+debezium\:deregister-postgresql-source-connector: ## Deregister PostgreSQL source connector
+	curl -i -X DELETE -H "Accept:application/json" -H "Content-Type:application/json" http://localhost:8083/connectors/users-connector
+
+.PHONY: debezium\:register-elasticsearch-sink-connector
+debezium\:register-elasticsearch-sink-connector: ## Register Elasticsearch sink connector
+	curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @./deploy/local/run/config/elasticsearch-sink-connector.json

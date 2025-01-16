@@ -2,6 +2,8 @@ services:
     # Config reference: https://kafka.apache.org/documentation/#brokerconfigs
     kafka:
         image: apache/kafka:3.9.0
+        expose:
+            - 9092
         ports:
             - "9092:9092"
         environment:

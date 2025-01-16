@@ -1,6 +1,6 @@
 services:
     postgres:
-        image: postgres:latest
+        image: debezium/postgres:17-alpine
         restart: "on-failure:5"
         environment:
             POSTGRES_USER: root
@@ -9,6 +9,7 @@ services:
         ports:
             - 5432:5432
         volumes:
+            - ./config/postgresql:/docker-entrypoint-initdb.d
             - ../../../.data/postgres:/data
         networks:
             - user-service-net
@@ -16,23 +17,23 @@ services:
     connect:
         image: quay.io/debezium/connect:3.0
         environment:
-            BOOTSTRAP_SERVERS: kafka:9092
+            BOOTSTRAP_SERVERS: kafka:29092
             GROUP_ID: "1"
             CONFIG_STORAGE_TOPIC: user_connect_configs
             OFFSET_STORAGE_TOPIC: user_connect_offsets
             STATUS_STORAGE_TOPIC: user_connect_statuses
             # https://kafka.apache.org/documentation/#connect_running
-            CONNECT_REST_ADVERTISED_LISTENER: http://localhost:8083
+            CONNECT_REST_ADVERTISED_LISTENER: connect
+            CONNECT_REST_HOST: 0.0.0.0
             CONNECT_REST_PORT: 8083
         ports:
             - "8083:8083"
         depends_on:
             - kafka
             - postgres
-        volumes:
-          - "./config/debezium-connector-postgres:/kafka/connect/debezium-connector-postgres"
         networks:
             - user-service-net
+            - core-net
 
     postgres-exporter:
         image: prometheuscommunity/postgres-exporter:latest
