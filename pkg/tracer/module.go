@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	TracerModule = fx.Module("tracer", fx.Provide(InitTracer))
+	TracerModule = fx.Module("tracer", fx.Provide(NewTracer))
 )
 
 type Tracer interface {
@@ -27,34 +27,43 @@ type Tracer interface {
 	Shutdown(ctx context.Context) error
 }
 
-type TracerImpl struct {
-	Exporter *otlptrace.Exporter
-	Config   *config.Config
+type TracerParam struct {
+	fx.In
+
+	Config    *config.Config
+	Lifecycle fx.Lifecycle
 }
 
-func InitTracer(cfg *config.Config) Tracer {
+type TracerResult struct {
+	fx.Out
+
+	Tracer Tracer
+}
+
+type tracerImpl struct {
+	exporter *otlptrace.Exporter
+	config   *config.Config
+}
+
+func NewTracer(p TracerParam) TracerResult {
 	secureOption := otlptracegrpc.WithInsecure()
 
-	exporter, err := otlptrace.New(
-		context.Background(),
+	exporter := otlptrace.NewUnstarted(
 		otlptracegrpc.NewClient(
 			secureOption,
-			otlptracegrpc.WithEndpoint(cfg.OtelHost),
+			otlptracegrpc.WithEndpoint(p.Config.OtelHost),
 		),
 	)
 
-	if err != nil {
-		fmt.Println("Failed to connect to Jaeger Open Telemetry", err.Error())
-	}
 	resources, err := resource.New(
 		context.Background(),
 		resource.WithAttributes(
-			attribute.String("service.name", cfg.AppName),
-			attribute.String("service.environment", cfg.Env),
+			attribute.String("service.name", p.Config.AppName),
+			attribute.String("service.environment", p.Config.Env),
 		),
 	)
 	if err != nil {
-		fmt.Println("Could not set resources", err.Error())
+		fmt.Printf("Could not set tracer resources: %v\n", err)
 	}
 
 	tracer := sdkTrace.NewTracerProvider(
@@ -71,17 +80,38 @@ func InitTracer(cfg *config.Config) Tracer {
 		fmt.Println("OpenTelemetry trace export error", err.Error())
 	}))
 
-	return &TracerImpl{
-		Exporter: exporter,
-		Config:   cfg,
+	t := &tracerImpl{
+		exporter: exporter,
+		config:   p.Config,
+	}
+
+	p.Lifecycle.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			if err := t.exporter.Start(ctx); err != nil {
+				fmt.Printf("Failed to connect to Jaeger OpenTelemetry: %v\n", err)
+				return err
+			}
+			return nil
+		},
+		OnStop: func(ctx context.Context) error {
+			if err = t.Shutdown(ctx); err != nil {
+				fmt.Printf("Error shutting down tracer: %v\n", err)
+				return err
+			}
+			return nil
+		},
+	})
+
+	return TracerResult{
+		Tracer: t,
 	}
 }
 
-func (t *TracerImpl) Start(ctx context.Context, spanName string) (context.Context, trace.Span) {
-	return otel.GetTracerProvider().Tracer(t.Config.AppName).Start(ctx, spanName)
+func (t *tracerImpl) Start(ctx context.Context, spanName string) (context.Context, trace.Span) {
+	return otel.GetTracerProvider().Tracer(t.config.AppName).Start(ctx, spanName)
 }
 
-func (s *TracerImpl) StartSpanWithCaller(ctx context.Context) (context.Context, trace.Span) {
+func (s *tracerImpl) StartSpanWithCaller(ctx context.Context) (context.Context, trace.Span) {
 	pc, _, _, _ := runtime.Caller(1)
 	callerName := runtime.FuncForPC(pc).Name()
 
@@ -92,8 +122,8 @@ func (s *TracerImpl) StartSpanWithCaller(ctx context.Context) (context.Context, 
 	return ctx, span
 }
 
-func (t *TracerImpl) Shutdown(ctx context.Context) error {
-	if err := t.Exporter.Shutdown(ctx); err != nil {
+func (t *tracerImpl) Shutdown(ctx context.Context) error {
+	if err := t.exporter.Shutdown(ctx); err != nil {
 		fmt.Println("Failed to shutdown OpenTelemetry exporter")
 		return err
 	}

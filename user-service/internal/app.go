@@ -27,9 +27,7 @@ import (
 )
 
 func StartApp() error {
-	app := NewApp(
-		fx.Invoke(Bootstrap),
-	)
+	app := NewApp()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -93,33 +91,4 @@ func NewApp(p ...fx.Option) *fx.App {
 	}
 
 	return fx.New(options...)
-}
-
-func Bootstrap(lc fx.Lifecycle, l logger.Logger, h *http_driver.HttpServer, t tracer.Tracer) {
-	lc.Append(fx.Hook{
-		OnStart: func(ctx context.Context) error {
-			err := h.Start(ctx)
-			if err != nil {
-				l.WithCtx(ctx).Error(err.Error())
-				return err
-			}
-
-			return nil
-		},
-		OnStop: func(ctx context.Context) error {
-			err := h.Shutdown(ctx)
-			if err != nil {
-				l.WithCtx(ctx).Error(err.Error())
-				return err
-			}
-
-			err = t.Shutdown(ctx)
-			if err != nil {
-				l.WithCtx(ctx).Error(err.Error())
-				return err
-			}
-
-			return nil
-		},
-	})
 }

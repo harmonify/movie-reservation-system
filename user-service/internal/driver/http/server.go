@@ -33,6 +33,7 @@ type HttpServer struct {
 type HttpServerParam struct {
 	fx.In
 
+	Lifecycle         fx.Lifecycle
 	Config            *config.Config
 	Logger            logger.Logger
 	MetricsMiddleware metrics.PrometheusHttpMiddleware
@@ -85,6 +86,23 @@ func NewHttpServer(p HttpServerParam) (HttpServerResult, error) {
 	}
 
 	h.configure(p.Routes...)
+
+	p.Lifecycle.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			if err := h.Start(ctx); err != nil {
+				h.logger.WithCtx(ctx).Error("Failed to start HTTP server", zap.Error(err))
+				return err
+			}
+			return nil
+		},
+		OnStop: func(ctx context.Context) error {
+			if err := h.Shutdown(ctx); err != nil {
+				h.logger.WithCtx(ctx).Error("Failed to shutdown HTTP server", zap.Error(err))
+				return err
+			}
+			return nil
+		},
+	})
 
 	return HttpServerResult{
 		HttpServer: h,
