@@ -1,4 +1,4 @@
-package tracer
+package carrier
 
 import (
 	"github.com/IBM/sarama"
@@ -6,7 +6,7 @@ import (
 )
 
 // KafkaCarrier wraps the Kafka headers to implement the TextMapCarrier interface
-type KafkaCarrier []sarama.RecordHeader
+type KafkaCarrier []*sarama.RecordHeader
 
 func (kc KafkaCarrier) Get(key string) string {
 	for _, h := range kc {
@@ -18,7 +18,7 @@ func (kc KafkaCarrier) Get(key string) string {
 }
 
 func (kc KafkaCarrier) Set(key, value string) {
-	kc = append(kc, sarama.RecordHeader{Key: []byte(key), Value: []byte(value)})
+	kc = append(kc, &sarama.RecordHeader{Key: []byte(key), Value: []byte(value)})
 }
 
 func (kc KafkaCarrier) Keys() []string {
