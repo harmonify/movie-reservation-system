@@ -43,7 +43,7 @@ build-cli: ## Build MRS CLI
 .PHONY: gen-proto
 gen-proto: ## Generate protobuf code for Golang in specified output directory
 	@if [ -z "$(target)" ]; then \
-		echo "Usage: make gen-proto output=user-service/internal/driven/proto"; \
+		echo "Example usage: make gen-proto output=user-service/internal/driven/proto"; \
 		exit 1; \
 	fi
 	bin/gen_proto.sh "$(target)"

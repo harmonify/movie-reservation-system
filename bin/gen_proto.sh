@@ -24,8 +24,6 @@ for proto_file_path in "${proto_files_path[@]}"; do
 done
 
 # clear
-
-rm -rf "$output_dir_path"
 mkdir -p "$output_dir_path"
 
 echo -e "Executing: protoc \n \

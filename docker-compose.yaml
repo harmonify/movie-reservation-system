@@ -13,4 +13,8 @@ include:
 
 networks:
     core-net:
+        name: mvs-core-net
+        enable_ipv6: false
     monitoring-net:
+        name: mvs-monitoring-net
+        enable_ipv6: false
