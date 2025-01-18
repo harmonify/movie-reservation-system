@@ -24,7 +24,7 @@ type KafkaRouter interface {
 // The first generic type argument corresponds to the message value type.
 type Route interface {
 	// Match determines if this route should handle the message
-	Match(topic string) bool
+	Match(message *sarama.ConsumerMessage) bool
 	// Handle handles the incoming message that has been decoded
 	Handle(ctx context.Context, message *sarama.ConsumerMessage) error
 }
@@ -82,7 +82,7 @@ func (c *kafkaRouterImpl) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 			}
 
 			for _, route := range c.routes {
-				if route.Match(message.Topic) {
+				if route.Match(message) {
 					var err error
 					err = route.Handle(session.Context(), message)
 					if err != nil {

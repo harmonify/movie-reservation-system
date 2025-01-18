@@ -25,8 +25,8 @@ func (c *TestRoute) Messages() <-chan *sarama.ConsumerMessage {
 }
 
 // Match implements kafka.Route.
-func (r *TestRoute) Match(topic string) bool {
-	return topic == TestBasicTopic
+func (r *TestRoute) Match(message *sarama.ConsumerMessage) bool {
+	return message.Topic == TestBasicTopic
 }
 
 // Handle implements kafka.Route.
