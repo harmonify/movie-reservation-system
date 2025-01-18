@@ -3,6 +3,5 @@ syntax = "proto3";
 package harmonify.movie_reservation_system.shared;
 
 message Test {
-    string traceId = 1;
-    string message = 2;
+    string message = 1;
 }

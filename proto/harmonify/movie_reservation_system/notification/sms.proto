@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package harmonify.movie_reservation_system.notification;
+
+message Sms {
+    string recipient = 1;
+    string body = 2;
+}
+
+message BulkSms {
+    repeated string recipients = 1;
+    string body = 2;
+}
