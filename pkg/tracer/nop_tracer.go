@@ -3,6 +3,7 @@ package tracer
 import (
 	"context"
 
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -25,4 +26,10 @@ func (t *nopTracerImpl) StartSpanWithCaller(ctx context.Context) (context.Contex
 
 func (t *nopTracerImpl) Shutdown(ctx context.Context) error {
 	return nil
+}
+
+func (t *nopTracerImpl) Inject(ctx context.Context, carrier propagation.TextMapCarrier) {}
+
+func (t *nopTracerImpl) Extract(ctx context.Context, carrier propagation.TextMapCarrier) context.Context {
+	return ctx
 }

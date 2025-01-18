@@ -23,11 +23,9 @@ type jaegerTracerImpl struct {
 }
 
 func NewJaegerTracer(p TracerParam) TracerResult {
-	secureOption := otlptracegrpc.WithInsecure()
-
 	exporter := otlptrace.NewUnstarted(
 		otlptracegrpc.NewClient(
-			secureOption,
+			otlptracegrpc.WithInsecure(),
 			otlptracegrpc.WithEndpoint(p.Config.OtelHost),
 		),
 	)
@@ -43,14 +41,18 @@ func NewJaegerTracer(p TracerParam) TracerResult {
 		fmt.Printf("Could not set tracer resources: %v\n", err)
 	}
 
-	tracer := sdkTrace.NewTracerProvider(
+	provider := sdkTrace.NewTracerProvider(
 		sdkTrace.WithSampler(sdkTrace.AlwaysSample()),
 		sdkTrace.WithBatcher(exporter),
 		sdkTrace.WithResource(resources),
 	)
+	otel.SetTracerProvider(provider)
 
-	otel.SetTracerProvider(tracer)
-	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
+	propagator := propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{},
+		propagation.Baggage{},
+	)
+	otel.SetTextMapPropagator(propagator)
 
 	// Set an error handler for trace exports
 	otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
@@ -65,14 +67,14 @@ func NewJaegerTracer(p TracerParam) TracerResult {
 	p.Lifecycle.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			if err := t.exporter.Start(ctx); err != nil {
-				fmt.Printf("Failed to connect to Jaeger OpenTelemetry: %v\n", err)
+				fmt.Printf("Failed to connect to OTel exporter: %v\n", err)
 				return err
 			}
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
-			if err = t.Shutdown(ctx); err != nil {
-				fmt.Printf("Error shutting down tracer: %v\n", err)
+			if err = t.exporter.Shutdown(ctx); err != nil {
+				fmt.Printf("Failed to shutdown OTel exporter: %v\n", err)
 				return err
 			}
 			return nil
@@ -85,7 +87,7 @@ func NewJaegerTracer(p TracerParam) TracerResult {
 }
 
 func (t *jaegerTracerImpl) Start(ctx context.Context, spanName string) (context.Context, trace.Span) {
-	return otel.GetTracerProvider().Tracer(t.config.AppName).Start(ctx, spanName)
+	return otel.Tracer(t.config.AppName).Start(ctx, spanName)
 }
 
 func (s *jaegerTracerImpl) StartSpanWithCaller(ctx context.Context) (context.Context, trace.Span) {
@@ -99,10 +101,10 @@ func (s *jaegerTracerImpl) StartSpanWithCaller(ctx context.Context) (context.Con
 	return ctx, span
 }
 
-func (t *jaegerTracerImpl) Shutdown(ctx context.Context) error {
-	if err := t.exporter.Shutdown(ctx); err != nil {
-		fmt.Println("Failed to shutdown OpenTelemetry exporter")
-		return err
-	}
-	return nil
+func (s *jaegerTracerImpl) Inject(ctx context.Context, carrier propagation.TextMapCarrier) {
+	otel.GetTextMapPropagator().Inject(ctx, carrier)
+}
+
+func (s *jaegerTracerImpl) Extract(ctx context.Context, carrier propagation.TextMapCarrier) context.Context {
+	return otel.GetTextMapPropagator().Extract(ctx, carrier)
 }
