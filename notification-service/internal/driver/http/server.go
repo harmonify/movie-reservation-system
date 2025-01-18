@@ -144,7 +144,7 @@ func (h *HttpServer) configure(handlers ...http_interface.RestHandler) {
 
 func (h *HttpServer) configureMiddlewares() {
 	h.Gin.Use(h.configureCorsMiddleware)
-	h.Gin.Use(otelgin.Middleware(h.cfg.AppName))
+	h.Gin.Use(otelgin.Middleware(h.cfg.ServiceIdentifier))
 	h.Gin.Use(ginzap.RecoveryWithZap(h.logger.GetZapLogger(), true))
 	h.Gin.Use(ginzap.GinzapWithConfig(h.logger.GetZapLogger(), &ginzap.Config{
 		TimeFormat: time.RFC3339Nano,

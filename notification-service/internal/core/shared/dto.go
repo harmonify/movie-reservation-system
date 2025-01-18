@@ -1,8 +1,6 @@
 package shared
 
 type (
-	EmailTemplatePath string
-
 	EmailMessage struct {
 		Recipients []string // emails
 		Subject    string
@@ -19,7 +17,3 @@ type (
 		Body       string
 	}
 )
-
-func (p *EmailTemplatePath) String() string {
-	return string(*p)
-}

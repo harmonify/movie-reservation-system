@@ -12,7 +12,6 @@ import (
 	http_driver "github.com/harmonify/movie-reservation-system/notification-service/internal/driver/http"
 	kafkaconsumer "github.com/harmonify/movie-reservation-system/notification-service/internal/driver/kafka_consumer"
 	"github.com/harmonify/movie-reservation-system/pkg/config"
-	"github.com/harmonify/movie-reservation-system/pkg/kafka"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/metrics"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
@@ -65,12 +64,6 @@ func NewApp(p ...fx.Option) *fx.App {
 		// API (DRIVER)
 		http_driver.HttpModule,
 		kafkaconsumer.KafkaConsumerModule,
-		fx.Provide(
-			fx.Annotate(
-				kafka.NewKafkaRouter,
-				fx.ParamTags(`group:"kafka-routes"`),
-			),
-		),
 	}
 
 	// Override dependencies

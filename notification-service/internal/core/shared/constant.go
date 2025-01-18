@@ -7,9 +7,17 @@ import (
 	"runtime"
 )
 
+type EmailTemplatePath string
+
+func (p *EmailTemplatePath) String() string {
+	return string(*p)
+}
+
 const (
-	EmailTopicV1_0_0 = `notifications_email_v1.0.0`
-	SmsTopicV1_0_0   = `notifications_sms_v1.0.0`
+	EmailVerificationTopicV1_0_0 = `notifications_email_v1.0.0`
+	SmsTopicV1_0_0               = `notifications_sms_v1.0.0`
+
+	EmailVerificationTemplateId = "email-verification"
 )
 
 var (

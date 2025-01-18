@@ -3,6 +3,7 @@ package kafka_test
 import (
 	"context"
 	"os"
+	"reflect"
 	"testing"
 	"time"
 
@@ -48,7 +49,7 @@ func (s *KafkaTestSuite) SetupSuite() {
 				return &config.Config{
 					KafkaBrokers:       "localhost:9092",
 					KafkaVersion:       "3.9.0",
-					KafkaConsumerGroup: "user-service",
+					KafkaConsumerGroup: "pkg",
 				}
 			},
 			logger.NewConsoleLogger,
@@ -65,7 +66,7 @@ func (s *KafkaTestSuite) SetupSuite() {
 				fx.ParamTags(`group:"kafka-routes"`),
 			),
 		),
-		fx.Invoke(func(t tracer.Tracer, p *kafka.KafkaProducer, cg *kafka.KafkaConsumerGroup, a *kafka.KafkaAdmin, c *test.TestConsumer, r kafka.KafkaRouter) {
+		fx.Invoke(func(t tracer.Tracer, a *kafka.KafkaAdmin, p *kafka.KafkaProducer, cg *kafka.KafkaConsumerGroup, c *test.TestConsumer, r kafka.KafkaRouter) {
 			s.tracer = t
 			s.admin = a
 			s.producer = p
@@ -96,7 +97,7 @@ func (s *KafkaTestSuite) SetupSuite() {
 	)
 	s.Require().Nil(err, "Admin should successfully create 2nd test topic for setup process, but got: %s", err)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
 	if err := s.app.Start(ctx); err != nil {
 		s.T().Fatal(">> App failed to start. Error:", err)
@@ -137,6 +138,7 @@ func (s *KafkaTestSuite) TestKafkaSuite_Basic() {
 	producerCtx, producerCancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer producerCancel()
 	producerCtx, producerSpan := s.tracer.StartSpanWithCaller(producerCtx)
+	defer producerSpan.End()
 	err := s.producer.SendMessage(producerCtx, &sarama.ProducerMessage{
 		Topic: test.TestBasicTopic,
 		Key:   sarama.ByteEncoder(expectedKey),
@@ -201,6 +203,7 @@ func (s *KafkaTestSuite) TestKafkaSuite_Router() {
 	producerCtx, producerCancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer producerCancel()
 	producerCtx, producerSpan := s.tracer.StartSpanWithCaller(producerCtx)
+	defer producerSpan.End()
 	err := s.producer.SendMessage(producerCtx, &sarama.ProducerMessage{
 		Topic: test.TestRouterTopic,
 		Key:   sarama.ByteEncoder(expectedKey),
@@ -227,8 +230,8 @@ func (s *KafkaTestSuite) TestKafkaSuite_Router() {
 		s.Require().Equal(string(expectedKey), string(ce.Event.Key), "Consumer route should receive the event with the correct key")
 
 		val, ok := ce.Event.Value.(*test_proto.Test)
-		s.Require().True(ok, "Consumer route should receive correct event value type")
-		s.Require().Equal(expectedValue.Message, val.GetMessage(), "Consumer route should receive the correct message")
+		s.Require().True(ok, "Consumer route should receive correct event value type of %s, but got: %s", reflect.TypeFor[*test_proto.Test]().Name(), reflect.TypeOf(val))
+		s.Require().Equal(expectedValue.GetMessage(), val.GetMessage(), "Consumer route should receive the correct message")
 	case <-consumerCtx.Done():
 		s.T().Fatal("Test timed out waiting for the event to be processed")
 	}

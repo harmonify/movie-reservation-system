@@ -1,4 +1,4 @@
-package kafkaconsumer
+package kafka_consumer
 
 import (
 	"github.com/harmonify/movie-reservation-system/pkg/kafka"
@@ -9,8 +9,12 @@ var (
 	KafkaConsumerModule = fx.Module(
 		"driver-kafka-consumer",
 		fx.Provide(
-			kafka.AsRoute(NewEmailRoute),
+			kafka.AsRoute(NewEmailVerificationRoute),
 			kafka.AsRoute(NewSmsRoute),
+			fx.Annotate(
+				kafka.NewKafkaRouter,
+				fx.ParamTags(`group:"kafka-routes"`),
+			),
 		),
 	)
 )

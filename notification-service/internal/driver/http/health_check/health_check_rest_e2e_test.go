@@ -12,11 +12,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/harmonify/movie-reservation-system/pkg/http/response"
-	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
 	"github.com/harmonify/movie-reservation-system/notification-service/internal"
 	http_driver "github.com/harmonify/movie-reservation-system/notification-service/internal/driver/http"
 	health_rest "github.com/harmonify/movie-reservation-system/notification-service/internal/driver/http/health_check"
+	"github.com/harmonify/movie-reservation-system/pkg/http/response"
+	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
 	"github.com/stretchr/testify/suite"
 	"github.com/tidwall/gjson"
 	"go.uber.org/fx"
@@ -146,7 +146,7 @@ func (s *HealthCheckRestTestSuite) TestHealthCheckRest_GetHealthCheck() {
 						s.Equal(expectedErrorObject.Field, responseError.Get("errors").Array()[i].Get("field").String())
 						s.Equal(expectedErrorObject.Message, responseError.Get("errors").Array()[i].Get("message").String())
 					} else {
-						s.T().Fatalf("Expected error object should be a response.BaseValidationErrorSchema, but got %s", reflect.TypeOf(errData))
+						s.T().Fatalf("Expected error object to be %s, but got %s", reflect.TypeFor[response.BaseValidationErrorSchema](), reflect.TypeOf(errData).Name())
 					}
 				}
 			}

@@ -8,9 +8,14 @@ import (
 var ServiceModule = fx.Module(
 	"service",
 	fx.Provide(
-		AsTemplate(func() shared.EmailTemplatePath {
-			return shared.EmailVerificationTemplatePath
-		}),
+		fx.Annotate(
+			func() []shared.EmailTemplatePath {
+				return []shared.EmailTemplatePath{
+					shared.EmailVerificationTemplatePath,
+				}
+			},
+			fx.ResultTags(`group:"email-template-paths"`),
+		),
 		NewEmailService,
 		NewEmailTemplateService,
 		NewSmsService,

@@ -51,6 +51,9 @@ func NewKafkaProducer(lc fx.Lifecycle, cfg *config.Config, logger logger.Logger,
 }
 
 func (kp *KafkaProducer) SendMessage(ctx context.Context, msg *sarama.ProducerMessage) error {
+	ctx, span := kp.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
 	if msg == nil {
 		return ErrNilMessage
 	}
