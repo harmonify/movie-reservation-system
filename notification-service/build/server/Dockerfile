@@ -1,5 +1,5 @@
 FROM golang:1.20.5-alpine3.18 as build
-WORKDIR /go/src/github.com/harmonify/movie-reservation-system/user-service
+WORKDIR /go/src/github.com/harmonify/movie-reservation-system/notification-service
 
 RUN go install github.com/cosmtrek/air@v1.44.0
 RUN mkdir -p .output
