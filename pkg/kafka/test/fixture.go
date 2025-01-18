@@ -1,6 +1,9 @@
 package test
 
+import "github.com/google/uuid"
+
 var (
-	TestBasicTopic  = "test_basic_v1.0.0"
-	TestRouterTopic = "test_router_v1.0.0"
+	runId           = uuid.New().String()
+	TestBasicTopic  = "test_basic_" + runId
+	TestRouterTopic = "test_router_" + runId
 )

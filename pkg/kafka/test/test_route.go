@@ -2,10 +2,8 @@ package test
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
-	"github.com/IBM/sarama"
 	"github.com/harmonify/movie-reservation-system/pkg/kafka"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	test_proto "github.com/harmonify/movie-reservation-system/pkg/test/proto"
@@ -14,50 +12,55 @@ import (
 
 // TestRoute represents a Kafka route handler
 type TestRoute struct {
-	events chan *sarama.ConsumerMessage
-	logger logger.Logger
+	logger    logger.Logger
+	listeners []kafka.EventListener
 }
 
-// Messages returns the channel for consumed event messages.
-// This method serve as a utility for testing purposes.
-func (c *TestRoute) Messages() <-chan *sarama.ConsumerMessage {
-	return c.events
-}
-
-// Match implements kafka.Route.
-func (r *TestRoute) Match(message *sarama.ConsumerMessage) bool {
-	return message.Topic == TestBasicTopic
-}
-
-// Handle implements kafka.Route.
-func (r *TestRoute) Handle(ctx context.Context, message *sarama.ConsumerMessage) (err error) {
+func (r *TestRoute) Decode(ctx context.Context, value []byte) (interface{}, error) {
 	val := &test_proto.Test{}
-	err = proto.Unmarshal(message.Value, val)
-	if err != nil {
-		return errors.New("invalid event value type")
+	if err := proto.Unmarshal(value, val); err != nil {
+		return nil, kafka.ErrDecodeFailed
+	}
+	return val, nil
+}
+
+func (r *TestRoute) Match(ctx context.Context, event *kafka.Event) (bool, error) {
+	return event.Topic == TestRouterTopic, nil
+}
+
+func (r *TestRoute) Handle(ctx context.Context, event *kafka.Event) error {
+	// Notify listeners
+	for _, listener := range r.listeners {
+		listener.OnEvent(ctx, event)
 	}
 
+	// Production handling logic
+	val, ok := event.Value.(*test_proto.Test)
+	if !ok {
+		return kafka.ErrInvalidValueType
+	}
 	r.logger.Debug(
 		fmt.Sprintf(
-			"Message claimed: topic = %s, timestamp = %v, trace_id = %s, key = %s, value = %s, headers = %v",
-			message.Topic,
-			message.Timestamp,
-			val.GetTraceId(),
-			message.Key,
-			proto.Message(val),
-			message.Headers,
+			"Message claimed: topic = %s, timestamp = %v, trace_id = %s, key = %s, value = %s",
+			event.Topic,
+			event.Timestamp,
+			event.TraceID,
+			event.Key,
+			val,
 		),
 	)
-	r.events <- message
+
 	return nil
+}
+
+func (r *TestRoute) AddEventListener(listener kafka.EventListener) {
+	r.listeners = append(r.listeners, listener)
 }
 
 // NewTestRoute initializes a new TestRoute
 func NewTestRoute(logger logger.Logger) *TestRoute {
 	return &TestRoute{
-		logger: logger,
-		events: make(chan *sarama.ConsumerMessage, 100),
+		logger:    logger,
+		listeners: []kafka.EventListener{},
 	}
 }
-
-var _ kafka.Route = &TestRoute{}

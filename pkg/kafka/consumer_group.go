@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/IBM/sarama"
+	"github.com/dnwe/otelsarama"
 	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"go.uber.org/fx"
@@ -47,8 +48,9 @@ func NewKafkaConsumerGroup(lc fx.Lifecycle, cfg *config.Config, logger logger.Lo
 // StartConsumer function do not need to be called inside a goroutine.
 func (kc *KafkaConsumerGroup) StartConsumer(ctx context.Context, topics []string, handler sarama.ConsumerGroupHandler) {
 	go func() {
+		wrappedHandler := otelsarama.WrapConsumerGroupHandler(handler)
 		for {
-			if err := kc.Client.Consume(ctx, topics, handler); err != nil {
+			if err := kc.Client.Consume(ctx, topics, wrappedHandler); err != nil {
 				kc.logger.WithCtx(ctx).Warn("Consumer session is closed", zap.Error(err))
 			}
 		}

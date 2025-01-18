@@ -5,9 +5,10 @@ import (
 	"errors"
 
 	"github.com/IBM/sarama"
+	"github.com/dnwe/otelsarama"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
-	"github.com/harmonify/movie-reservation-system/pkg/tracer/carrier"
+	"go.uber.org/zap"
 )
 
 // KafkaRouter distributes incoming messages to the correct handler
@@ -16,17 +17,8 @@ type KafkaRouter interface {
 	Ready() <-chan bool
 	// GetRoutes returns routes that are registered within the router
 	GetRoutes() []Route
-
+	// Implement the underlying interface
 	sarama.ConsumerGroupHandler
-}
-
-// Route handle incoming messages from a Topic.
-// The first generic type argument corresponds to the message value type.
-type Route interface {
-	// Match determines if this route should handle the message
-	Match(message *sarama.ConsumerMessage) bool
-	// Handle handles the incoming message that has been decoded
-	Handle(ctx context.Context, message *sarama.ConsumerMessage) error
 }
 
 func NewKafkaRouter(routes []Route, logger logger.Logger, tracer tracer.Tracer) KafkaRouter {
@@ -71,20 +63,31 @@ func (c *kafkaRouterImpl) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 	for {
 		select {
 		case message, ok := <-claim.Messages():
-			ctx := c.tracer.Extract(session.Context(), carrier.KafkaCarrier(message.Headers))
+			ctx := c.tracer.Extract(session.Context(), otelsarama.NewConsumerMessageCarrier(message))
 			ctx, span := c.tracer.StartSpanWithCaller(ctx)
 			defer span.End()
 
 			var finalErr error
 
 			if !ok {
-				finalErr = errors.New("message channel was closed")
+				finalErr = ErrMessageChannelClosed
 			}
 
 			for _, route := range c.routes {
-				if route.Match(message) {
-					var err error
-					err = route.Handle(session.Context(), message)
+				event, err := c.constructEventForRoute(ctx, route, message)
+				if err != nil {
+					finalErr = errors.Join(finalErr, err)
+					continue
+				}
+
+				match, err := route.Match(ctx, event)
+				if err != nil {
+					finalErr = errors.Join(finalErr, err)
+					continue
+				}
+
+				if match {
+					err = route.Handle(ctx, event)
 					if err != nil {
 						finalErr = errors.Join(finalErr, err)
 					}
@@ -92,7 +95,7 @@ func (c *kafkaRouterImpl) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 			}
 
 			if finalErr != nil {
-				c.logger.WithCtx(ctx).Error(finalErr.Error())
+				c.logger.WithCtx(ctx).Error("Errors", zap.Error(finalErr))
 			}
 
 			session.MarkMessage(message, "")
@@ -100,6 +103,24 @@ func (c *kafkaRouterImpl) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 			return nil
 		}
 	}
+}
+
+func (c *kafkaRouterImpl) constructEventForRoute(ctx context.Context, route Route, message *sarama.ConsumerMessage) (*Event, error) {
+	ctx, span := c.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
+	val, err := route.Decode(ctx, message.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Event{
+		TraceID:   span.SpanContext().TraceID().String(),
+		Timestamp: message.Timestamp,
+		Key:       string(message.Key),
+		Value:     val,
+		Topic:     message.Topic,
+	}, nil
 }
 
 var _ KafkaRouter = (*kafkaRouterImpl)(nil)
