@@ -8,8 +8,6 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer/carrier"
-	"go.opentelemetry.io/otel/trace"
-	"go.uber.org/zap"
 )
 
 // KafkaRouter distributes incoming messages to the correct handler
@@ -73,10 +71,11 @@ func (c *kafkaRouterImpl) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 	for {
 		select {
 		case message, ok := <-claim.Messages():
-			var finalErr error
-
 			ctx := c.tracer.Extract(session.Context(), carrier.KafkaCarrier(message.Headers))
-			traceId := trace.SpanFromContext(ctx).SpanContext().TraceID()
+			ctx, span := c.tracer.StartSpanWithCaller(ctx)
+			defer span.End()
+
+			var finalErr error
 
 			if !ok {
 				finalErr = errors.New("message channel was closed")
@@ -93,11 +92,7 @@ func (c *kafkaRouterImpl) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 			}
 
 			if finalErr != nil {
-				logger := c.logger
-				if traceId.IsValid() {
-					logger = c.logger.With(zap.String("trace_id", traceId.String()))
-				}
-				logger.Error(finalErr.Error())
+				c.logger.WithCtx(ctx).Error(finalErr.Error())
 			}
 
 			session.MarkMessage(message, "")
