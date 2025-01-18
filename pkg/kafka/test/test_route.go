@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/IBM/sarama"
-	"github.com/harmonify/movie-reservation-system/pkg/kafka"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	test_proto "github.com/harmonify/movie-reservation-system/pkg/test/proto"
 	"google.golang.org/protobuf/proto"
@@ -14,13 +13,13 @@ import (
 
 // TestRoute represents a Kafka route handler
 type TestRoute struct {
-	events chan *kafka.Event
+	events chan *sarama.ConsumerMessage
 	logger logger.Logger
 }
 
-// Events returns the channel for consumed event messages.
+// Messages returns the channel for consumed event messages.
 // This method serve as a utility for testing purposes.
-func (c *TestRoute) Events() <-chan *kafka.Event {
+func (c *TestRoute) Messages() <-chan *sarama.ConsumerMessage {
 	return c.events
 }
 
@@ -29,49 +28,33 @@ func (r *TestRoute) Match(topic string) bool {
 	return topic == TestBasicTopic
 }
 
-// Decode implements kafka.Route.
-func (r *TestRoute) Decode(message *sarama.ConsumerMessage) (*kafka.Event, error) {
-	val := &test_proto.Test{}
-	err := proto.Unmarshal(message.Value, val)
-	if err != nil {
-		return nil, err
-	}
-
-	return &kafka.Event{
-		Headers:   message.Headers,
-		Timestamp: message.Timestamp,
-		TraceID:   val.GetTraceId(),
-		Key:       string(message.Key),
-		Value:     val,
-		Topic:     message.Topic,
-	}, nil
-}
-
 // Handle implements kafka.Route.
-func (r *TestRoute) Handle(ctx context.Context, event *kafka.Event) error {
-	val, ok := event.Value.(*test_proto.Test)
-	if !ok {
-		return errors.New("invalid event value type")
+func (r *TestRoute) Handle(ctx context.Context, message *sarama.ConsumerMessage) (traceId string, err error) {
+	val := &test_proto.Test{}
+	err = proto.Unmarshal(message.Value, val)
+	if err != nil {
+		return val.GetTraceId(), errors.New("invalid event value type")
 	}
+
 	r.logger.Debug(
 		fmt.Sprintf(
 			"Message claimed: topic = %s, timestamp = %v, trace_id = %s, key = %s, value = %s, headers = %v",
-			event.Topic,
-			event.Timestamp,
-			event.TraceID,
-			event.Key,
+			message.Topic,
+			message.Timestamp,
+			val.GetTraceId(),
+			message.Key,
 			proto.Message(val),
-			event.Headers,
+			message.Headers,
 		),
 	)
-	r.events <- event
-	return nil
+	r.events <- message
+	return val.GetTraceId(), nil
 }
 
 // NewTestRoute initializes a new TestRoute
 func NewTestRoute(logger logger.Logger) *TestRoute {
 	return &TestRoute{
 		logger: logger,
-		events: make(chan *kafka.Event, 100),
+		events: make(chan *sarama.ConsumerMessage, 100),
 	}
 }

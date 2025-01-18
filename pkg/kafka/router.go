@@ -24,10 +24,8 @@ type KafkaRouter interface {
 type Route interface {
 	// Match determines if this route should handle the message
 	Match(topic string) bool
-	// Decode decodes the message value
-	Decode(message *sarama.ConsumerMessage) (*Event, error)
 	// Handle handles the incoming message that has been decoded
-	Handle(ctx context.Context, event *Event) error
+	Handle(ctx context.Context, message *sarama.ConsumerMessage) (traceId string, err error)
 }
 
 func NewKafkaRouter(routes []Route, logger logger.Logger) KafkaRouter {
@@ -79,15 +77,8 @@ func (c *kafkaRouterImpl) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 
 			for _, route := range c.routes {
 				if route.Match(message.Topic) {
-					event, err := route.Decode(message)
-					if err != nil {
-						finalErr = errors.Join(finalErr, err)
-						continue
-					}
-					if traceId == "" {
-						traceId = event.TraceID
-					}
-					err = route.Handle(session.Context(), event)
+					var err error
+					traceId, err = route.Handle(session.Context(), message)
 					if err != nil {
 						finalErr = errors.Join(finalErr, err)
 					}

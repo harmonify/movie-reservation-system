@@ -179,12 +179,13 @@ func (s *KafkaTestSuite) TestKafkaSuite_KafkaRouter() {
 	tr, ok := s.router.GetRoutes()[0].(*test.TestRoute)
 	s.Require().True(ok, "Consumer route should be correct type")
 	select {
-	case event := <-tr.Events():
+	case message := <-tr.Messages():
 		// ASSERT
-		s.Require().Equal(test.TestBasicTopic, event.Topic, "Consumer route should receive the event from the correct topic")
-		s.Require().Equal(string(expectedKey), event.Key, "Consumer route should receive the event with the correct key")
-		val, ok := event.Value.(*test_proto.Test)
-		s.Require().True(ok, "Consumer route should receive the correct event value type")
+		s.Require().Equal(test.TestBasicTopic, message.Topic, "Consumer route should receive the event from the correct topic")
+		s.Require().Equal(expectedKey, message.Key, "Consumer route should receive the event with the correct key")
+		val := &test_proto.Test{}
+		err = proto.Unmarshal(message.Value, val)
+		s.Require().Nil(err, "Consumer route should receive the correct event value type")
 		s.Require().Equal(expectedValue.TraceId, val.TraceId, "Consumer route should receive the correct trace id")
 		s.Require().Equal(expectedValue.TraceId, val.GetTraceId(), "Consumer route should receive the correct trace id")
 		s.Require().Equal(expectedValue.Message, val.GetMessage(), "Consumer route should receive the correct message")
