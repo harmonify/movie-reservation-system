@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/IBM/sarama"
+	"github.com/harmonify/movie-reservation-system/pkg/kafka"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	test_proto "github.com/harmonify/movie-reservation-system/pkg/test/proto"
 	"google.golang.org/protobuf/proto"
@@ -29,11 +30,11 @@ func (r *TestRoute) Match(topic string) bool {
 }
 
 // Handle implements kafka.Route.
-func (r *TestRoute) Handle(ctx context.Context, message *sarama.ConsumerMessage) (traceId string, err error) {
+func (r *TestRoute) Handle(ctx context.Context, message *sarama.ConsumerMessage) (err error) {
 	val := &test_proto.Test{}
 	err = proto.Unmarshal(message.Value, val)
 	if err != nil {
-		return val.GetTraceId(), errors.New("invalid event value type")
+		return errors.New("invalid event value type")
 	}
 
 	r.logger.Debug(
@@ -48,7 +49,7 @@ func (r *TestRoute) Handle(ctx context.Context, message *sarama.ConsumerMessage)
 		),
 	)
 	r.events <- message
-	return val.GetTraceId(), nil
+	return nil
 }
 
 // NewTestRoute initializes a new TestRoute
@@ -58,3 +59,5 @@ func NewTestRoute(logger logger.Logger) *TestRoute {
 		events: make(chan *sarama.ConsumerMessage, 100),
 	}
 }
+
+var _ kafka.Route = &TestRoute{}

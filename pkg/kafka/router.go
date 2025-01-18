@@ -6,6 +6,9 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
+	"github.com/harmonify/movie-reservation-system/pkg/tracer"
+	"github.com/harmonify/movie-reservation-system/pkg/tracer/carrier"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
@@ -25,14 +28,15 @@ type Route interface {
 	// Match determines if this route should handle the message
 	Match(topic string) bool
 	// Handle handles the incoming message that has been decoded
-	Handle(ctx context.Context, message *sarama.ConsumerMessage) (traceId string, err error)
+	Handle(ctx context.Context, message *sarama.ConsumerMessage) error
 }
 
-func NewKafkaRouter(routes []Route, logger logger.Logger) KafkaRouter {
+func NewKafkaRouter(routes []Route, logger logger.Logger, tracer tracer.Tracer) KafkaRouter {
 	return &kafkaRouterImpl{
 		ready:  make(chan bool),
 		routes: routes,
 		logger: logger,
+		tracer: tracer,
 	}
 }
 
@@ -41,6 +45,7 @@ type kafkaRouterImpl struct {
 	routes []Route
 
 	logger logger.Logger
+	tracer tracer.Tracer
 }
 
 func (c *kafkaRouterImpl) Ready() <-chan bool {
@@ -69,7 +74,9 @@ func (c *kafkaRouterImpl) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 		select {
 		case message, ok := <-claim.Messages():
 			var finalErr error
-			var traceId string
+
+			ctx := c.tracer.Extract(session.Context(), carrier.KafkaCarrier(message.Headers))
+			traceId := trace.SpanFromContext(ctx).SpanContext().TraceID()
 
 			if !ok {
 				finalErr = errors.New("message channel was closed")
@@ -78,7 +85,7 @@ func (c *kafkaRouterImpl) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 			for _, route := range c.routes {
 				if route.Match(message.Topic) {
 					var err error
-					traceId, err = route.Handle(session.Context(), message)
+					err = route.Handle(session.Context(), message)
 					if err != nil {
 						finalErr = errors.Join(finalErr, err)
 					}
@@ -86,7 +93,11 @@ func (c *kafkaRouterImpl) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 			}
 
 			if finalErr != nil {
-				c.logger.With(zap.String("trace_id", traceId)).Warn(finalErr.Error())
+				logger := c.logger
+				if traceId.IsValid() {
+					logger = c.logger.With(zap.String("trace_id", traceId.String()))
+				}
+				logger.Error(finalErr.Error())
 			}
 
 			session.MarkMessage(message, "")
