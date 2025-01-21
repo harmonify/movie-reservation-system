@@ -59,6 +59,10 @@ func (r *emailRouteImpl) Match(ctx context.Context, event *kafka.Event) (bool, e
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
+	if event.Topic != shared.EmailTopicV1_0_0 {
+		return false, nil
+	}
+
 	val, ok := event.Value.(*notification_proto.Email)
 	if !ok {
 		r.logger.WithCtx(ctx).Error(
@@ -68,7 +72,8 @@ func (r *emailRouteImpl) Match(ctx context.Context, event *kafka.Event) (bool, e
 		)
 		return false, kafka.ErrInvalidValueType
 	}
-	return event.Topic == shared.EmailVerificationTopicV1_0_0 && val.TemplateId == shared.EmailVerificationTemplateId, nil
+
+	return val.TemplateId == shared.EmailVerificationTemplateId.String(), nil
 }
 
 func (r *emailRouteImpl) Handle(ctx context.Context, event *kafka.Event) error {
