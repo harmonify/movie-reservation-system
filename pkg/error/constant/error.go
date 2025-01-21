@@ -50,7 +50,7 @@ var (
 		InvalidRequestBody: {
 			HttpCode: http.StatusBadRequest,
 			GrpcCode: grpc_constant.GrpcInvalidArgument,
-			Message:  "Please ensure you have filled all the information required and try again. If the problem persists, please contact our technical support.",
+			Message:  "Please ensure you have filled all the required information correctly and try again. If the problem persists, please contact our technical support.",
 		},
 
 		Unauthorized: {

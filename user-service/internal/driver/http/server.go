@@ -11,8 +11,8 @@ import (
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	config "github.com/harmonify/movie-reservation-system/pkg/config"
-	constant "github.com/harmonify/movie-reservation-system/pkg/config/constant"
-	http_interface "github.com/harmonify/movie-reservation-system/pkg/http/interface"
+	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
+	http_middleware "github.com/harmonify/movie-reservation-system/pkg/http/middleware"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/metrics"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
@@ -26,6 +26,7 @@ type HttpServer struct {
 	Server      *http.Server
 	Gin         *gin.Engine
 	cfg         *config.Config
+	response    http_pkg.HttpResponse
 	logger      logger.Logger
 	middlewares *httpServerMiddlewares
 }
@@ -35,9 +36,10 @@ type HttpServerParam struct {
 
 	Lifecycle         fx.Lifecycle
 	Config            *config.Config
+	Response          http_pkg.HttpResponse
 	Logger            logger.Logger
 	MetricsMiddleware metrics.PrometheusHttpMiddleware
-	Routes            []http_interface.RestHandler `group:"http_routes"`
+	Routes            []http_pkg.RestHandler `group:"http_routes"`
 }
 
 type HttpServerResult struct {
@@ -73,13 +75,14 @@ func NewHttpServer(p HttpServerParam) (HttpServerResult, error) {
 	h := &HttpServer{
 		Gin: gin,
 		Server: &http.Server{
-			Addr:         ":" + p.Config.ServicePort,
+			Addr:         ":" + p.Config.ServiceHttpPort,
 			Handler:      gin,
 			ReadTimeout:  time.Second * readTimeout,
 			WriteTimeout: time.Second * writeTimeout,
 		},
-		cfg:    p.Config,
-		logger: p.Logger,
+		cfg:      p.Config,
+		logger:   p.Logger,
+		response: p.Response,
 		middlewares: &httpServerMiddlewares{
 			metrics: p.MetricsMiddleware,
 		},
@@ -89,18 +92,10 @@ func NewHttpServer(p HttpServerParam) (HttpServerResult, error) {
 
 	p.Lifecycle.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			if err := h.Start(ctx); err != nil {
-				h.logger.WithCtx(ctx).Error("Failed to start HTTP server", zap.Error(err))
-				return err
-			}
-			return nil
+			return h.Start(ctx)
 		},
 		OnStop: func(ctx context.Context) error {
-			if err := h.Shutdown(ctx); err != nil {
-				h.logger.WithCtx(ctx).Error("Failed to shutdown HTTP server", zap.Error(err))
-				return err
-			}
-			return nil
+			return h.Shutdown(ctx)
 		},
 	})
 
@@ -110,10 +105,10 @@ func NewHttpServer(p HttpServerParam) (HttpServerResult, error) {
 }
 
 func (h *HttpServer) Start(ctx context.Context) error {
-	h.logger.WithCtx(ctx).Info(">> HTTP server run on port: " + h.cfg.ServicePort)
+	h.logger.WithCtx(ctx).Info(">> HTTP server run on port: " + h.cfg.ServiceHttpPort)
 	var err error
 	if err = h.Server.ListenAndServe(); err == nil {
-		h.logger.WithCtx(ctx).Info(">> HTTP server started on port " + h.cfg.ServicePort)
+		h.logger.WithCtx(ctx).Info(">> HTTP server started on port " + h.cfg.ServiceHttpPort)
 	} else {
 		h.logger.WithCtx(ctx).Error(">> HTTP server failed to start. Error: " + err.Error())
 	}
@@ -130,10 +125,10 @@ func (h *HttpServer) Shutdown(ctx context.Context) error {
 	return err
 }
 
-func (h *HttpServer) configure(handlers ...http_interface.RestHandler) {
+func (h *HttpServer) configure(handlers ...http_pkg.RestHandler) {
 	h.configureMiddlewares()
 
-	if h.cfg.Env == constant.EnvironmentProduction {
+	if h.cfg.Env == config.EnvironmentProduction {
 		gin.SetMode(gin.ReleaseMode)
 		gin.DefaultWriter = io.Discard
 		h.Gin.TrustedPlatform = gin.PlatformCloudflare
@@ -144,8 +139,8 @@ func (h *HttpServer) configure(handlers ...http_interface.RestHandler) {
 
 func (h *HttpServer) configureMiddlewares() {
 	h.Gin.Use(h.configureCorsMiddleware)
-	h.Gin.Use(otelgin.Middleware(h.cfg.AppName))
-	h.Gin.Use(ginzap.RecoveryWithZap(h.logger.GetZapLogger(), true))
+	h.Gin.Use(otelgin.Middleware(h.cfg.ServiceIdentifier))
+	h.Gin.Use(http_middleware.NewRecoveryHttpMiddleware(h.response, h.logger, true))
 	h.Gin.Use(ginzap.GinzapWithConfig(h.logger.GetZapLogger(), &ginzap.Config{
 		TimeFormat: time.RFC3339Nano,
 		UTC:        true,
@@ -180,10 +175,6 @@ func (h *HttpServer) configureMiddlewares() {
 				},
 				{
 					Method: "GET",
-					Path:   "/ping",
-				},
-				{
-					Method: "GET",
 					Path:   "/metrics",
 				},
 			}
@@ -201,7 +192,7 @@ func (h *HttpServer) configureMiddlewares() {
 }
 
 func (h *HttpServer) configureCorsMiddleware(c *gin.Context) {
-	if h.cfg.ServiceEnableCors {
+	if h.cfg.ServiceHttpEnableCors {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
@@ -216,8 +207,8 @@ func (h *HttpServer) configureCorsMiddleware(c *gin.Context) {
 	c.Next()
 }
 
-func (h *HttpServer) registerRoutes(handlers ...http_interface.RestHandler) {
-	baseGroup := h.Gin.Group(h.cfg.ServiceBasePath)
+func (h *HttpServer) registerRoutes(handlers ...http_pkg.RestHandler) {
+	baseGroup := h.Gin.Group(h.cfg.ServiceHttpBasePath)
 	groupMap := map[string]*gin.RouterGroup{}
 	for _, handler := range handlers {
 		version := "v" + handler.Version()

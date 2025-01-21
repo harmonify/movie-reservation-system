@@ -1,4 +1,4 @@
-package response
+package http_pkg
 
 import (
 	"context"
@@ -45,8 +45,7 @@ func NewHttpResponse(logger logger.Logger, tracer tracer.Tracer, structUtil stru
 }
 
 func (r *httpResponseImpl) Send(c *gin.Context, data interface{}, err error) {
-	ctx := c.Request.Context()
-	_, span := r.tracer.StartSpanWithCaller(ctx)
+	ctx, span := r.tracer.StartSpanWithCaller(c.Request.Context())
 	defer span.End()
 
 	code, response, responseError := r.Build(ctx, http.StatusOK, data, err)
@@ -57,8 +56,7 @@ func (r *httpResponseImpl) Send(c *gin.Context, data interface{}, err error) {
 }
 
 func (r *httpResponseImpl) SendWithResponseCode(c *gin.Context, httpCode int, data interface{}, err error) {
-	ctx := c.Request.Context()
-	_, span := r.tracer.StartSpanWithCaller(ctx)
+	ctx, span := r.tracer.StartSpanWithCaller(c.Request.Context())
 	defer span.End()
 
 	code, response, responseError := r.Build(ctx, httpCode, data, err)

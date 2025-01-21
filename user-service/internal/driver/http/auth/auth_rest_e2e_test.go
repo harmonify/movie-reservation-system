@@ -14,18 +14,18 @@ import (
 	"time"
 
 	"github.com/harmonify/movie-reservation-system/pkg/database"
-	http_constant "github.com/harmonify/movie-reservation-system/pkg/http/constant"
-	"github.com/harmonify/movie-reservation-system/pkg/http/response"
+	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
 	"github.com/harmonify/movie-reservation-system/user-service/internal"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	auth_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/auth"
-	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/factory"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/model"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/seeder"
 	http_driver "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http"
 	auth_rest "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/auth"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/auth/test"
 	"github.com/stretchr/testify/suite"
 	"github.com/tidwall/gjson"
 	"go.uber.org/fx"
@@ -49,8 +49,8 @@ type AuthRestTestSuite struct {
 	userSessionFactory     factory.UserSessionFactory
 	userSeeder             seeder.UserSeeder
 	userSessionSeeder      seeder.UserSessionSeeder
-	userStorage            shared_service.UserStorage
-	otpStorage             shared_service.OtpStorage
+	userStorage            shared.UserStorage
+	otpStorage             shared.OtpStorage
 }
 
 func (s *AuthRestTestSuite) SetupSuite() {
@@ -65,8 +65,8 @@ func (s *AuthRestTestSuite) SetupSuite() {
 			userSessionFactory factory.UserSessionFactory,
 			userSeeder seeder.UserSeeder,
 			userSessionSeeder seeder.UserSessionSeeder,
-			userStorage shared_service.UserStorage,
-			otpStorage shared_service.OtpStorage,
+			userStorage shared.UserStorage,
+			otpStorage shared.OtpStorage,
 		) {
 			s.database = database
 			s.httpServer = httpServer
@@ -197,11 +197,11 @@ func (s *AuthRestTestSuite) TestAuthRest_PostRegister() {
 			if testCase.Expectation.ResponseBodyErrorObject != nil {
 				s.Require().True(responseError.Get("errors").IsArray(), "Expected 'errors' to be an array")
 				for i, errData := range testCase.Expectation.ResponseBodyErrorObject {
-					if expectedErrorObject, ok := errData.(response.BaseValidationErrorSchema); ok {
+					if expectedErrorObject, ok := errData.(http_pkg.BaseValidationErrorSchema); ok {
 						s.Equal(expectedErrorObject.Field, responseError.Get("errors").Array()[i].Get("field").String())
 						s.Equal(expectedErrorObject.Message, responseError.Get("errors").Array()[i].Get("message").String())
 					} else {
-						s.T().Fatalf("Expected error object should be a response.BaseValidationErrorSchema, but got %s", reflect.TypeOf(errData))
+						s.T().Fatalf("Expected error object to be %s, but got %s", reflect.TypeFor[http_pkg.BaseValidationErrorSchema]().Name(), reflect.TypeOf(errData).Name())
 					}
 				}
 			}
@@ -215,12 +215,12 @@ func (s *AuthRestTestSuite) TestAuthRest_PostVerifyEmail() {
 		METHOD = "POST"
 	)
 
-	testCases := []test_interface.TestCase[postVerifyEmailTestConfig, postVerifyEmailTestExpectation]{
+	testCases := []test_interface.TestCase[test.PostVerifyEmailTestConfig, test.PostVerifyEmailTestExpectation]{
 		{
 			Description: "It should return a 200 OK response",
 			Config: func() auth_rest.PostVerifyEmailReq {
 				token := "123456"
-				err := s.otpStorage.SaveEmailVerificationToken(context.Background(), shared_service.SaveEmailVerificationTokenParam{
+				err := s.otpStorage.SaveEmailVerificationToken(context.Background(), shared.SaveEmailVerificationTokenParam{
 					Email: s.testUser.Email,
 					Token: token,
 					TTL:   time.Minute * 5,
@@ -231,7 +231,7 @@ func (s *AuthRestTestSuite) TestAuthRest_PostVerifyEmail() {
 					Token: token,
 				}
 			},
-			Expectation: postVerifyEmailTestExpectation{
+			Expectation: test.PostVerifyEmailTestExpectation{
 				ResponseStatusCode:       test_interface.NullInt{Int: http.StatusOK, Valid: true},
 				ResponseBodyStatus:       test_interface.NullBool{Bool: true, Valid: true},
 				ResponseBodyResult:       make(map[string]interface{}, 0),
@@ -247,7 +247,7 @@ func (s *AuthRestTestSuite) TestAuthRest_PostVerifyEmail() {
 			Description: "It should return a 403 Forbidden response",
 			Config: func() auth_rest.PostVerifyEmailReq {
 				token := "123456"
-				err := s.otpStorage.SaveEmailVerificationToken(context.Background(), shared_service.SaveEmailVerificationTokenParam{
+				err := s.otpStorage.SaveEmailVerificationToken(context.Background(), shared.SaveEmailVerificationTokenParam{
 					Email: s.testUser.Email,
 					Token: token,
 					TTL:   time.Minute * 5,
@@ -258,7 +258,7 @@ func (s *AuthRestTestSuite) TestAuthRest_PostVerifyEmail() {
 					Token: "INCORRECT",
 				}
 			},
-			Expectation: postVerifyEmailTestExpectation{
+			Expectation: test.PostVerifyEmailTestExpectation{
 				ResponseStatusCode:       test_interface.NullInt{Int: http.StatusForbidden, Valid: true},
 				ResponseBodyStatus:       test_interface.NullBool{Bool: false, Valid: true},
 				ResponseBodyResult:       make(map[string]interface{}, 0),
@@ -349,17 +349,17 @@ func (s *AuthRestTestSuite) TestAuthRest_PostLogin() {
 	var (
 		PATH                   = "/v1/login"
 		METHOD                 = "POST"
-		refreshTokenCookieName = http_constant.HttpCookiePrefix + "token"
+		refreshTokenCookieName = http_pkg.HttpCookiePrefix + "token"
 	)
 
-	testCases := []test_interface.TestCase[auth_rest.PostLoginReq, postRegisterTestExpectation]{
+	testCases := []test_interface.TestCase[auth_rest.PostLoginReq, test.PostRegisterTestExpectation]{
 		{
 			Description: "User exist and correct password should return a 200 OK response",
 			Config: auth_rest.PostLoginReq{
 				Username: s.testUser.Username,
 				Password: s.testUser.Password,
 			},
-			Expectation: postRegisterTestExpectation{
+			Expectation: test.PostRegisterTestExpectation{
 				ResponseStatusCode:                   test_interface.NullInt{Int: http.StatusOK, Valid: true},
 				ResponseBodyStatus:                   test_interface.NullBool{Bool: true, Valid: true},
 				ResponseHeaderRefreshTokenExist:      test_interface.NullBool{Bool: true, Valid: true},
@@ -373,7 +373,7 @@ func (s *AuthRestTestSuite) TestAuthRest_PostLogin() {
 				Username: "nonexistentuser@example.com",
 				Password: "password",
 			},
-			Expectation: postRegisterTestExpectation{
+			Expectation: test.PostRegisterTestExpectation{
 				ResponseStatusCode:                   test_interface.NullInt{Int: http.StatusNotFound, Valid: true},
 				ResponseBodyStatus:                   test_interface.NullBool{Bool: false, Valid: true},
 				ResponseHeaderRefreshTokenExist:      test_interface.NullBool{Bool: false, Valid: true},
@@ -390,7 +390,7 @@ func (s *AuthRestTestSuite) TestAuthRest_PostLogin() {
 				Username: s.testUser.Username,
 				Password: "incorrect_password",
 			},
-			Expectation: postRegisterTestExpectation{
+			Expectation: test.PostRegisterTestExpectation{
 				ResponseStatusCode:                   test_interface.NullInt{Int: http.StatusForbidden, Valid: true},
 				ResponseBodyStatus:                   test_interface.NullBool{Bool: false, Valid: true},
 				ResponseHeaderRefreshTokenExist:      test_interface.NullBool{Bool: false, Valid: true},
@@ -497,16 +497,16 @@ func (s *AuthRestTestSuite) TestAuthRest_GetToken() {
 	var (
 		PATH                   = "/v1/token"
 		METHOD                 = "GET"
-		refreshTokenCookieName = http_constant.HttpCookiePrefix + "token"
+		refreshTokenCookieName = http_pkg.HttpCookiePrefix + "token"
 	)
 
-	testCases := []test_interface.HttpTestCase[any, getTokenTestExpectation]{
+	testCases := []test_interface.HttpTestCase[any, test.GetTokenTestExpectation]{
 		{
 			Description: "Refresh token exist should return a 200 OK response",
-			Expectation: test_interface.ResponseExpectation[getTokenTestExpectation]{
+			Expectation: test_interface.ResponseExpectation[test.GetTokenTestExpectation]{
 				ResponseStatusCode: test_interface.NullInt{Int: http.StatusOK, Valid: true},
 				ResponseBodyStatus: test_interface.NullBool{Bool: true, Valid: true},
-				ResponseBodyResult: getTokenTestExpectation{
+				ResponseBodyResult: test.GetTokenTestExpectation{
 					AccessTokenExist:         test_interface.NullBool{Bool: true, Valid: true},
 					AccessTokenDurationExist: test_interface.NullBool{Bool: true, Valid: true},
 				},
@@ -534,10 +534,10 @@ func (s *AuthRestTestSuite) TestAuthRest_GetToken() {
 		},
 		{
 			Description: "Refresh token not exist should return a 401 Unauthorized response",
-			Expectation: test_interface.ResponseExpectation[getTokenTestExpectation]{
+			Expectation: test_interface.ResponseExpectation[test.GetTokenTestExpectation]{
 				ResponseStatusCode: test_interface.NullInt{Int: http.StatusUnauthorized, Valid: true},
 				ResponseBodyStatus: test_interface.NullBool{Bool: false, Valid: true},
-				ResponseBodyResult: getTokenTestExpectation{
+				ResponseBodyResult: test.GetTokenTestExpectation{
 					AccessTokenExist:         test_interface.NullBool{Bool: false, Valid: true},
 					AccessTokenDurationExist: test_interface.NullBool{Bool: false, Valid: true},
 				},
@@ -617,7 +617,7 @@ func (s *AuthRestTestSuite) TestAuthRest_PostLogout() {
 	var (
 		PATH                   = "/v1/logout"
 		METHOD                 = "POST"
-		refreshTokenCookieName = http_constant.HttpCookiePrefix + "token"
+		refreshTokenCookieName = http_pkg.HttpCookiePrefix + "token"
 	)
 
 	testCases := []test_interface.HttpTestCase[any, any]{

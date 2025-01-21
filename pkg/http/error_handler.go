@@ -1,4 +1,4 @@
-package response
+package http_pkg
 
 type HttpErrorHandlerImpl struct {
 	Code     string

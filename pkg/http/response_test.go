@@ -1,4 +1,4 @@
-package response_test
+package http_pkg_test
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/harmonify/movie-reservation-system/pkg/config"
 	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
-	"github.com/harmonify/movie-reservation-system/pkg/http/response"
+	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
@@ -34,7 +34,7 @@ func TestHttpResponse(t *testing.T) {
 type ResponseTestSuite struct {
 	suite.Suite
 	app      *fx.App
-	response response.HttpResponse
+	response http_pkg.HttpResponse
 }
 
 type testConfig struct {
@@ -66,9 +66,9 @@ func (s *ResponseTestSuite) SetupSuite() {
 				return &error_constant.DefaultCustomErrorMap
 			},
 			struct_util.NewStructUtil,
-			response.NewHttpResponse,
+			http_pkg.NewHttpResponse,
 		),
-		fx.Invoke(func(response response.HttpResponse) {
+		fx.Invoke(func(response http_pkg.HttpResponse) {
 			s.response = response
 		}),
 
@@ -129,9 +129,9 @@ func (s *ResponseTestSuite) TestHttpResponse_Build() {
 			s.Assert().Equal(testCase.Expectation.HttpCode, httpCode)
 			s.Assert().Equal(testCase.Expectation.Result, httpResponse.Result)
 			if testCase.Expectation.Error != nil {
-				s.Require().IsType(httpResponseError, &response.HttpErrorHandlerImpl{})
+				s.Require().IsType(httpResponseError, &http_pkg.HttpErrorHandlerImpl{})
 				s.Assert().Equal(
-					httpResponseError.(*response.HttpErrorHandlerImpl).Code,
+					httpResponseError.(*http_pkg.HttpErrorHandlerImpl).Code,
 					testCase.Expectation.Error.Error(),
 				)
 			}

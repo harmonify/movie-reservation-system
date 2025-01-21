@@ -11,7 +11,8 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/database"
 	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
-	"github.com/harmonify/movie-reservation-system/pkg/http"
+	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
+	"github.com/harmonify/movie-reservation-system/pkg/kafka"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/mail"
 	"github.com/harmonify/movie-reservation-system/pkg/messaging"
@@ -60,6 +61,9 @@ func NewApp(p ...fx.Option) *fx.App {
 		tracer.TracerModule,
 		metrics.MetricsModule,
 		util.UtilModule,
+		fx.Provide(
+			kafka.NewKafkaProducer,
+		),
 
 		// CORE
 		service.ServiceModule,
@@ -79,7 +83,7 @@ func NewApp(p ...fx.Option) *fx.App {
 				return &error_constant.DefaultCustomErrorMap
 			},
 		),
-		http.HttpModule,
+		http_pkg.HttpModule,
 		http_driver.HttpModule,
 	}
 

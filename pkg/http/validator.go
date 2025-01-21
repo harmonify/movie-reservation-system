@@ -1,9 +1,8 @@
-package validator
+package http_pkg
 
 import (
 	"github.com/gin-gonic/gin"
 	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
-	"github.com/harmonify/movie-reservation-system/pkg/http/response"
 	"github.com/harmonify/movie-reservation-system/pkg/util/validation"
 )
 
@@ -13,13 +12,13 @@ type HttpValidator interface {
 }
 
 type HttpValidatorImpl struct {
-	response        response.HttpResponse
+	response        HttpResponse
 	structValidator validation.StructValidator
 }
 
 func NewHttpValidator(
 	structValidator validation.StructValidator,
-	response response.HttpResponse,
+	response HttpResponse,
 ) HttpValidator {
 
 	return &HttpValidatorImpl{
