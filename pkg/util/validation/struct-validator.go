@@ -9,7 +9,6 @@ import (
 	"github.com/go-playground/validator/v10"
 	en_translations "github.com/go-playground/validator/v10/translations/en"
 	"github.com/gobeam/stringy"
-	http_constant "github.com/harmonify/movie-reservation-system/pkg/http/constant"
 )
 
 type StructValidator interface {
@@ -18,17 +17,16 @@ type StructValidator interface {
 }
 
 type structValidatorImpl struct {
-	uni       *ut.UniversalTranslator
-	trans     ut.Translator
-	validate  *validator.Validate
-	validator Validator
+	uni           *ut.UniversalTranslator
+	trans         ut.Translator
+	validator     *validator.Validate
+	validatorUtil Validator
 }
 
-func NewStructValidator(validationUtil Validator) (StructValidator, error) {
-	validate := validator.New()
-
+func NewStructValidator(validatorUtil Validator) (StructValidator, error) {
 	structValidator := &structValidatorImpl{
-		validate: validate,
+		validator:     validator.New(),
+		validatorUtil: validatorUtil,
 	}
 
 	err := structValidator.registerTranslations()
@@ -51,7 +49,7 @@ func (v *structValidatorImpl) registerTranslations() error {
 	// this is usually know or extracted from http 'Accept-Language' header
 	// also see uni.FindTranslator(...)
 	v.trans, _ = v.uni.GetTranslator("en")
-	err := en_translations.RegisterDefaultTranslations(v.validate, v.trans)
+	err := en_translations.RegisterDefaultTranslations(v.validator, v.trans)
 	if err != nil {
 		return err
 	}
@@ -60,10 +58,20 @@ func (v *structValidatorImpl) registerTranslations() error {
 }
 
 func (v *structValidatorImpl) registerCustomValidations() error {
-	err := v.validate.RegisterValidation(
-		string(http_constant.PhoneNumberKey),
+	err := v.validator.RegisterValidation(
+		PhoneNumberKey.String(),
 		func(fl validator.FieldLevel) bool {
-			return v.validator.ValidatePhoneNumber(fl.Field().String())
+			return v.validatorUtil.ValidatePhoneNumber(fl.Field().String())
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	err = v.validator.RegisterValidation(
+		AlphaSpaceKey.String(),
+		func(fl validator.FieldLevel) bool {
+			return v.validatorUtil.ValidateAlphaSpace(fl.Field().String())
 		},
 	)
 	if err != nil {
@@ -74,7 +82,7 @@ func (v *structValidatorImpl) registerCustomValidations() error {
 }
 
 func (v *structValidatorImpl) Validate(schema interface{}) (original error, errorFields []BaseValidationErrorSchema) {
-	if err := v.validate.Struct(schema); err != nil {
+	if err := v.validator.Struct(schema); err != nil {
 		_, errFields := v.ConstructValidationErrorFields(err)
 		return err, errFields
 	}
