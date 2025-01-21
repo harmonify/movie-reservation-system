@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/database"
@@ -14,8 +15,8 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/util"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	otp_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/otp"
-	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
 	token_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/token"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -35,10 +36,10 @@ type (
 		Logger             logger.Logger
 		Tracer             tracer.Tracer
 		Database           *database.Database
-		UserStorage        shared_service.UserStorage
-		UserKeyStorage     shared_service.UserKeyStorage
-		UserSessionStorage shared_service.UserSessionStorage
-		RbacStorage        shared_service.RbacStorage
+		UserStorage        shared.UserStorage
+		UserKeyStorage     shared.UserKeyStorage
+		UserSessionStorage shared.UserSessionStorage
+		RbacStorage        shared.RbacStorage
 		Mailer             mail.Mailer
 		Util               *util.Util
 		Config             *config.Config
@@ -56,10 +57,10 @@ type (
 		logger             logger.Logger
 		tracer             tracer.Tracer
 		database           *database.Database
-		userStorage        shared_service.UserStorage
-		userKeyStorage     shared_service.UserKeyStorage
-		userSessionStorage shared_service.UserSessionStorage
-		rbacStorage        shared_service.RbacStorage
+		userStorage        shared.UserStorage
+		userKeyStorage     shared.UserKeyStorage
+		userSessionStorage shared.UserSessionStorage
+		rbacStorage        shared.RbacStorage
 		mailer             mail.Mailer
 		util               *util.Util
 		config             *config.Config
@@ -141,9 +142,9 @@ func (s *authServiceImpl) Register(ctx context.Context, p RegisterParam) error {
 		}
 
 		// Grant user role
-		_, err = s.rbacStorage.WithTx(tx).GrantRole(ctx, shared_service.GrantRoleParam{
+		_, err = s.rbacStorage.WithTx(tx).GrantRole(ctx, shared.GrantRoleParam{
 			UUID: user.UUID.String(),
-			Role: shared_service.RoleUser,
+			Role: shared.RoleUser,
 		})
 		if err != nil {
 			s.logger.WithCtx(ctx).Error("Failed to grant user role", zap.Error(err))
@@ -159,6 +160,7 @@ func (s *authServiceImpl) Register(ctx context.Context, p RegisterParam) error {
 
 	// Send email verification link
 	err = s.otpService.SendEmailVerificationLink(ctx, otp_service.SendEmailVerificationLinkParam{
+		Name:  fmt.Sprintf("%s %s", p.FirstName, p.LastName),
 		Email: p.Email,
 	})
 	if err != nil {

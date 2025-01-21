@@ -7,6 +7,7 @@ type (
 	}
 
 	SendEmailVerificationLinkParam struct {
+		Name  string
 		Email string
 	}
 

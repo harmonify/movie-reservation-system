@@ -12,7 +12,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/util"
 	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
-	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -32,7 +32,7 @@ type (
 		Tracer             tracer.Tracer
 		Config             *config.Config
 		Util               *util.Util
-		UserSessionStorage shared_service.UserSessionStorage
+		UserSessionStorage shared.UserSessionStorage
 	}
 
 	TokenServiceResult struct {
@@ -46,7 +46,7 @@ type (
 		tracer             tracer.Tracer
 		config             *config.Config
 		util               *util.Util
-		userSessionStorage shared_service.UserSessionStorage
+		userSessionStorage shared.UserSessionStorage
 
 		AccessTokenDuration  int // in seconds
 		RefreshTokenDuration int // in seconds

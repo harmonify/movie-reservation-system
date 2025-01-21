@@ -11,7 +11,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/database"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
-	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"go.uber.org/fx"
 )
 
@@ -28,7 +28,7 @@ type (
 	CasbinResult struct {
 		fx.Out
 
-		RbacStorage shared_service.RbacStorage
+		RbacStorage shared.RbacStorage
 	}
 
 	casbinImpl struct {
@@ -61,7 +61,7 @@ func NewCasbin(p CasbinParam) CasbinResult {
 	}
 }
 
-func (c *casbinImpl) WithTx(tx *database.Transaction) shared_service.RbacStorage {
+func (c *casbinImpl) WithTx(tx *database.Transaction) shared.RbacStorage {
 	if tx == nil {
 		return c
 	}
@@ -72,7 +72,7 @@ func (c *casbinImpl) WithTx(tx *database.Transaction) shared_service.RbacStorage
 	return c
 }
 
-func (c *casbinImpl) CheckPermission(ctx context.Context, p shared_service.CheckPermissionParam) (bool, error) {
+func (c *casbinImpl) CheckPermission(ctx context.Context, p shared.CheckPermissionParam) (bool, error) {
 	ctx, span := c.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -80,7 +80,7 @@ func (c *casbinImpl) CheckPermission(ctx context.Context, p shared_service.Check
 	return authorized, err
 }
 
-func (c *casbinImpl) GrantPermission(ctx context.Context, p shared_service.GrantPermissionParam) (bool, error) {
+func (c *casbinImpl) GrantPermission(ctx context.Context, p shared.GrantPermissionParam) (bool, error) {
 	ctx, span := c.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -88,7 +88,7 @@ func (c *casbinImpl) GrantPermission(ctx context.Context, p shared_service.Grant
 	return success, err
 }
 
-func (c *casbinImpl) BulkGrantPermission(ctx context.Context, p []shared_service.GrantPermissionParam) (bool, error) {
+func (c *casbinImpl) BulkGrantPermission(ctx context.Context, p []shared.GrantPermissionParam) (bool, error) {
 	ctx, span := c.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -102,7 +102,7 @@ func (c *casbinImpl) BulkGrantPermission(ctx context.Context, p []shared_service
 	return success, err
 }
 
-func (c *casbinImpl) RevokePermission(ctx context.Context, p shared_service.RevokePermissionParam) (bool, error) {
+func (c *casbinImpl) RevokePermission(ctx context.Context, p shared.RevokePermissionParam) (bool, error) {
 	ctx, span := c.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -110,7 +110,7 @@ func (c *casbinImpl) RevokePermission(ctx context.Context, p shared_service.Revo
 	return success, err
 }
 
-func (c *casbinImpl) GrantRole(ctx context.Context, p shared_service.GrantRoleParam) (bool, error) {
+func (c *casbinImpl) GrantRole(ctx context.Context, p shared.GrantRoleParam) (bool, error) {
 	ctx, span := c.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 

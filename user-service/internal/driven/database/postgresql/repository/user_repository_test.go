@@ -10,7 +10,7 @@ import (
 	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
 	"github.com/harmonify/movie-reservation-system/user-service/internal"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
-	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/factory"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/model"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/seeder"
@@ -64,7 +64,7 @@ type (
 type UserRepositoryTestSuite struct {
 	suite.Suite
 	app         *fx.App
-	userStorage shared_service.UserStorage
+	userStorage shared.UserStorage
 	testUser    *model.User
 	userSeeder  seeder.UserSeeder
 }
@@ -74,7 +74,7 @@ func (s *UserRepositoryTestSuite) SetupSuite() {
 		factory.DrivenPostgresqlFactoryModule,
 		seeder.DrivenPostgresqlSeederModule,
 		fx.Invoke(func(
-			userStorage shared_service.UserStorage,
+			userStorage shared.UserStorage,
 			userFactory factory.UserFactory,
 			userSeeder seeder.UserSeeder,
 		) {

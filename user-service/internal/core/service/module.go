@@ -4,6 +4,7 @@ import (
 	auth_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/auth"
 	otp_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/otp"
 	token_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/token"
+	user_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/user"
 	"go.uber.org/fx"
 )
 
@@ -29,10 +30,18 @@ var (
 		),
 	)
 
+	UserServiceModule = fx.Module(
+		"user-service",
+		fx.Provide(
+			user_service.NewUserService,
+		),
+	)
+
 	ServiceModule = fx.Module(
 		"service",
 		AuthServiceModule,
 		OtpServiceModule,
 		TokenServiceModule,
+		UserServiceModule,
 	)
 )

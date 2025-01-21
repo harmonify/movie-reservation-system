@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/harmonify/movie-reservation-system/pkg/database"
-	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/model"
 	"go.uber.org/fx"
 )
@@ -28,7 +28,7 @@ type UserKeySeederParam struct {
 
 	PostgresqlErrorTranslator database.PostgresqlErrorTranslator
 	Database                  *database.Database
-	UserKeyStorage            shared_service.UserKeyStorage
+	UserKeyStorage            shared.UserKeyStorage
 }
 
 func NewUserKeySeeder(p UserKeySeederParam) UserKeySeeder {
@@ -42,7 +42,7 @@ func NewUserKeySeeder(p UserKeySeederParam) UserKeySeeder {
 type userKeySeederImpl struct {
 	translator     database.PostgresqlErrorTranslator
 	database       *database.Database
-	userKeyStorage shared_service.UserKeyStorage
+	userKeyStorage shared.UserKeyStorage
 }
 
 func (s *userKeySeederImpl) CreateUserKey(user model.User) (*model.UserKey, error) {

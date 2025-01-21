@@ -7,7 +7,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
-	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"go.uber.org/fx"
 )
 
@@ -25,7 +25,7 @@ type UserServiceParam struct {
 
 	Logger      logger.Logger
 	Tracer      tracer.Tracer
-	UserStorage shared_service.UserStorage
+	UserStorage shared.UserStorage
 }
 
 type UserServiceResult struct {
@@ -37,7 +37,7 @@ type UserServiceResult struct {
 type userServiceImpl struct {
 	logger      logger.Logger
 	tracer      tracer.Tracer
-	userStorage shared_service.UserStorage
+	userStorage shared.UserStorage
 }
 
 func NewUserService(p UserServiceParam) UserServiceResult {
@@ -84,9 +84,13 @@ func (s *userServiceImpl) UpdateUser(ctx context.Context, p UpdateUserParam) (*U
 			UUID: sql.NullString{String: p.UUID, Valid: true},
 		},
 		entity.UpdateUser{
-			Username:  sql.NullString{String: p.Username, Valid: true},
-			FirstName: sql.NullString{String: p.FirstName, Valid: true},
-			LastName:  sql.NullString{String: p.LastName, Valid: true},
+			Email:                 sql.NullString{String: p.Email, Valid: p.Email != ""},
+			PhoneNumber:           sql.NullString{String: p.PhoneNumber, Valid: p.PhoneNumber != ""},
+			Username:              sql.NullString{String: p.Username, Valid: true},
+			FirstName:             sql.NullString{String: p.FirstName, Valid: true},
+			LastName:              sql.NullString{String: p.LastName, Valid: true},
+			IsEmailVerified:       sql.NullBool{Bool: p.Email != "", Valid: p.Email != ""},
+			IsPhoneNumberVerified: sql.NullBool{Bool: p.PhoneNumber != "", Valid: p.PhoneNumber != ""},
 		},
 	)
 

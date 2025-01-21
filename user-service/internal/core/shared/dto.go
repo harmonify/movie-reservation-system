@@ -1,4 +1,4 @@
-package shared_service
+package shared
 
 import "time"
 

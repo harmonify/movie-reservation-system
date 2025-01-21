@@ -8,7 +8,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
-	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/model"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -29,7 +29,7 @@ func NewUserSessionRepository(
 	tracer tracer.Tracer,
 	logger logger.Logger,
 	util *util.Util,
-) shared_service.UserSessionStorage {
+) shared.UserSessionStorage {
 	return &userSessionRepositoryImpl{
 		database: database,
 		pgErrTl:  pgErrTl,
@@ -39,7 +39,7 @@ func NewUserSessionRepository(
 	}
 }
 
-func (r *userSessionRepositoryImpl) WithTx(tx *database.Transaction) shared_service.UserSessionStorage {
+func (r *userSessionRepositoryImpl) WithTx(tx *database.Transaction) shared.UserSessionStorage {
 	if tx == nil {
 		return r
 	}

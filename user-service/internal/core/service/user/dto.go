@@ -25,10 +25,12 @@ type (
 	}
 
 	UpdateUserParam struct {
-		UUID      string
-		Username  string
-		FirstName string
-		LastName  string
+		UUID        string
+		Username    string
+		FirstName   string
+		LastName    string
+		Email       string
+		PhoneNumber string
 	}
 
 	UpdateUserResult struct {

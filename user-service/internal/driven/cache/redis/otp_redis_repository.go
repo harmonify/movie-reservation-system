@@ -12,7 +12,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
-	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -32,7 +32,7 @@ type (
 	OtpRedisRepositoryResult struct {
 		fx.Out
 
-		OtpRedisRepository shared_service.OtpStorage
+		OtpRedisRepository shared.OtpStorage
 	}
 
 	otpRedisRepositoryImpl struct {
@@ -69,7 +69,7 @@ func (r *otpRedisRepositoryImpl) constructCacheKey(ctx context.Context, otpType 
 
 func (r *otpRedisRepositoryImpl) SaveEmailVerificationToken(
 	ctx context.Context,
-	p shared_service.SaveEmailVerificationTokenParam,
+	p shared.SaveEmailVerificationTokenParam,
 ) error {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
@@ -130,7 +130,7 @@ func (r *otpRedisRepositoryImpl) DeleteEmailVerificationToken(ctx context.Contex
 	return removed == 1, nil
 }
 
-func (r *otpRedisRepositoryImpl) SavePhoneOtp(ctx context.Context, p shared_service.SavePhoneOtpParam) error {
+func (r *otpRedisRepositoryImpl) SavePhoneOtp(ctx context.Context, p shared.SavePhoneOtpParam) error {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 

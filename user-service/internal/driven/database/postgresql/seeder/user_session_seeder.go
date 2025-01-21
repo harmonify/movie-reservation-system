@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/harmonify/movie-reservation-system/pkg/database"
-	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/model"
 	"go.uber.org/fx"
 )
@@ -19,7 +19,7 @@ type UserSessionSeederParam struct {
 
 	PostgresqlErrorTranslator database.PostgresqlErrorTranslator
 	Database                  *database.Database
-	UserSessionStorage        shared_service.UserSessionStorage
+	UserSessionStorage        shared.UserSessionStorage
 }
 
 func NewUserSessionSeeder(p UserSessionSeederParam) UserSessionSeeder {
@@ -33,7 +33,7 @@ func NewUserSessionSeeder(p UserSessionSeederParam) UserSessionSeeder {
 type userSessionSeederImpl struct {
 	translator         database.PostgresqlErrorTranslator
 	database           *database.Database
-	userSessionStorage shared_service.UserSessionStorage
+	userSessionStorage shared.UserSessionStorage
 }
 
 func (s *userSessionSeederImpl) SaveUserSession(session model.UserSession) (*model.UserSession, error) {
