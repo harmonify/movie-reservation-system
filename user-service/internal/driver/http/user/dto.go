@@ -6,8 +6,6 @@ import (
 )
 
 type (
-	GetUserReq struct{}
-
 	GetUserRes struct {
 		UUID                  string       `json:"uuid"`
 		Username              string       `json:"username"`
@@ -23,9 +21,11 @@ type (
 	}
 
 	PatchUserReq struct {
-		Username  string `form:"username" json:"username"`
-		FirstName string `form:"first_name" json:"first_name"`
-		LastName  string `form:"last_name" json:"last_name"`
+		Email       string `form:"email" json:"email" validate:"omitempty,email"`
+		PhoneNumber string `form:"phone_number" json:"phone_number" validate:"omitempty,e164"`
+		Username    string `form:"username" json:"username" validate:"omitempty,alphanum,min=3,max=20"`
+		FirstName   string `form:"first_name" json:"first_name" validate:"omitempty,alpha,max=50"`
+		LastName    string `form:"last_name" json:"last_name" validate:"omitempty,alpha,max=50"`
 	}
 
 	PatchUserRes struct {

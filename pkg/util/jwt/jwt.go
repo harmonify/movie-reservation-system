@@ -47,8 +47,8 @@ type jwtUtilImpl struct {
 }
 
 type JwtUtilConfig struct {
-	AppJwtAudiences string
-	ServiceBaseUrl  string
+	AppJwtAudiences    string
+	ServiceHttpBaseUrl string
 }
 
 func NewJwtUtil(
@@ -58,15 +58,15 @@ func NewJwtUtil(
 	if config.AppJwtAudiences == "" {
 		return nil, fmt.Errorf("AppJwtAudiences is empty")
 	}
-	if config.ServiceBaseUrl == "" {
-		return nil, fmt.Errorf("ServiceBaseUrl is empty")
+	if config.ServiceHttpBaseUrl == "" {
+		return nil, fmt.Errorf("ServiceHttpBaseUrl is empty")
 	}
 
 	return &jwtUtilImpl{
 		encryption: encryption,
 		config: &JwtUtilConfig{
-			AppJwtAudiences: config.AppJwtAudiences,
-			ServiceBaseUrl:  config.ServiceBaseUrl,
+			AppJwtAudiences:    config.AppJwtAudiences,
+			ServiceHttpBaseUrl: config.ServiceHttpBaseUrl,
 		},
 	}, nil
 }
@@ -83,7 +83,7 @@ func (i *jwtUtilImpl) JWTSign(payload JWTSignParam) (string, error) {
 	// Claim Property
 	claims := JWTCustomClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    i.config.ServiceBaseUrl,
+			Issuer:    i.config.ServiceHttpBaseUrl,
 			Subject:   payload.BodyPayload.UUID,
 			Audience:  strings.Split(i.config.AppJwtAudiences, ","),
 			ExpiresAt: jwt.NewNumericDate(now.Add(time.Second * time.Duration(payload.ExpInSeconds))),
@@ -133,10 +133,10 @@ func (i *jwtUtilImpl) JWTVerify(tokenString string) (*JWTBodyPayload, error) {
 
 			return rsaPublicKey, nil
 		},
-		jwt.WithAudience(i.config.ServiceBaseUrl),
+		jwt.WithAudience(i.config.ServiceHttpBaseUrl),
 		jwt.WithExpirationRequired(),
 		jwt.WithIssuedAt(),
-		jwt.WithIssuer(i.config.ServiceBaseUrl),
+		jwt.WithIssuer(i.config.ServiceHttpBaseUrl),
 		jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()}),
 	)
 	if err != nil {

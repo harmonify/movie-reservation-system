@@ -12,5 +12,8 @@ var (
 			health_rest.NewHealthCheckRestHandler,
 			NewHttpServer,
 		),
+		fx.Invoke(BootstrapHttpServer),
 	)
 )
+
+func BootstrapHttpServer(h *HttpServer) {}

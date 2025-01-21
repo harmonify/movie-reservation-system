@@ -2,9 +2,7 @@ package user_rest
 
 import (
 	"github.com/gin-gonic/gin"
-	http_interface "github.com/harmonify/movie-reservation-system/pkg/http/interface"
-	"github.com/harmonify/movie-reservation-system/pkg/http/response"
-	http_validator "github.com/harmonify/movie-reservation-system/pkg/http/validator"
+	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
@@ -23,24 +21,24 @@ type UserRestHandlerParam struct {
 
 	Logger      logger.Logger
 	Tracer      tracer.Tracer
-	Middleware  middleware.HttpMiddleware
-	Validator   http_validator.HttpValidator
-	Response    response.HttpResponse
+	Middleware  *middleware.HttpMiddleware
+	Validator   http_pkg.HttpValidator
+	Response    http_pkg.HttpResponse
 	UserService user_service.UserService
 }
 
 type UserRestHandlerResult struct {
 	fx.Out
 
-	UserRestHandler http_interface.RestHandler `group:"http_routes"`
+	UserRestHandler http_pkg.RestHandler `group:"http_routes"`
 }
 
 type userRestHandlerImpl struct {
 	logger      logger.Logger
 	tracer      tracer.Tracer
-	middleware  middleware.HttpMiddleware
-	validator   http_validator.HttpValidator
-	response    response.HttpResponse
+	middleware  *middleware.HttpMiddleware
+	validator   http_pkg.HttpValidator
+	response    http_pkg.HttpResponse
 	userService user_service.UserService
 }
 
@@ -58,8 +56,8 @@ func NewUserRestHandler(p UserRestHandlerParam) UserRestHandlerResult {
 }
 
 func (h *userRestHandlerImpl) Register(g *gin.RouterGroup) {
-	g.GET("/profile", h.middleware.JwtHttpMiddleware.AuthenticateUser, h.GetUser)
-	g.PATCH("/profile", h.middleware.JwtHttpMiddleware.AuthenticateUser, h.PatchUser)
+	g.GET("/profile", h.middleware.JwtHttpMiddleware.AuthenticateUser, h.getUser)
+	g.PATCH("/profile", h.middleware.JwtHttpMiddleware.AuthenticateUser, h.patchUser)
 	// TODO
 	// g.GET("/profile/email/verify", h.middleware.JwtHttpMiddleware.AuthenticateUser, h.GetVerifyUpdateEmail)
 	// g.POST("/profile/email/verify", h.PostVerifyUpdateEmail)
@@ -71,13 +69,12 @@ func (h *userRestHandlerImpl) Version() string {
 	return "1"
 }
 
-func (h *userRestHandlerImpl) GetUser(c *gin.Context) {
+func (h *userRestHandlerImpl) getUser(c *gin.Context) {
 	var (
-		ctx = c.Request.Context()
 		err error
 	)
 
-	ctx, span := h.tracer.StartSpanWithCaller(ctx)
+	ctx, span := h.tracer.StartSpanWithCaller(c.Request.Context())
 	defer span.End()
 
 	var fUserInfo *jwt_util.JWTBodyPayload
@@ -97,14 +94,13 @@ func (h *userRestHandlerImpl) GetUser(c *gin.Context) {
 	}
 }
 
-func (h *userRestHandlerImpl) PatchUser(c *gin.Context) {
+func (h *userRestHandlerImpl) patchUser(c *gin.Context) {
 	var (
-		ctx  = c.Request.Context()
 		body PatchUserReq
 		err  error
 	)
 
-	ctx, span := h.tracer.StartSpanWithCaller(ctx)
+	ctx, span := h.tracer.StartSpanWithCaller(c.Request.Context())
 	defer span.End()
 
 	if err = h.validator.ValidateRequestBody(c, &body); err != nil {

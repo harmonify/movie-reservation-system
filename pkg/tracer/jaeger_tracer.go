@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"runtime"
 
+	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
@@ -17,15 +18,17 @@ import (
 )
 
 type jaegerTracerImpl struct {
-	tracer     trace.Tracer
-	propagator propagation.TextMapPropagator
+	cfg           *config.Config
+	provider      trace.TracerProvider
+	propagator    propagation.TextMapPropagator
+	defaultTracer trace.Tracer
 }
 
-func NewJaegerTracer(p TracerParam) TracerResult {
+func NewJaegerTracer(p TracerParam) (TracerResult, error) {
 	exporter := otlptrace.NewUnstarted(
 		otlptracegrpc.NewClient(
 			otlptracegrpc.WithInsecure(),
-			otlptracegrpc.WithEndpoint(p.Config.OtelHost),
+			otlptracegrpc.WithEndpoint(p.Config.OtelEndpoint),
 		),
 	)
 
@@ -37,8 +40,14 @@ func NewJaegerTracer(p TracerParam) TracerResult {
 		),
 	)
 	if err != nil {
-		fmt.Printf("Could not set tracer resources: %v\n", err)
+		fmt.Printf("Could not set OTel resources: %v\n", err)
 	}
+
+	propagator := propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{},
+		propagation.Baggage{},
+	)
+	otel.SetTextMapPropagator(propagator)
 
 	provider := sdktrace.NewTracerProvider(
 		sdktrace.WithSampler(sdktrace.AlwaysSample()),
@@ -47,20 +56,16 @@ func NewJaegerTracer(p TracerParam) TracerResult {
 	)
 	otel.SetTracerProvider(provider)
 
-	propagator := propagation.NewCompositeTextMapPropagator(
-		propagation.TraceContext{},
-		propagation.Baggage{},
-	)
-	otel.SetTextMapPropagator(propagator)
-
 	// Set an error handler for trace exports
 	otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
-		fmt.Println("OpenTelemetry trace export error", err.Error())
+		fmt.Printf("OTel trace export error: %v\n", err)
 	}))
 
 	t := &jaegerTracerImpl{
-		tracer:     provider.Tracer(p.Config.ServiceIdentifier),
-		propagator: propagator,
+		cfg:           p.Config,
+		propagator:    propagator,
+		provider:      provider,
+		defaultTracer: provider.Tracer(p.Config.ServiceIdentifier),
 	}
 
 	p.Lifecycle.Append(fx.Hook{
@@ -82,11 +87,11 @@ func NewJaegerTracer(p TracerParam) TracerResult {
 
 	return TracerResult{
 		Tracer: t,
-	}
+	}, nil
 }
 
 func (t *jaegerTracerImpl) Start(ctx context.Context, spanName string) (context.Context, trace.Span) {
-	return t.tracer.Start(ctx, spanName)
+	return t.defaultTracer.Start(ctx, spanName)
 }
 
 func (s *jaegerTracerImpl) StartSpanWithCaller(ctx context.Context) (context.Context, trace.Span) {
@@ -101,9 +106,9 @@ func (s *jaegerTracerImpl) StartSpanWithCaller(ctx context.Context) (context.Con
 }
 
 func (s *jaegerTracerImpl) Inject(ctx context.Context, carrier propagation.TextMapCarrier) {
-	s.propagator.Inject(ctx, carrier)
+	otel.GetTextMapPropagator().Inject(ctx, carrier)
 }
 
 func (s *jaegerTracerImpl) Extract(ctx context.Context, carrier propagation.TextMapCarrier) context.Context {
-	return s.propagator.Extract(ctx, carrier)
+	return otel.GetTextMapPropagator().Extract(ctx, carrier)
 }

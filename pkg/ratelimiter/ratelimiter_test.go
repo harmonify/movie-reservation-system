@@ -251,15 +251,15 @@ func createNewRegistry() (*fx.App, ratelimiter.RateLimiterRegistry, error) {
 		fx.Provide(
 			func() *config.Config {
 				return &config.Config{
-					Env:               "test",
-					AppSecret:         "1233334556905407",
-					ServiceIdentifier: "user-service",
-					ServiceBaseUrl:    "http://localhost:8080",
-					LogLevel:          "debug",
-					LogType:           "console",
-					RedisHost:         "localhost",
-					RedisPort:         "6379",
-					RedisPass:         "secret",
+					Env:                "test",
+					AppSecret:          "1233334556905407",
+					ServiceIdentifier:  "user-service",
+					ServiceHttpBaseUrl: "http://localhost:8080",
+					LogLevel:           "debug",
+					LogType:            "console",
+					RedisHost:          "localhost",
+					RedisPort:          "6379",
+					RedisPass:          "secret",
 				}
 			},
 			func() *ratelimiter.RateLimiterConfig {

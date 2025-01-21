@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	config_constant "github.com/harmonify/movie-reservation-system/pkg/config/constant"
+	config "github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/uptrace/opentelemetry-go-extra/otelgorm"
 	pgDriver "gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -39,7 +39,7 @@ func newPostgresqlDatabase(p DatabaseParam) (DatabaseResult, error) {
 			SingularTable: true,
 		},
 	})
-	if p.Config.Env == config_constant.EnvironmentProduction {
+	if p.Config.Env == config.EnvironmentProduction {
 		db.Logger = gormLogger.Default.LogMode(gormLogger.Silent)
 	}
 

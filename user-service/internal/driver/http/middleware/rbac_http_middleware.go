@@ -6,11 +6,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/harmonify/movie-reservation-system/pkg/config"
 	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
-	"github.com/harmonify/movie-reservation-system/pkg/http/response"
+	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
-	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"go.uber.org/fx"
 )
 
@@ -24,8 +24,8 @@ type (
 
 		Logger      logger.Logger
 		Tracer      tracer.Tracer
-		Response    response.HttpResponse
-		RbacStorage shared_service.RbacStorage
+		Response    http_pkg.HttpResponse
+		RbacStorage shared.RbacStorage
 		Config      *config.Config
 	}
 
@@ -38,8 +38,8 @@ type (
 	rbacHttpMiddlewareImpl struct {
 		logger      logger.Logger
 		tracer      tracer.Tracer
-		response    response.HttpResponse
-		rbacStorage shared_service.RbacStorage
+		response    http_pkg.HttpResponse
+		rbacStorage shared.RbacStorage
 		config      *config.Config
 	}
 )
@@ -58,11 +58,7 @@ func NewRbacHttpMiddleware(p RbacHttpMiddlewareParam) RbacHttpMiddlewareResult {
 
 // CheckPermission checks the user/domain/method/path combination from the request.
 func (m *rbacHttpMiddlewareImpl) CheckPermission(c *gin.Context) {
-	var (
-		ctx = c.Request.Context()
-	)
-
-	_, span := m.tracer.StartSpanWithCaller(ctx)
+	_, span := m.tracer.StartSpanWithCaller(c.Request.Context())
 	defer span.End()
 
 	authorized, err := m.checkPermission(c)
@@ -79,11 +75,7 @@ func (m *rbacHttpMiddlewareImpl) CheckPermission(c *gin.Context) {
 }
 
 func (m *rbacHttpMiddlewareImpl) checkPermission(c *gin.Context) (bool, error) {
-	var (
-		ctx = c.Request.Context()
-	)
-
-	_, span := m.tracer.StartSpanWithCaller(ctx)
+	ctx, span := m.tracer.StartSpanWithCaller(c.Request.Context())
 	defer span.End()
 
 	var userInfo *jwt_util.JWTBodyPayload
@@ -94,11 +86,11 @@ func (m *rbacHttpMiddlewareImpl) checkPermission(c *gin.Context) (bool, error) {
 		userInfo = _userInfo.(*jwt_util.JWTBodyPayload)
 	}
 
-	allowed, err := m.rbacStorage.CheckPermission(ctx, shared_service.CheckPermissionParam{
+	allowed, err := m.rbacStorage.CheckPermission(ctx, shared.CheckPermissionParam{
 		UUID:     userInfo.UUID,
 		Domain:   m.config.ServiceIdentifier,
 		Resource: c.Request.URL.Path,
-		Action:   shared_service.Action(c.Request.Method),
+		Action:   shared.Action(c.Request.Method),
 	})
 
 	if err != nil {

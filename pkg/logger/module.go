@@ -1,51 +1,30 @@
 package logger
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"go.uber.org/fx"
-	"go.uber.org/zap"
 )
 
 func NewLogger(cfg *config.Config) (Logger, error) {
-	if cfg.LogLevel == "" {
-		return nil, fmt.Errorf("Log level is required")
-	}
-	if cfg.LogType == "" {
-		return nil, fmt.Errorf("Log type is required")
-	}
-
-	zapConfig := zap.NewProductionConfig()
-	// zapConfig.EncoderConfig.CallerKey = zapcore.OmitKey
-
-	logLevel, err := zap.ParseAtomicLevel(cfg.LogLevel)
-	if err == nil {
-		zapConfig.Level = logLevel
-	} else {
-		fmt.Println("Failed to set log level")
-	}
-
 	switch cfg.LogType {
 	case "nop":
 		{
 			return NewNopLogger(), nil
 		}
-	case "console":
+	case "loki":
 		{
-			return NewConsoleLogger(), nil
-		}
-	default:
-		{
-			if cfg.LokiUrl == "" {
-				return nil, fmt.Errorf("Loki URL is required")
-			}
-			logger, err := NewLokiLogger(zapConfig, LokiConfig{
+			logger, err := NewLokiZapLogger(&LokiZapConfig{
+				LogLevel:     cfg.LogLevel,
 				Url:          cfg.LokiUrl,
 				BatchMaxSize: 1000,
 				BatchMaxWait: 10 * time.Second,
-				Labels:       map[string]string{"app": cfg.AppName, "env": cfg.Env},
+				// https://grafana.com/docs/loki/latest/get-started/labels/
+				Labels: map[string]string{
+					"env":          cfg.Env,
+					"service_name": cfg.ServiceIdentifier,
+				},
 			})
 
 			if err != nil {
@@ -53,6 +32,10 @@ func NewLogger(cfg *config.Config) (Logger, error) {
 			}
 
 			return logger, nil
+		}
+	default:
+		{
+			return NewConsoleLogger(), nil
 		}
 	}
 }

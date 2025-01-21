@@ -63,15 +63,15 @@ func (c *kafkaRouterImpl) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 	for {
 		select {
 		case message, ok := <-claim.Messages():
+			var finalErr error
+			if !ok {
+				finalErr = ErrMessageChannelClosed
+				return finalErr
+			}
+
 			ctx := c.tracer.Extract(session.Context(), otelsarama.NewConsumerMessageCarrier(message))
 			ctx, span := c.tracer.StartSpanWithCaller(ctx)
 			defer span.End()
-
-			var finalErr error
-
-			if !ok {
-				finalErr = ErrMessageChannelClosed
-			}
 
 			for _, route := range c.routes {
 				event, err := c.constructEventForRoute(ctx, route, message)

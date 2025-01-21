@@ -1,6 +1,6 @@
 services:
     loki:
-        image: grafana/loki:latest
+        image: grafana/loki:2.9.11
         volumes:
             - ./config/loki.yaml:/etc/loki/loki.yaml:ro
         ports:
@@ -10,32 +10,15 @@ services:
             - minio
         networks:
             - monitoring-net
-        # send Loki traces to Jaeger
-        environment:
-            - JAEGER_AGENT_HOST=jaeger-agent
-            - JAEGER_AGENT_PORT=6831
-            - JAEGER_SAMPLER_TYPE=const
-            - JAEGER_SAMPLER_PARAM=1
-        # logging:
-        #     driver: loki
-        #     options:
-        #         loki-url: "http://loki:3100/api/prom/push"
-        #         # Prevent container from being stuck when shutting down
-        #         # https://github.com/grafana/loki/issues/2361#issuecomment-718024318
-        #         loki-timeout: 1s
-        #         loki-max-backoff: 1s
-        #         loki-retries: 1
-
-    promtail:
-        image: grafana/promtail:latest
-        volumes:
-            - /var/log:/var/log
-            - ./config/promtail.yaml:/etc/promtail/promtail.yaml:ro
-        command: -config.file=/etc/promtail/promtail.yaml
-        depends_on:
-            - loki
-        networks:
-            - monitoring-net
+        healthcheck:
+            test:
+                [
+                    "CMD-SHELL",
+                    "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
 
     minio:
         image: minio/minio:latest
@@ -55,5 +38,10 @@ services:
             - "9000:9000"
         volumes:
             - ./.data/minio:/data
+        healthcheck:
+            test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+            interval: 15s
+            timeout: 20s
+            retries: 5
         networks:
             - monitoring-net

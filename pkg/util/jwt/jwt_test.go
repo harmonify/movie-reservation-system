@@ -87,9 +87,9 @@ func (s *JwtUtilTestSuite) SetupSuite() {
 	s.app = fx.New(
 		fx.Provide(func() *config.Config {
 			return &config.Config{
-				AppSecret:       "1233334556905407",
-				ServiceBaseUrl:  "http://localhost:8080",
-				AppJwtAudiences: "http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084",
+				AppSecret:          "1233334556905407",
+				ServiceHttpBaseUrl: "http://localhost:8080",
+				AppJwtAudiences:    "http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084",
 			}
 		}),
 		generator_util.GeneratorUtilModule,
@@ -164,8 +164,8 @@ func (s *JwtUtilTestSuite) TestJwtUtil_JWTVerify() {
 			Description: "Should return no error",
 			Setup: func() jwt_util.JwtUtil {
 				jwtUtil, err := buildJwtUtil(&config.Config{
-					AppSecret:      "1233334556905407",
-					ServiceBaseUrl: "http://localhost:8080",
+					AppSecret:          "1233334556905407",
+					ServiceHttpBaseUrl: "http://localhost:8080",
 				})
 				s.Require().Nil(err)
 				return jwtUtil

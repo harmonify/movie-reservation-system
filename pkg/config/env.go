@@ -1,29 +1,29 @@
 package config
 
 type Config struct {
-	Env string `mapstructure:"ENV"`
+	Env string `mapstructure:"ENV" validate:"required,oneof=development staging production"`
 
-	AppName                   string `mapstructure:"APP_NAME"`
+	AppName                   string `mapstructure:"APP_NAME" validate:"required"`
 	AppDefaultCountryDialCode string `mapstructure:"APP_DEFAULT_COUNTRY_DIAL_CODE"`
-	AppSecret                 string `mapstructure:"APP_SECRET"`
-	AppJwtAudiences           string `mapstructure:"APP_JWT_AUDIENCES"`
+	AppSecret                 string `mapstructure:"APP_SECRET" validate:"required"`
+	AppJwtAudiences           string `mapstructure:"APP_JWT_AUDIENCES" validate:"required"`
 
-	ServiceIdentifier       string `mapstructure:"SERVICE_IDENTIFIER"` // any identifier, used in RBAC
-	ServicePort             string `mapstructure:"SERVICE_PORT"`
-	ServiceBaseUrl          string `mapstructure:"SERVICE_BASE_URL"`
-	ServiceBasePath         string `mapstructure:"SERVICE_BASE_PATH"`
-	ServiceHttpReadTimeOut  string `mapstructure:"SERVICE_HTTP_READ_TIMEOUT"`
-	ServiceHttpWriteTimeOut string `mapstructure:"SERVICE_HTTP_WRITE_TIMEOUT"`
-	ServiceEnableCors       bool   `mapstructure:"SERVICE_ENABLE_CORS"`
+	ServiceIdentifier       string `mapstructure:"SERVICE_IDENTIFIER" validate:"required"`
+	ServiceHttpPort         string `mapstructure:"SERVICE_HTTP_PORT" validate:"required,numeric"`
+	ServiceHttpBaseUrl      string `mapstructure:"SERVICE_HTTP_BASE_URL" validate:"required"`
+	ServiceHttpBasePath     string `mapstructure:"SERVICE_HTTP_BASE_PATH" validate:"required"`
+	ServiceHttpReadTimeOut  string `mapstructure:"SERVICE_HTTP_READ_TIMEOUT" validate:"required"`
+	ServiceHttpWriteTimeOut string `mapstructure:"SERVICE_HTTP_WRITE_TIMEOUT" validate:"required"`
+	ServiceHttpEnableCors   bool   `mapstructure:"SERVICE_HTTP_ENABLE_CORS" validate:"required,boolean"`
 
 	FrontEndUrl string `mapstructure:"FRONTEND_URL"`
 
 	DbHost                string `mapstructure:"PG_HOST"`
-	DbPort                int    `mapstructure:"PG_PORT"`
+	DbPort                int    `mapstructure:"PG_PORT" validate:"min=1,max=65535"`
 	DbUser                string `mapstructure:"PG_USER"`
 	DbPassword            string `mapstructure:"PG_PASSWORD"`
 	DbName                string `mapstructure:"PG_DATABASE"`
-	DbMigration           bool   `mapstructure:"PG_AUTO_MIGRATION"`
+	DbMigration           bool   `mapstructure:"PG_AUTO_MIGRATION" validate:"boolean"`
 	DbMaxIdleConn         int    `mapstructure:"PG_MAX_IDLE_CONN"`
 	DbMaxOpenConn         int    `mapstructure:"PG_MAX_OPEN_CONN"`
 	DbMaxLifetimeInMinute int    `mapstructure:"PG_MAX_LIFETIME_IN_MINUTE"`
@@ -32,23 +32,18 @@ type Config struct {
 	RedisPort string `mapstructure:"REDIS_PORT"`
 	RedisPass string `mapstructure:"REDIS_PASS"`
 
-	GrpcPort                  string `mapstructure:"GRPC_PORT"`
-	GrpcReservationServiceUrl string `mapstructure:"GRPC_RESERVATION_SERVICE_URL"`
-	GrpcMovieServiceUrl       string `mapstructure:"GRPC_MOVIE_SERVICE_URL"`
-	GrpcTheaterServiceUrl     string `mapstructure:"GRPC_THEATER_SERVICE_URL"`
-	GrpcTicketServiceUrl      string `mapstructure:"GRPC_TICKET_SERVICE_URL"`
-	GrpcUserServiceUrl        string `mapstructure:"GRPC_USER_SERVICE_URL"`
+	GrpcPort string `mapstructure:"GRPC_PORT"`
 
-	KafkaBrokers       string `mapstructure:"KAFKA_BROKERS"`
+	KafkaBrokers       string `mapstructure:"KAFKA_BROKERS" validate:"required"`
 	KafkaVersion       string `mapstructure:"KAFKA_VERSION"`
 	KafkaConsumerGroup string `mapstructure:"KAFKA_CONSUMER_GROUP"`
 
-	LogType  string `mapstructure:"LOG_TYPE"`
-	LogLevel string `mapstructure:"LOG_LEVEL"`
-	LokiUrl  string `mapstructure:"LOKI_URL"`
+	LogType  string `mapstructure:"LOG_TYPE" validate:"required"`
+	LogLevel string `mapstructure:"LOG_LEVEL" validate:"required"`
+	LokiUrl  string `mapstructure:"LOKI_URL" validate:"required_if=LogType loki"`
 
-	OtelHost     string `mapstructure:"OTEL_ENDPOINT"`
-	OtelInsecure bool   `mapstructure:"OTEL_INSECURE"`
+	OtelEndpoint string `mapstructure:"OTEL_ENDPOINT" validate:"required"`
+	OtelInsecure bool   `mapstructure:"OTEL_INSECURE" validate:"required,boolean"`
 
 	MailgunDefaultSender string `mapstructure:"MAILGUN_DEFAULT_SENDER"`
 	MailgunDomain        string `mapstructure:"MAILGUN_DOMAIN"`

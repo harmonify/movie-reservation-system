@@ -1,6 +1,6 @@
-package config_constant
+package config
 
-var (
+const (
 	EnvironmentTest        = "test"
 	EnvironmentDevelopment = "dev"
 	EnvironmentProduction  = "prod"

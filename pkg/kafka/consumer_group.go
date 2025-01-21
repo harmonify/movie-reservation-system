@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/IBM/sarama"
 	"github.com/dnwe/otelsarama"
@@ -52,6 +53,7 @@ func (kc *KafkaConsumerGroup) StartConsumer(ctx context.Context, topics []string
 		for {
 			if err := kc.Client.Consume(ctx, topics, wrappedHandler); err != nil {
 				kc.logger.WithCtx(ctx).Warn("Consumer session is closed", zap.Error(err))
+				time.Sleep(5 * time.Second) // TODO: exponential backoff & jitter
 			}
 		}
 	}()

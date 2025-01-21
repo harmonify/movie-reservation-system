@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
-	"github.com/harmonify/movie-reservation-system/pkg/http/response"
+	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
 )
@@ -20,14 +20,14 @@ type (
 
 	jwtHttpMiddlewareImpl struct {
 		tracer   tracer.Tracer
-		response response.HttpResponse
+		response http_pkg.HttpResponse
 		util     *util.Util
 	}
 )
 
 func NewJwtHttpMiddleware(
 	tracer tracer.Tracer,
-	response response.HttpResponse,
+	response http_pkg.HttpResponse,
 	util *util.Util,
 ) JwtHttpMiddleware {
 	return &jwtHttpMiddlewareImpl{
@@ -39,11 +39,10 @@ func NewJwtHttpMiddleware(
 
 func (h *jwtHttpMiddlewareImpl) AuthenticateUser(c *gin.Context) {
 	var (
-		ctx = c.Request.Context()
 		err error
 	)
 
-	_, span := h.tracer.StartSpanWithCaller(ctx)
+	_, span := h.tracer.StartSpanWithCaller(c.Request.Context())
 	defer span.End()
 
 	accessToken := c.Request.Header.Get("Authorization")
@@ -76,17 +75,13 @@ func (h *jwtHttpMiddlewareImpl) AuthenticateUser(c *gin.Context) {
 		return
 	}
 
-	ctx = context.WithValue(c.Request.Context(), UserInfoKey, payload)
+	ctx := context.WithValue(c.Request.Context(), UserInfoKey, payload)
 	c.Request = c.Request.WithContext(ctx)
 	c.Next()
 }
 
 func (h *jwtHttpMiddlewareImpl) OptAuthenticateUser(c *gin.Context) {
-	var (
-		ctx = c.Request.Context()
-	)
-
-	_, span := h.tracer.StartSpanWithCaller(ctx)
+	_, span := h.tracer.StartSpanWithCaller(c.Request.Context())
 	defer span.End()
 
 	accessToken := c.Request.Header.Get("Authorization")

@@ -56,10 +56,6 @@ func NewRateLimiterRegistry(p RateLimiterRegistryParam, c *RateLimiterConfig) (R
 		c.RefillRate = defaultRefillRate
 	}
 
-	if p.Config.ServiceIdentifier == "" {
-		return nil, fmt.Errorf("service identifier is required")
-	}
-
 	registry := limiters.NewRegistry()
 	clock := limiters.NewSystemClock()
 

@@ -5,10 +5,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	http_constant "github.com/harmonify/movie-reservation-system/pkg/http/constant"
-	http_interface "github.com/harmonify/movie-reservation-system/pkg/http/interface"
-	"github.com/harmonify/movie-reservation-system/pkg/http/response"
-	http_validator "github.com/harmonify/movie-reservation-system/pkg/http/validator"
+	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
@@ -27,8 +24,8 @@ type AuthRestHandlerParam struct {
 	fx.In
 
 	AuthService auth_service.AuthService
-	Validator   http_validator.HttpValidator
-	Response    response.HttpResponse
+	Validator   http_pkg.HttpValidator
+	Response    http_pkg.HttpResponse
 	Logger      logger.Logger
 	Tracer      tracer.Tracer
 	Util        *util.Util
@@ -38,13 +35,13 @@ type AuthRestHandlerParam struct {
 type AuthRestHandlerResult struct {
 	fx.Out
 
-	AuthRestHandler http_interface.RestHandler `group:"http_routes"`
+	AuthRestHandler http_pkg.RestHandler `group:"http_routes"`
 }
 
 type authRestHandlerImpl struct {
 	authService auth_service.AuthService
-	validator   http_validator.HttpValidator
-	response    response.HttpResponse
+	validator   http_pkg.HttpValidator
+	response    http_pkg.HttpResponse
 	logger      logger.Logger
 	tracer      tracer.Tracer
 	util        *util.Util
@@ -66,25 +63,24 @@ func NewAuthRestHandler(p AuthRestHandlerParam) AuthRestHandlerResult {
 }
 
 func (h *authRestHandlerImpl) Register(g *gin.RouterGroup) {
-	g.POST("/register", h.PostRegister)
-	g.POST("/register/verify", h.PostVerifyEmail)
-	g.POST("/login", h.PostLogin)
-	g.POST("/logout", h.PostLogout)
-	g.GET("/token", h.GetToken)
+	g.POST("/register", h.postRegister)
+	g.POST("/register/verify", h.postVerifyEmail) // Deprecated, see GET & POST /profile/email/verify endpoints
+	g.POST("/login", h.postLogin)
+	g.POST("/logout", h.postLogout)
+	g.GET("/token", h.getToken)
 }
 
 func (h *authRestHandlerImpl) Version() string {
 	return "1"
 }
 
-func (h *authRestHandlerImpl) PostRegister(c *gin.Context) {
+func (h *authRestHandlerImpl) postRegister(c *gin.Context) {
 	var (
-		ctx  = c.Request.Context()
 		body PostRegisterReq
 		err  error
 	)
 
-	ctx, span := h.tracer.StartSpanWithCaller(ctx)
+	ctx, span := h.tracer.StartSpanWithCaller(c.Request.Context())
 	defer span.End()
 
 	if err = h.validator.ValidateRequestBody(c, &body); err != nil {
@@ -104,14 +100,14 @@ func (h *authRestHandlerImpl) PostRegister(c *gin.Context) {
 	h.response.Send(c, nil, err)
 }
 
-func (h *authRestHandlerImpl) PostVerifyEmail(c *gin.Context) {
+// Deprecated, see GET & POST /profile/email/verify endpoints
+func (h *authRestHandlerImpl) postVerifyEmail(c *gin.Context) {
 	var (
-		ctx  = c.Request.Context()
 		body PostVerifyEmailReq
 		err  error
 	)
 
-	ctx, span := h.tracer.StartSpanWithCaller(ctx)
+	ctx, span := h.tracer.StartSpanWithCaller(c.Request.Context())
 	defer span.End()
 
 	if err = h.validator.ValidateRequestBody(c, &body); err != nil {
@@ -131,14 +127,13 @@ func (h *authRestHandlerImpl) PostVerifyEmail(c *gin.Context) {
 	h.response.Send(c, nil, nil)
 }
 
-func (h *authRestHandlerImpl) PostLogin(c *gin.Context) {
+func (h *authRestHandlerImpl) postLogin(c *gin.Context) {
 	var (
-		ctx    = c.Request.Context()
 		params PostLoginReq
 		err    error
 	)
 
-	ctx, span := h.tracer.StartSpanWithCaller(ctx)
+	ctx, span := h.tracer.StartSpanWithCaller(c.Request.Context())
 	defer span.End()
 
 	if err = h.validator.ValidateRequestBody(c, &params); err != nil {
@@ -158,7 +153,7 @@ func (h *authRestHandlerImpl) PostLogin(c *gin.Context) {
 	}
 
 	// Set refresh token cookies
-	cookieName := http_constant.HttpCookiePrefix + "token"
+	cookieName := http_pkg.HttpCookiePrefix + "token"
 	cookieMaxAge := int(time.Until(data.RefreshTokenExpiredAt).Seconds())
 	cookieValue := data.RefreshToken
 	cookieDomain := "localhost"
@@ -172,16 +167,15 @@ func (h *authRestHandlerImpl) PostLogin(c *gin.Context) {
 	}, err)
 }
 
-func (h *authRestHandlerImpl) GetToken(c *gin.Context) {
+func (h *authRestHandlerImpl) getToken(c *gin.Context) {
 	var (
-		ctx = c.Request.Context()
 		err error
 	)
 
-	ctx, span := h.tracer.StartSpanWithCaller(ctx)
+	ctx, span := h.tracer.StartSpanWithCaller(c.Request.Context())
 	defer span.End()
 
-	cookieName := http_constant.HttpCookiePrefix + "token"
+	cookieName := http_pkg.HttpCookiePrefix + "token"
 	refreshToken, err := c.Cookie(cookieName)
 	if err != nil {
 		err = h.response.BuildError(auth_service.InvalidRefreshToken, err)
@@ -203,16 +197,15 @@ func (h *authRestHandlerImpl) GetToken(c *gin.Context) {
 	}, err)
 }
 
-func (h *authRestHandlerImpl) PostLogout(c *gin.Context) {
+func (h *authRestHandlerImpl) postLogout(c *gin.Context) {
 	var (
-		ctx = c.Request.Context()
 		err error
 	)
 
-	ctx, span := h.tracer.StartSpanWithCaller(ctx)
+	ctx, span := h.tracer.StartSpanWithCaller(c.Request.Context())
 	defer span.End()
 
-	cookieName := http_constant.HttpCookiePrefix + "token"
+	cookieName := http_pkg.HttpCookiePrefix + "token"
 	refreshToken, err := c.Cookie(cookieName)
 	if err != nil {
 		h.response.Send(c, nil, auth_service.ErrRefreshTokenAlreadyExpired)
