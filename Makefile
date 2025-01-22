@@ -47,3 +47,7 @@ gen-proto: ## Generate protobuf code for Golang in specified output directory
 		exit 1; \
 	fi
 	bin/gen_proto.sh "$(target)"
+
+.PHONY: export-puml
+export-puml: ## ex: make export-puml darkmode=true
+	bin/export_puml.sh "$(darkmode)"
