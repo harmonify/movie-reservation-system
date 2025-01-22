@@ -1,5 +1,4 @@
 @startuml register
-!theme plain
 skinparam style strictuml
 hide footbox
 actor User

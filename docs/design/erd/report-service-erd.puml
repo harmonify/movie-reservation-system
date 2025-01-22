@@ -6,3 +6,5 @@ entity Reports {
     generated_at : datetime NOT NULL
     content_url : text NOT NULL
 }
+
+@enduml

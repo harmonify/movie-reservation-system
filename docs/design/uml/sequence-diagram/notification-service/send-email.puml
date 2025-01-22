@@ -1,0 +1,60 @@
+@startuml send-email
+skinparam style strictuml
+hide footbox
+
+boundary Producer
+queue MessageBroker
+box "NotificationService"
+participant Router
+participant Handler
+participant EmailTemplateService
+participant EmailService
+collections EmailProvider
+participant DLQProducer
+end box
+
+activate MessageBroker
+
+Producer -> MessageBroker : send message to "notifications.email.v1"
+MessageBroker -> Router ++ : consume message from "notifications.email.v1"
+Router -> Handler ++ : send event to matching handler
+Handler -> EmailTemplateService ++ : Render()
+EmailTemplateService -> Handler : email body in HTML
+deactivate EmailTemplateService
+
+alt Success
+    Handler -> EmailService ++ : Send()
+    EmailService -> EmailProvider ++ : Send()
+    EmailProvider -> EmailService : nil
+    deactivate EmailProvider
+    EmailService -> Handler : nil
+    deactivate EmailService
+    Handler -> Router : nil
+else Success on retry
+    Handler -> EmailService ++ : Send()
+    EmailService -> EmailProvider ++ : Send()
+    EmailProvider -> EmailService : err
+    EmailService -> EmailProvider : retry Send()
+    EmailProvider -> EmailService : nil
+    deactivate EmailProvider
+    EmailService -> Handler : nil
+    deactivate EmailService
+    Handler -> Router : nil
+else Failed
+    Handler -> EmailService ++ : Send()
+    EmailService -> EmailProvider ++ : Send()
+    EmailProvider -> EmailService : err
+    EmailService -> EmailProvider : retry Send()
+    EmailProvider -> EmailService : err
+    EmailService -> EmailProvider : retry Send()
+    EmailProvider -> EmailService : err
+    EmailService -> Handler : err
+    Handler -> Router : err
+    Router -> DLQProducer ++: MoveToDLQ()
+    DLQProducer -> MessageBroker : send message to "notifications.email.v1.dlq"
+    deactivate DLQProducer
+end alt
+
+deactivate Handler
+Router -> MessageBroker : mark message as read\n(mark offset)
+@enduml

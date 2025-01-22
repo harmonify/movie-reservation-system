@@ -25,3 +25,5 @@ entity Actors {
 
 Movies ||-o{ MovieSubtitles : "has"
 Movies ||-o{ Actors : "casts"
+
+@enduml

@@ -33,3 +33,5 @@ entity PaymentHistories {
 
 Reservations ||-o{ ReservationItems : "has"
 Reservations ||-o{ PaymentHistories : "has"
+
+@enduml
