@@ -14,6 +14,7 @@ var KafkaModule = fx.Module(
 		NewKafkaAdmin,
 		NewKafkaProducer,
 		NewKafkaConsumerGroup,
+		NewKafkaDLQProducer,
 		// Example register kafka route:
 		// AsRoute(
 		// test.NewTestRoute,

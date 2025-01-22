@@ -222,8 +222,7 @@ func (s *KafkaTestSuite) TestKafkaSuite_Router() {
 		consumerSpanCtx := trace.SpanContextFromContext(ce.Context)
 		s.T().Logf("Consumer context: topic=%s spanid=%s traceid=%s", ce.Event.Topic, consumerSpanCtx.SpanID(), consumerSpanCtx.TraceID())
 		// ASSERT
-		s.Require().Equal(consumerSpanCtx.TraceID().String(), ce.Event.TraceID, "Router should correctly parse the message header to the event trace id property")
-		s.Require().Equal(producerSpan.SpanContext().TraceID().String(), ce.Event.TraceID, "Consumer route should receive the correct trace id")
+		s.Require().Equal(producerSpan.SpanContext().TraceID().String(), consumerSpanCtx.TraceID().String(), "Consumer route should receive the correct trace id")
 
 		s.Require().Equal(test.TestRouterTopic, ce.Event.Topic, "Consumer route should receive the event from the correct topic")
 

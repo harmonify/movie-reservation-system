@@ -7,6 +7,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/kafka"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	test_proto "github.com/harmonify/movie-reservation-system/pkg/test/proto"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -19,7 +20,7 @@ type TestRoute struct {
 func (r *TestRoute) Decode(ctx context.Context, value []byte) (interface{}, error) {
 	val := &test_proto.Test{}
 	if err := proto.Unmarshal(value, val); err != nil {
-		return nil, kafka.ErrDecodeFailed
+		return nil, kafka.ErrMalformedMessage
 	}
 	return val, nil
 }
@@ -37,14 +38,14 @@ func (r *TestRoute) Handle(ctx context.Context, event *kafka.Event) error {
 	// Production handling logic
 	val, ok := event.Value.(*test_proto.Test)
 	if !ok {
-		return kafka.ErrInvalidValueType
+		return kafka.ErrMalformedMessage
 	}
 	r.logger.Debug(
 		fmt.Sprintf(
 			"Message claimed: topic = %s, timestamp = %v, trace_id = %s, key = %s, value = %s",
 			event.Topic,
 			event.Timestamp,
-			event.TraceID,
+			trace.SpanContextFromContext(ctx).TraceID().String(),
 			event.Key,
 			val,
 		),

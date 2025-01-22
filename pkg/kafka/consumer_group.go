@@ -2,8 +2,8 @@ package kafka
 
 import (
 	"context"
+	"errors"
 	"strings"
-	"time"
 
 	"github.com/IBM/sarama"
 	"github.com/dnwe/otelsarama"
@@ -32,6 +32,11 @@ func NewKafkaConsumerGroup(lc fx.Lifecycle, cfg *config.Config, logger logger.Lo
 		return nil, err
 	}
 
+	kc := &KafkaConsumerGroup{
+		Client: client,
+		logger: logger,
+	}
+
 	lc.Append(fx.Hook{
 		OnStop: func(ctx context.Context) error {
 			logger.Info("Closing Kafka consumer")
@@ -39,10 +44,7 @@ func NewKafkaConsumerGroup(lc fx.Lifecycle, cfg *config.Config, logger logger.Lo
 		},
 	})
 
-	return &KafkaConsumerGroup{
-		Client: client,
-		logger: logger,
-	}, nil
+	return kc, nil
 }
 
 // StartConsumer starts consuming messages from the given topic.
@@ -51,9 +53,14 @@ func (kc *KafkaConsumerGroup) StartConsumer(ctx context.Context, topics []string
 	go func() {
 		wrappedHandler := otelsarama.WrapConsumerGroupHandler(handler)
 		for {
+			// `Consume` should be called inside an infinite loop, when a
+			// server-side rebalance happens, the consumer session will need to be
+			// recreated to get the new claims
 			if err := kc.Client.Consume(ctx, topics, wrappedHandler); err != nil {
-				kc.logger.WithCtx(ctx).Warn("Consumer session is closed", zap.Error(err))
-				time.Sleep(5 * time.Second) // TODO: exponential backoff & jitter
+				if errors.Is(err, sarama.ErrClosedConsumerGroup) {
+					return
+				}
+				kc.logger.WithCtx(ctx).Error("Consumer error", zap.Error(err))
 			}
 		}
 	}()
