@@ -31,3 +31,33 @@ func NewInvalidPhoneNumberError(phoneNumber string) error {
 		PhoneNumber: phoneNumber,
 	}
 }
+
+type RateLimitError struct {
+	Original   error
+	RetryAfter int
+}
+
+func (e *RateLimitError) Error() string {
+	return e.Original.Error()
+}
+
+func (e *RateLimitError) Is(err error) bool {
+	_, ok := err.(*RateLimitError)
+	return ok
+}
+
+func (e *RateLimitError) As(target interface{}) bool {
+	_, ok := target.(*RateLimitError)
+	return ok
+}
+
+func (e *RateLimitError) Unwrap() error {
+	return e
+}
+
+func NewRateLimitError(err error, retryAfter int) error {
+	return &RateLimitError{
+		Original:   err,
+		RetryAfter: retryAfter,
+	}
+}

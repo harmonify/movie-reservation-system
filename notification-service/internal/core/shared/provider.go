@@ -6,7 +6,9 @@ import (
 
 type (
 	EmailProvider interface {
-		Send(ctx context.Context, msg EmailMessage) (email_message string, email_id string, err error)
+		// Send sends an email. Send returns email_id string and err error.
+		// If err is not nil, email_id should be empty.
+		Send(ctx context.Context, msg EmailMessage) (email_id string, err error)
 	}
 
 	SmsProvider interface {
