@@ -10,7 +10,7 @@ CQRS is applied for full-text search on movies and theaters.
 
 ## Storage
 
-Search component uses Elasticsearch as its storage. It leverages Debezium as a CDC (change data capture) to pull in data from other data sources through Kafka, i.e. SQL database.
+Search component uses Elasticsearch as its storage. It leverages Debezium as a CDC (change data capture) to pull in data from other data sources through Kafka, e.g. SQL database.
 
 ## References
 

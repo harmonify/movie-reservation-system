@@ -1,5 +1,7 @@
 # Event-Driven Architecture
 
+> P.S. Read [this document](./cdc-and-transactional-outbox.md) first to understand the context of this document.
+
 This document outlines the pros and cons of different approaches when building this system with event-driven architecture mindset.
 
 ## Sending Account Verification Email
@@ -18,7 +20,7 @@ User service sends a gRPC request to the notification service, the notification 
 
 ### Cons
 
-- Message loss when system error (i.e. network error, host crashes, etc.) occurs.
+- Message loss when system error (e.g. network error, host crashes, etc.) occurs.
 - High temporal coupling:
   - At least one instance of notification service must be up and ready when the user service sends a request.
   - Necessity to implement client-side / 3rd-party service discovery: To be highly available and scalable.
@@ -26,7 +28,7 @@ User service sends a gRPC request to the notification service, the notification 
 
 ## Approach 2: user service --produce message--> message broker <-- subscribe & consume message --> notification service
 
-User service publishes events to `user.created.v1` topic on the message broker, then the notification service consumes the event and sends an account verification email to the user.
+User service publishes events to `public.user.registered.v1` topic on the message broker, then the notification service consumes the event and sends an account verification email to the user.
 
 ### Pros
 
@@ -42,7 +44,7 @@ User service publishes events to `user.created.v1` topic on the message broker, 
 
 ### Cons
 
-- Harder to implement, compared to the 1st approach. We need to consider the internal workings of the message broker, in this case Kafka. See [Apache Kafka technical challenges](../reference/tools/kafka.md) for more info.
+- Harder to implement, compared to the 1st approach. We need to consider the internal workings of the message broker, in this case Kafka. See [Apache Kafka technical challenges](../../reference/tools/kafka.md) for more info.
 - Harder to test E2E, compared to the 1st approach.
 - Harder to debug, compared to the 1st approach.
 - High behavioral coupling & low cohesion:
@@ -53,11 +55,11 @@ User service publishes events to `user.created.v1` topic on the message broker, 
 
 ## Approach 3: Hybrid approach: user service --produce message--> message broker <-- subscribe & consume message --> intermediary service --???--> notification service
 
-User service publishes event to `user.created.v1` topic like the 2nd approach. An intermediary service (could be a dedicated event processor, rule engine, or even user service itself) in the user domain consumes the event and then proceeds the flow (possibly applying business rules related to user domain) to send an account verification email to the user.
+User service publishes event to `public.user.registered.v1` topic like the 2nd approach. An intermediary service (could be a dedicated event processor, rule engine, or even user service itself) in the user domain consumes the event and then proceeds the flow (possibly applying business rules related to user domain) to send an account verification email to the user.
 
 Possible flow of the intermediary service:
 
-- Intermediary service subscribes & consumes events from `user.created.v1` topic,
+- Intermediary service subscribes & consumes events from `public.user.registered.v1` topic,
 - Intermediary service applies business rules, and
 - Intermediary service sends gRPC request to notification service,
   - Notification service receives the request,

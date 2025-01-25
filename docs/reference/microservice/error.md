@@ -17,7 +17,7 @@ Examples of business errors:
 
 ### Handling business error
 
-The most straightforward way to handle a business error is to do a backwards recovery, where the system compensates for the failed operation by reversing any changes made. This ensures the system remains in a consistent state. See [Saga pattern](../dev/saga.md).
+The most straightforward way to handle a business error is to do a backwards recovery, where the system compensates for the failed operation by reversing any changes made. This ensures the system remains in a consistent state. See [Saga pattern](./saga.md).
 
 We should provide detailed error messages to guide users either in correcting their input or retry again later.
 
