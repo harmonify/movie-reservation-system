@@ -1,4 +1,4 @@
-package http
+package http_driver
 
 import (
 	auth_rest "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/auth"
@@ -10,7 +10,7 @@ import (
 
 var (
 	HttpModule = fx.Module(
-		"http",
+		"http-driver",
 		middleware.HttpMiddlewareModule,
 		fx.Provide(
 			health_rest.NewHealthCheckRestHandler,

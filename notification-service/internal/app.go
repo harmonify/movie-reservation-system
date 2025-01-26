@@ -10,9 +10,8 @@ import (
 	"github.com/harmonify/movie-reservation-system/notification-service/internal/driven/email/mailgun"
 	"github.com/harmonify/movie-reservation-system/notification-service/internal/driven/sms/twilio"
 	http_driver "github.com/harmonify/movie-reservation-system/notification-service/internal/driver/http"
-	kafkaconsumer "github.com/harmonify/movie-reservation-system/notification-service/internal/driver/kafka_consumer"
 	"github.com/harmonify/movie-reservation-system/pkg/config"
-	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
+	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/metrics"
@@ -54,6 +53,7 @@ func NewApp(p ...fx.Option) *fx.App {
 		logger.LoggerModule,
 		tracer.TracerModule,
 		metrics.MetricsModule,
+		error_pkg.ErrorModule,
 		util.UtilModule,
 
 		// CORE
@@ -64,14 +64,8 @@ func NewApp(p ...fx.Option) *fx.App {
 		twilio.TwilioSmsModule,
 
 		// API (DRIVER)
-		fx.Provide(
-			func() *error_constant.CustomErrorMap {
-				return &error_constant.DefaultCustomErrorMap
-			},
-		),
 		http_pkg.HttpModule,
 		http_driver.HttpModule,
-		kafkaconsumer.KafkaConsumerModule,
 	}
 
 	// Override dependencies

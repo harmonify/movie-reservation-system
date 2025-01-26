@@ -1,22 +1,23 @@
-package grpc
+package grpc_pkg
 
 import (
+	"context"
 	"fmt"
-	"log"
 	"net"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel/exporters/prometheus"
+	"go.opentelemetry.io/otel/sdk/metric"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/stats/opentelemetry"
 )
 
 type GrpcServerParam struct {
 	fx.In
+	fx.Lifecycle
 
 	Config *config.Config
 	Logger logger.Logger
@@ -38,9 +39,17 @@ type GrpcServer struct {
 
 func NewGrpcServer(
 	p GrpcServerParam,
-) (GrpcServerResult, error) {
+) GrpcServerResult {
+	exporter, err := prometheus.New()
+	if err != nil {
+		p.Logger.Error(fmt.Sprintf("Failed to start prometheus exporter: %v", err))
+	}
+	provider := metric.NewMeterProvider(metric.WithReader(exporter))
+
 	server := grpc.NewServer(
+		grpc.MaxConcurrentStreams(100),
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+		opentelemetry.ServerOption(opentelemetry.Options{MetricsOptions: opentelemetry.MetricsOptions{MeterProvider: provider}}),
 	)
 
 	g := &GrpcServer{
@@ -53,39 +62,43 @@ func NewGrpcServer(
 		GrpcServer: g,
 	}
 
-	err := g.Start()
+	p.Lifecycle.Append(fx.StartStopHook(
+		func(ctx context.Context) error {
+			return g.Start(ctx)
+		},
+		func(ctx context.Context) error {
+			g.Shutdown(ctx)
+			return nil
+		},
+	))
 
-	return result, err
+	return result
 }
 
-func (g *GrpcServer) Start() error {
+func (g *GrpcServer) Start(ctx context.Context) error {
 	if g.is_started {
-		g.logger.Warn(fmt.Sprintf(">> gRPC server is already running on port: %s", g.cfg.GrpcPort))
+		g.logger.WithCtx(ctx).Warn(fmt.Sprintf(">> gRPC server is already running on port: %s", g.cfg.GrpcPort))
 		return nil
 	}
 
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%s", g.cfg.GrpcPort))
 	if err != nil {
-		g.logger.Error(fmt.Sprintf(">> gRPC server failed to listen on port %s. error: %s", g.cfg.GrpcPort, err.Error()))
+		g.logger.WithCtx(ctx).Error(fmt.Sprintf(">> gRPC server failed to listen on port %s. error: %s", g.cfg.GrpcPort, err.Error()))
 		return err
 	}
 
 	err = g.Server.Serve(listener)
 	if err != nil {
-		g.logger.Error(fmt.Sprintf(">> gRPC server failed to start. error: %s", err.Error()))
+		g.logger.WithCtx(ctx).Error(fmt.Sprintf(">> gRPC server failed to start. error: %s", err.Error()))
 		return err
 	}
 
-	g.logger.Info(fmt.Sprintf(">> gRPC server is running on port: %s", g.cfg.GrpcPort))
+	g.logger.WithCtx(ctx).Info(fmt.Sprintf(">> gRPC server is running on port: %s", g.cfg.GrpcPort))
 	return nil
 }
 
-func (g *GrpcServer) Shutdown() {
-	sh := make(chan os.Signal, 2)
-	signal.Notify(sh, os.Interrupt, syscall.SIGTERM)
-	<-sh
-
-	log.Println(">> gRPC server shutting down...")
+func (g *GrpcServer) Shutdown(ctx context.Context) {
+	g.logger.WithCtx(ctx).Info(">> gRPC server shutting down...")
 	g.Server.GracefulStop()
-	log.Println(">> gRPC server is shutdown")
+	g.logger.WithCtx(ctx).Info(">> gRPC server is shutdown")
 }

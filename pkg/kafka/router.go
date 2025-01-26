@@ -79,31 +79,15 @@ func (r *kafkaRouterImpl) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 			var errs []DLQError
 
 			for _, route := range r.routes {
-				val, err := route.Decode(ctx, message.Value)
-				if err != nil {
-					errs = append(errs, DLQError{Error: err, RouteID: route.Identifier()})
-					continue
-				}
-
-				event := &Event{
+				err := route.Handle(ctx, &Event{
 					Headers:   message.Headers,
 					Timestamp: message.Timestamp,
 					Key:       string(message.Key),
-					Value:     val,
+					Value:     message.Value,
 					Topic:     message.Topic,
-				}
-
-				match, err := route.Match(ctx, event)
+				})
 				if err != nil {
 					errs = append(errs, DLQError{Error: err, RouteID: route.Identifier()})
-					continue
-				}
-
-				if match {
-					err = route.Handle(ctx, event)
-					if err != nil {
-						errs = append(errs, DLQError{Error: err, RouteID: route.Identifier()})
-					}
 				}
 			}
 

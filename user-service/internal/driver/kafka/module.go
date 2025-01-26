@@ -1,28 +1,30 @@
-package kafka_consumer
+package kafka_driver
 
 import (
 	"context"
 	"errors"
 
-	"github.com/harmonify/movie-reservation-system/notification-service/internal/core/shared"
 	"github.com/harmonify/movie-reservation-system/pkg/kafka"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"go.uber.org/fx"
 )
 
 var (
-	topics = []string{}
+	registeredTopics = []string{
+		shared.PublicUserRegisteredV1.String(),
+	}
 
 	KafkaConsumerModule = fx.Module(
-		"driver-kafka-consumer",
+		"kafka-driver",
 		fx.Provide(
 			kafka.NewKafkaConsumerGroup,
+			kafka.NewKafkaDLQProducer,
 			fx.Annotate(
 				kafka.NewKafkaRouter,
 				fx.ParamTags(`group:"kafka-routes"`),
 			),
-			kafka.AsRoute(NewEmailVerificationRoute),
-			kafka.AsRoute(NewSmsRoute),
+			kafka.AsRoute(NewOutboxRoute),
 		),
 		fx.Invoke(BootstrapKafkaConsumer),
 	)
@@ -30,7 +32,7 @@ var (
 
 func BootstrapKafkaConsumer(lc fx.Lifecycle, l logger.Logger, cg *kafka.KafkaConsumerGroup, r kafka.KafkaRouter) {
 	lc.Append(fx.StartHook(func(ctx context.Context) error {
-		cg.StartConsumer(ctx, shared.RegisteredTopics, r)
+		cg.StartConsumer(ctx, registeredTopics, r)
 		select {
 		case <-r.Ready():
 			l.WithCtx(ctx).Info("Sarama consumer up and running!")

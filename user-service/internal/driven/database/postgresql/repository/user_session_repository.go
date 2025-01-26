@@ -73,7 +73,7 @@ func (r *userSessionRepositoryImpl) FindSession(ctx context.Context, findModel e
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(findModel)
+	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err

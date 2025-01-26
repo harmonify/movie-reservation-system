@@ -25,7 +25,7 @@ func (_m *HttpResponse) EXPECT() *HttpResponse_Expecter {
 }
 
 // Build provides a mock function with given fields: ctx, httpCode, data, err
-func (_m *HttpResponse) Build(ctx context.Context, httpCode int, data interface{}, err error) (int, http_pkg.BaseResponseSchema, error) {
+func (_m *HttpResponse) Build(ctx context.Context, httpCode int, data interface{}, err error) (int, http_pkg.Response, error) {
 	ret := _m.Called(ctx, httpCode, data, err)
 
 	if len(ret) == 0 {
@@ -33,9 +33,9 @@ func (_m *HttpResponse) Build(ctx context.Context, httpCode int, data interface{
 	}
 
 	var r0 int
-	var r1 http_pkg.BaseResponseSchema
+	var r1 http_pkg.Response
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, interface{}, error) (int, http_pkg.BaseResponseSchema, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, interface{}, error) (int, http_pkg.Response, error)); ok {
 		return rf(ctx, httpCode, data, err)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, int, interface{}, error) int); ok {
@@ -44,10 +44,10 @@ func (_m *HttpResponse) Build(ctx context.Context, httpCode int, data interface{
 		r0 = ret.Get(0).(int)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int, interface{}, error) http_pkg.BaseResponseSchema); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, int, interface{}, error) http_pkg.Response); ok {
 		r1 = rf(ctx, httpCode, data, err)
 	} else {
-		r1 = ret.Get(1).(http_pkg.BaseResponseSchema)
+		r1 = ret.Get(1).(http_pkg.Response)
 	}
 
 	if rf, ok := ret.Get(2).(func(context.Context, int, interface{}, error) error); ok {
@@ -80,30 +80,30 @@ func (_c *HttpResponse_Build_Call) Run(run func(ctx context.Context, httpCode in
 	return _c
 }
 
-func (_c *HttpResponse_Build_Call) Return(_a0 int, _a1 http_pkg.BaseResponseSchema, _a2 error) *HttpResponse_Build_Call {
+func (_c *HttpResponse_Build_Call) Return(_a0 int, _a1 http_pkg.Response, _a2 error) *HttpResponse_Build_Call {
 	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *HttpResponse_Build_Call) RunAndReturn(run func(context.Context, int, interface{}, error) (int, http_pkg.BaseResponseSchema, error)) *HttpResponse_Build_Call {
+func (_c *HttpResponse_Build_Call) RunAndReturn(run func(context.Context, int, interface{}, error) (int, http_pkg.Response, error)) *HttpResponse_Build_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // BuildError provides a mock function with given fields: code, err
-func (_m *HttpResponse) BuildError(code string, err error) *http_pkg.HttpErrorHandlerImpl {
+func (_m *HttpResponse) BuildError(code string, err error) *http_pkg.HttpError {
 	ret := _m.Called(code, err)
 
 	if len(ret) == 0 {
 		panic("no return value specified for BuildError")
 	}
 
-	var r0 *http_pkg.HttpErrorHandlerImpl
-	if rf, ok := ret.Get(0).(func(string, error) *http_pkg.HttpErrorHandlerImpl); ok {
+	var r0 *http_pkg.HttpError
+	if rf, ok := ret.Get(0).(func(string, error) *http_pkg.HttpError); ok {
 		r0 = rf(code, err)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*http_pkg.HttpErrorHandlerImpl)
+			r0 = ret.Get(0).(*http_pkg.HttpError)
 		}
 	}
 
@@ -129,30 +129,30 @@ func (_c *HttpResponse_BuildError_Call) Run(run func(code string, err error)) *H
 	return _c
 }
 
-func (_c *HttpResponse_BuildError_Call) Return(_a0 *http_pkg.HttpErrorHandlerImpl) *HttpResponse_BuildError_Call {
+func (_c *HttpResponse_BuildError_Call) Return(_a0 *http_pkg.HttpError) *HttpResponse_BuildError_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *HttpResponse_BuildError_Call) RunAndReturn(run func(string, error) *http_pkg.HttpErrorHandlerImpl) *HttpResponse_BuildError_Call {
+func (_c *HttpResponse_BuildError_Call) RunAndReturn(run func(string, error) *http_pkg.HttpError) *HttpResponse_BuildError_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // BuildValidationError provides a mock function with given fields: code, err, errorFields
-func (_m *HttpResponse) BuildValidationError(code string, err error, errorFields []validation.BaseValidationErrorSchema) *http_pkg.HttpErrorHandlerImpl {
+func (_m *HttpResponse) BuildValidationError(code string, err error, errorFields []validation.ValidationError) *http_pkg.HttpError {
 	ret := _m.Called(code, err, errorFields)
 
 	if len(ret) == 0 {
 		panic("no return value specified for BuildValidationError")
 	}
 
-	var r0 *http_pkg.HttpErrorHandlerImpl
-	if rf, ok := ret.Get(0).(func(string, error, []validation.BaseValidationErrorSchema) *http_pkg.HttpErrorHandlerImpl); ok {
+	var r0 *http_pkg.HttpError
+	if rf, ok := ret.Get(0).(func(string, error, []validation.ValidationError) *http_pkg.HttpError); ok {
 		r0 = rf(code, err, errorFields)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*http_pkg.HttpErrorHandlerImpl)
+			r0 = ret.Get(0).(*http_pkg.HttpError)
 		}
 	}
 
@@ -172,19 +172,19 @@ func (_e *HttpResponse_Expecter) BuildValidationError(code interface{}, err inte
 	return &HttpResponse_BuildValidationError_Call{Call: _e.mock.On("BuildValidationError", code, err, errorFields)}
 }
 
-func (_c *HttpResponse_BuildValidationError_Call) Run(run func(code string, err error, errorFields []validation.BaseValidationErrorSchema)) *HttpResponse_BuildValidationError_Call {
+func (_c *HttpResponse_BuildValidationError_Call) Run(run func(code string, err error, errorFields []validation.ValidationError)) *HttpResponse_BuildValidationError_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string), args[1].(error), args[2].([]validation.BaseValidationErrorSchema))
+		run(args[0].(string), args[1].(error), args[2].([]validation.ValidationError))
 	})
 	return _c
 }
 
-func (_c *HttpResponse_BuildValidationError_Call) Return(_a0 *http_pkg.HttpErrorHandlerImpl) *HttpResponse_BuildValidationError_Call {
+func (_c *HttpResponse_BuildValidationError_Call) Return(_a0 *http_pkg.HttpError) *HttpResponse_BuildValidationError_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *HttpResponse_BuildValidationError_Call) RunAndReturn(run func(string, error, []validation.BaseValidationErrorSchema) *http_pkg.HttpErrorHandlerImpl) *HttpResponse_BuildValidationError_Call {
+func (_c *HttpResponse_BuildValidationError_Call) RunAndReturn(run func(string, error, []validation.ValidationError) *http_pkg.HttpError) *HttpResponse_BuildValidationError_Call {
 	_c.Call.Return(run)
 	return _c
 }

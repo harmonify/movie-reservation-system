@@ -16,11 +16,9 @@ var (
 )
 
 type (
-	EmailProvider interface {
-		Send(ctx context.Context, p *notification_proto.Email) error
-	}
-
-	SmsProvider interface {
-		Send(ctx context.Context, p *notification_proto.Sms) error
+	NotificationProvider interface {
+		SendEmail(ctx context.Context, p *notification_proto.SendEmailRequest) error
+		SendSms(ctx context.Context, p *notification_proto.SendSmsRequest) error
+		BulkSendSms(ctx context.Context, p *notification_proto.BulkSendSmsRequest) error
 	}
 )

@@ -2,7 +2,7 @@ package http_pkg
 
 import (
 	"github.com/gin-gonic/gin"
-	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
+	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	"github.com/harmonify/movie-reservation-system/pkg/util/validation"
 )
 
@@ -12,29 +12,34 @@ type HttpValidator interface {
 }
 
 type HttpValidatorImpl struct {
-	response        HttpResponse
+	errorMapper     error_pkg.ErrorMapper
+	httpResponse    HttpResponse
 	structValidator validation.StructValidator
 }
 
 func NewHttpValidator(
+	errorMapper error_pkg.ErrorMapper,
 	structValidator validation.StructValidator,
-	response HttpResponse,
+	httpResponse HttpResponse,
 ) HttpValidator {
-
 	return &HttpValidatorImpl{
+		errorMapper:     errorMapper,
 		structValidator: structValidator,
-		response:        response,
+		httpResponse:    httpResponse,
 	}
 }
 
 func (v *HttpValidatorImpl) ValidateRequestBody(c *gin.Context, schema interface{}) error {
 	if err := c.ShouldBind(schema); err != nil {
-		_, errFields := v.structValidator.ConstructValidationErrorFields(err)
-		return v.response.BuildValidationError(error_constant.InvalidRequestBody, err, errFields)
+		_, validationErrs := v.structValidator.ConstructValidationErrorFields(err)
+		errWithStack := error_pkg.NewErrorWithStack(err, error_pkg.InvalidRequestBodyError)
+		return NewHttpError(errWithStack, validationErrs...)
 	}
 
-	if err, errFields := v.structValidator.Validate(schema); len(errFields) > 0 {
-		return v.response.BuildValidationError(error_constant.InvalidRequestBody, err, errFields)
+	if err, validationErrs := v.structValidator.Validate(schema); len(validationErrs) > 0 {
+		_, validationErrs := v.structValidator.ConstructValidationErrorFields(err)
+		errWithStack := error_pkg.NewErrorWithStack(err, error_pkg.InvalidRequestBodyError)
+		return NewHttpError(errWithStack, validationErrs...)
 	}
 
 	return nil
@@ -42,12 +47,15 @@ func (v *HttpValidatorImpl) ValidateRequestBody(c *gin.Context, schema interface
 
 func (v *HttpValidatorImpl) ValidateRequestQuery(c *gin.Context, schema interface{}) error {
 	if err := c.ShouldBindQuery(schema); err != nil {
-		_, errFields := v.structValidator.ConstructValidationErrorFields(err)
-		return v.response.BuildValidationError(error_constant.InvalidRequestBody, err, errFields)
+		_, validationErrs := v.structValidator.ConstructValidationErrorFields(err)
+		errWithStack := error_pkg.NewErrorWithStack(err, error_pkg.InvalidRequestBodyError)
+		return NewHttpError(errWithStack, validationErrs...)
 	}
 
-	if err, errFields := v.structValidator.Validate(schema); len(errFields) > 0 {
-		return v.response.BuildValidationError(error_constant.InvalidRequestBody, err, errFields)
+	if err, validationErrs := v.structValidator.Validate(schema); len(validationErrs) > 0 {
+		_, validationErrs := v.structValidator.ConstructValidationErrorFields(err)
+		errWithStack := error_pkg.NewErrorWithStack(err, error_pkg.InvalidRequestBodyError)
+		return NewHttpError(errWithStack, validationErrs...)
 	}
 
 	return nil

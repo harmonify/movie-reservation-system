@@ -3,7 +3,6 @@ package driven
 import (
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/cache/redis"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql"
-	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/kafka_producer"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/rbac"
 	"go.uber.org/fx"
 )
@@ -14,6 +13,5 @@ var (
 		redis.DrivenRedisModule,
 		postgresql.DrivenPostgresqlModule,
 		rbac.DrivenCasbinModule,
-		kafka_producer.DrivenKafkaModule,
 	)
 )

@@ -1,4 +1,4 @@
-package http
+package http_driver
 
 import (
 	"bytes"
@@ -11,6 +11,7 @@ import (
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	config "github.com/harmonify/movie-reservation-system/pkg/config"
+	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	http_middleware "github.com/harmonify/movie-reservation-system/pkg/http/middleware"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
@@ -26,8 +27,9 @@ type HttpServer struct {
 	Server      *http.Server
 	Gin         *gin.Engine
 	cfg         *config.Config
-	response    http_pkg.HttpResponse
 	logger      logger.Logger
+	errorMapper error_pkg.ErrorMapper
+	response    http_pkg.HttpResponse
 	middlewares *httpServerMiddlewares
 }
 
@@ -36,8 +38,9 @@ type HttpServerParam struct {
 
 	Lifecycle         fx.Lifecycle
 	Config            *config.Config
-	Response          http_pkg.HttpResponse
 	Logger            logger.Logger
+	ErrorMapper       error_pkg.ErrorMapper
+	Response          http_pkg.HttpResponse
 	MetricsMiddleware metrics.PrometheusHttpMiddleware
 	Routes            []http_pkg.RestHandler `group:"http_routes"`
 }
@@ -80,9 +83,10 @@ func NewHttpServer(p HttpServerParam) (HttpServerResult, error) {
 			ReadTimeout:  time.Second * readTimeout,
 			WriteTimeout: time.Second * writeTimeout,
 		},
-		cfg:      p.Config,
-		logger:   p.Logger,
-		response: p.Response,
+		cfg:         p.Config,
+		logger:      p.Logger,
+		errorMapper: p.ErrorMapper,
+		response:    p.Response,
 		middlewares: &httpServerMiddlewares{
 			metrics: p.MetricsMiddleware,
 		},
@@ -141,7 +145,7 @@ func (h *HttpServer) configure(handlers ...http_pkg.RestHandler) {
 func (h *HttpServer) configureMiddlewares() {
 	h.Gin.Use(h.configureCorsMiddleware)
 	h.Gin.Use(otelgin.Middleware(h.cfg.ServiceIdentifier))
-	h.Gin.Use(http_middleware.NewRecoveryHttpMiddleware(h.response, h.logger, true))
+	h.Gin.Use(http_middleware.NewRecoveryHttpMiddleware(h.response, h.errorMapper, h.logger, true))
 	h.Gin.Use(ginzap.GinzapWithConfig(h.logger.GetZapLogger(), &ginzap.Config{
 		TimeFormat: time.RFC3339Nano,
 		UTC:        true,

@@ -9,18 +9,15 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/harmonify/movie-reservation-system/pkg/config"
-	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
+	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	struct_util "github.com/harmonify/movie-reservation-system/pkg/util/struct"
-	"github.com/harmonify/movie-reservation-system/pkg/util/validation"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/fx"
-
-	"errors"
 )
 
 func TestHttpResponse(t *testing.T) {
@@ -33,27 +30,28 @@ func TestHttpResponse(t *testing.T) {
 
 type ResponseTestSuite struct {
 	suite.Suite
-	app      *fx.App
-	response http_pkg.HttpResponse
+	app          *fx.App
+	httpResponse http_pkg.HttpResponse
 }
 
 type testConfig struct {
-	HttpCode int
-	Data     string
-	Error    error
+	SuccessHttpCode int
+	Data            string
+	Error           *error_pkg.ErrorWithDetails
 }
 
 type testExpectation struct {
 	Success  bool
 	HttpCode int
 	Result   string
-	Error    error
+	Error    *error_pkg.ErrorWithDetails
 }
 
 func (s *ResponseTestSuite) SetupSuite() {
 	s.app = fx.New(
 		logger.LoggerModule,
 		tracer.TracerModule,
+		error_pkg.ErrorModule,
 		fx.Provide(
 			func() *config.Config {
 				return &config.Config{
@@ -62,14 +60,11 @@ func (s *ResponseTestSuite) SetupSuite() {
 					LogLevel: "debug",
 				}
 			},
-			func() *error_constant.CustomErrorMap {
-				return &error_constant.DefaultCustomErrorMap
-			},
 			struct_util.NewStructUtil,
 			http_pkg.NewHttpResponse,
 		),
 		fx.Invoke(func(response http_pkg.HttpResponse) {
-			s.response = response
+			s.httpResponse = response
 		}),
 
 		fx.NopLogger,
@@ -81,9 +76,9 @@ func (s *ResponseTestSuite) TestHttpResponse_Build() {
 		{
 			Description: "Should build success response",
 			Config: testConfig{
-				HttpCode: 200,
-				Data:     "Test data",
-				Error:    nil,
+				SuccessHttpCode: 200,
+				Data:            "Test data",
+				Error:           nil,
 			},
 			Expectation: testExpectation{
 				Success:  true,
@@ -95,15 +90,14 @@ func (s *ResponseTestSuite) TestHttpResponse_Build() {
 		{
 			Description: "Should build error response",
 			Config: testConfig{
-				HttpCode: 400,
-				Data:     "Test data",
-				Error:    errors.New("Test error"),
+				Data:  "Test data",
+				Error: error_pkg.InvalidRequestBodyError,
 			},
 			Expectation: testExpectation{
 				Success:  false,
-				HttpCode: 500, // unknown error http code should be overwritten to 500
+				HttpCode: 400,
 				Result:   "Test data",
-				Error:    errors.New("Test error"),
+				Error:    error_pkg.InvalidRequestBodyError,
 			},
 		},
 	}
@@ -114,9 +108,9 @@ func (s *ResponseTestSuite) TestHttpResponse_Build() {
 				testCase.BeforeCall(testCase.Config)
 			}
 
-			httpCode, httpResponse, httpResponseError := s.response.Build(
+			httpCode, httpResponse, httpResponseError := s.httpResponse.Build(
 				context.Background(),
-				testCase.Config.HttpCode,
+				testCase.Config.SuccessHttpCode,
 				testCase.Config.Data,
 				testCase.Config.Error,
 			)
@@ -129,10 +123,10 @@ func (s *ResponseTestSuite) TestHttpResponse_Build() {
 			s.Assert().Equal(testCase.Expectation.HttpCode, httpCode)
 			s.Assert().Equal(testCase.Expectation.Result, httpResponse.Result)
 			if testCase.Expectation.Error != nil {
-				s.Require().IsType(httpResponseError, &http_pkg.HttpErrorHandlerImpl{})
+				s.Require().IsType(httpResponseError, &http_pkg.HttpError{})
 				s.Assert().Equal(
-					httpResponseError.(*http_pkg.HttpErrorHandlerImpl).Code,
-					testCase.Expectation.Error.Error(),
+					httpResponseError.Code,
+					testCase.Expectation.Error.Code,
 				)
 			}
 		})
@@ -148,7 +142,7 @@ func (s *ResponseTestSuite) TestHttpResponse_Build_ResponseCode() {
 				testCase.BeforeCall(testCase.Config)
 			}
 
-			httpCode, response, responseError := s.response.Build(context.Background(), testCase.Config.HttpCode, testCase.Config.Data, nil)
+			httpCode, response, responseError := s.httpResponse.Build(context.Background(), testCase.Config.SuccessHttpCode, testCase.Config.Data, nil)
 
 			if testCase.AfterCall != nil {
 				testCase.AfterCall()
@@ -175,7 +169,7 @@ func (s *ResponseTestSuite) TestHttpResponse_Send() {
 		c.Request = req
 
 		// Act
-		s.response.Send(c, nil, nil)
+		s.httpResponse.Send(c, nil, nil)
 
 		// Assert
 		assert.Equal(t, http.StatusOK, w.Code)
@@ -194,38 +188,10 @@ func (s *ResponseTestSuite) TestHttpResponse_Send() {
 		c.Request = req
 
 		// Act
-		err := s.response.BuildError(error_constant.InternalServerError, errors.New("test error"))
-		s.response.Send(c, nil, err)
+		s.httpResponse.Send(c, nil, error_pkg.InternalServerError)
 
 		// Assert
 		assert.Equal(t, http.StatusInternalServerError, w.Code)
 		assert.Contains(t, w.Body.String(), "error")
-	})
-}
-
-func (s *ResponseTestSuite) TestHttpResponse_BuildError() {
-	s.T().Run("Should Build Error Correctly", func(t *testing.T) {
-		err := errors.New("test error")
-		handler := s.response.BuildError("test_code", err)
-
-		if handler.Code != "test_code" {
-			t.Errorf("Expected code 'test_code', got '%s'", handler.Code)
-		}
-	})
-}
-
-func (s *ResponseTestSuite) TestHttpResponse_BuildValidationError() {
-	s.T().Run("Should build error correctly", func(t *testing.T) {
-		err := errors.New("test error")
-		handler := s.response.BuildValidationError("test_code", err, []validation.BaseValidationErrorSchema{
-			{
-				Field:   "error",
-				Message: "test error",
-			},
-		})
-
-		if handler.Code != "test_code" {
-			t.Errorf("Expected code 'test_code', got '%s'", handler.Code)
-		}
 	})
 }

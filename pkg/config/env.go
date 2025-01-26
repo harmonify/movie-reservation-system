@@ -32,11 +32,12 @@ type Config struct {
 	RedisPort string `mapstructure:"REDIS_PORT"`
 	RedisPass string `mapstructure:"REDIS_PASS"`
 
-	GrpcPort string `mapstructure:"GRPC_PORT"`
+	GrpcPort                       string `mapstructure:"GRPC_PORT" validate:"numeric"`
+	NotificationServiceGrpcAddress string `mapstructure:"NOTIFICATION_SERVICE_GRPC_ADDRESS" validate:"required,url"`
 
 	KafkaBrokers       string `mapstructure:"KAFKA_BROKERS" validate:"required"`
-	KafkaVersion       string `mapstructure:"KAFKA_VERSION"`
-	KafkaConsumerGroup string `mapstructure:"KAFKA_CONSUMER_GROUP"`
+	KafkaVersion       string `mapstructure:"KAFKA_VERSION" validate:"required"`
+	KafkaConsumerGroup string `mapstructure:"KAFKA_CONSUMER_GROUP" validate:"required"`
 
 	LogType  string `mapstructure:"LOG_TYPE" validate:"required"`
 	LogLevel string `mapstructure:"LOG_LEVEL" validate:"required"`

@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/harmonify/movie-reservation-system/pkg/config"
-	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
+	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
@@ -81,7 +81,7 @@ func (m *rbacHttpMiddlewareImpl) checkPermission(c *gin.Context) (bool, error) {
 	var userInfo *jwt_util.JWTBodyPayload
 	_userInfo := c.Request.Context().Value(UserInfoKey)
 	if _userInfo == nil {
-		return false, error_constant.ErrUnauthorized
+		return false, error_pkg.UnauthorizedError
 	} else {
 		userInfo = _userInfo.(*jwt_util.JWTBodyPayload)
 	}

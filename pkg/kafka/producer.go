@@ -21,10 +21,12 @@ type KafkaProducer struct {
 }
 
 type KafkaProducerParam struct {
-	Lifecycle fx.Lifecycle
-	Config    *config.Config
-	Logger    logger.Logger
-	Tracer    tracer.Tracer
+	fx.In
+	fx.Lifecycle
+
+	Config *config.Config
+	Logger logger.Logger
+	Tracer tracer.Tracer
 }
 
 // NewKafkaProducer initializes the Kafka producer.

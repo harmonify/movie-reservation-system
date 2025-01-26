@@ -1,37 +1,31 @@
 package token_service
 
 import (
-	"errors"
 	"net/http"
 
-	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
-	grpc_constant "github.com/harmonify/movie-reservation-system/pkg/grpc/constant"
+	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
+	"google.golang.org/grpc/codes"
 )
 
 var (
-	SessionInvalid = "SESSION_INVALID"
-	SessionRevoked = "SESSION_REVOKED"
-	SessionExpired = "SESSION_EXPIRED"
+	SessionInvalidError = &error_pkg.ErrorWithDetails{
+		Code:     "SESSION_INVALID",
+		HttpCode: http.StatusUnauthorized,
+		GrpcCode: codes.Unauthenticated,
+		Message:  "Invalid session. Please log in again.",
+	}
 
-	ErrSessionInvalid = errors.New(SessionInvalid)
-	ErrSessionRevoked = errors.New(SessionRevoked)
-	ErrSessionExpired = errors.New(SessionExpired)
+	SessionRevokedError = &error_pkg.ErrorWithDetails{
+		Code:     "SESSION_REVOKED",
+		HttpCode: http.StatusUnauthorized,
+		GrpcCode: codes.Unauthenticated,
+		Message:  "You have been logged out from this device.",
+	}
 
-	OtpServiceErrorMap = error_constant.CustomErrorMap{
-		SessionInvalid: {
-			HttpCode: http.StatusUnauthorized,
-			GrpcCode: grpc_constant.GrpcUnauthenticated,
-			Message:  "Invalid session. Please log in again.",
-		},
-		SessionRevoked: {
-			HttpCode: http.StatusUnauthorized,
-			GrpcCode: grpc_constant.GrpcUnauthenticated,
-			Message:  "You have been logged out from this device.",
-		},
-		SessionExpired: {
-			HttpCode: http.StatusUnauthorized,
-			GrpcCode: grpc_constant.GrpcUnauthenticated,
-			Message:  "Your session has expired. Please log in again.",
-		},
+	SessionExpiredError = &error_pkg.ErrorWithDetails{
+		Code:     "SESSION_EXPIRED",
+		HttpCode: http.StatusUnauthorized,
+		GrpcCode: codes.Unauthenticated,
+		Message:  "Your session has expired. Please log in again.",
 	}
 )

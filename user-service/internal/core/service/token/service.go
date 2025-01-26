@@ -161,22 +161,22 @@ func (s *tokenServiceImpl) VerifyRefreshToken(ctx context.Context, p VerifyRefre
 	})
 	if err != nil {
 		s.logger.WithCtx(ctx).Error("Failed to get user session from the storage", zap.Error(err))
-		return nil, ErrSessionInvalid
+		return nil, SessionInvalidError
 	}
 
 	if session == nil {
 		s.logger.WithCtx(ctx).Info("Session not found")
-		return nil, ErrSessionInvalid
+		return nil, SessionInvalidError
 	}
 
 	if session.IsRevoked {
 		s.logger.WithCtx(ctx).Info("Session is revoked")
-		return nil, ErrSessionRevoked
+		return nil, SessionRevokedError
 	}
 
 	if time.Now().After(session.ExpiredAt) {
 		s.logger.WithCtx(ctx).Info("Session is expired")
-		return nil, ErrSessionExpired
+		return nil, SessionExpiredError
 	}
 
 	return &VerifyRefreshTokenResult{

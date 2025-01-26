@@ -21,7 +21,7 @@ func (_m *StructValidator) EXPECT() *StructValidator_Expecter {
 }
 
 // ConstructValidationErrorFields provides a mock function with given fields: err
-func (_m *StructValidator) ConstructValidationErrorFields(err error) (bool, []validation.BaseValidationErrorSchema) {
+func (_m *StructValidator) ConstructValidationErrorFields(err error) (bool, []validation.ValidationError) {
 	ret := _m.Called(err)
 
 	if len(ret) == 0 {
@@ -29,8 +29,8 @@ func (_m *StructValidator) ConstructValidationErrorFields(err error) (bool, []va
 	}
 
 	var r0 bool
-	var r1 []validation.BaseValidationErrorSchema
-	if rf, ok := ret.Get(0).(func(error) (bool, []validation.BaseValidationErrorSchema)); ok {
+	var r1 []validation.ValidationError
+	if rf, ok := ret.Get(0).(func(error) (bool, []validation.ValidationError)); ok {
 		return rf(err)
 	}
 	if rf, ok := ret.Get(0).(func(error) bool); ok {
@@ -39,11 +39,11 @@ func (_m *StructValidator) ConstructValidationErrorFields(err error) (bool, []va
 		r0 = ret.Get(0).(bool)
 	}
 
-	if rf, ok := ret.Get(1).(func(error) []validation.BaseValidationErrorSchema); ok {
+	if rf, ok := ret.Get(1).(func(error) []validation.ValidationError); ok {
 		r1 = rf(err)
 	} else {
 		if ret.Get(1) != nil {
-			r1 = ret.Get(1).([]validation.BaseValidationErrorSchema)
+			r1 = ret.Get(1).([]validation.ValidationError)
 		}
 	}
 
@@ -68,18 +68,18 @@ func (_c *StructValidator_ConstructValidationErrorFields_Call) Run(run func(err 
 	return _c
 }
 
-func (_c *StructValidator_ConstructValidationErrorFields_Call) Return(processed bool, errorFields []validation.BaseValidationErrorSchema) *StructValidator_ConstructValidationErrorFields_Call {
+func (_c *StructValidator_ConstructValidationErrorFields_Call) Return(processed bool, errorFields []validation.ValidationError) *StructValidator_ConstructValidationErrorFields_Call {
 	_c.Call.Return(processed, errorFields)
 	return _c
 }
 
-func (_c *StructValidator_ConstructValidationErrorFields_Call) RunAndReturn(run func(error) (bool, []validation.BaseValidationErrorSchema)) *StructValidator_ConstructValidationErrorFields_Call {
+func (_c *StructValidator_ConstructValidationErrorFields_Call) RunAndReturn(run func(error) (bool, []validation.ValidationError)) *StructValidator_ConstructValidationErrorFields_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Validate provides a mock function with given fields: schema
-func (_m *StructValidator) Validate(schema interface{}) (error, []validation.BaseValidationErrorSchema) {
+func (_m *StructValidator) Validate(schema interface{}) (error, []validation.ValidationError) {
 	ret := _m.Called(schema)
 
 	if len(ret) == 0 {
@@ -87,8 +87,8 @@ func (_m *StructValidator) Validate(schema interface{}) (error, []validation.Bas
 	}
 
 	var r0 error
-	var r1 []validation.BaseValidationErrorSchema
-	if rf, ok := ret.Get(0).(func(interface{}) (error, []validation.BaseValidationErrorSchema)); ok {
+	var r1 []validation.ValidationError
+	if rf, ok := ret.Get(0).(func(interface{}) (error, []validation.ValidationError)); ok {
 		return rf(schema)
 	}
 	if rf, ok := ret.Get(0).(func(interface{}) error); ok {
@@ -97,11 +97,11 @@ func (_m *StructValidator) Validate(schema interface{}) (error, []validation.Bas
 		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(interface{}) []validation.BaseValidationErrorSchema); ok {
+	if rf, ok := ret.Get(1).(func(interface{}) []validation.ValidationError); ok {
 		r1 = rf(schema)
 	} else {
 		if ret.Get(1) != nil {
-			r1 = ret.Get(1).([]validation.BaseValidationErrorSchema)
+			r1 = ret.Get(1).([]validation.ValidationError)
 		}
 	}
 
@@ -126,12 +126,12 @@ func (_c *StructValidator_Validate_Call) Run(run func(schema interface{})) *Stru
 	return _c
 }
 
-func (_c *StructValidator_Validate_Call) Return(original error, errorFields []validation.BaseValidationErrorSchema) *StructValidator_Validate_Call {
+func (_c *StructValidator_Validate_Call) Return(original error, errorFields []validation.ValidationError) *StructValidator_Validate_Call {
 	_c.Call.Return(original, errorFields)
 	return _c
 }
 
-func (_c *StructValidator_Validate_Call) RunAndReturn(run func(interface{}) (error, []validation.BaseValidationErrorSchema)) *StructValidator_Validate_Call {
+func (_c *StructValidator_Validate_Call) RunAndReturn(run func(interface{}) (error, []validation.ValidationError)) *StructValidator_Validate_Call {
 	_c.Call.Return(run)
 	return _c
 }

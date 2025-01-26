@@ -74,7 +74,7 @@ func (r *userKeyRepositoryImpl) FindUserKey(ctx context.Context, findModel entit
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(findModel)
+	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
@@ -95,13 +95,13 @@ func (r *userKeyRepositoryImpl) UpdateUserKey(ctx context.Context, findModel ent
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(findModel)
+	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
 	}
 
-	updateMap, err := r.util.StructUtil.ConvertSqlStructToMap(updateModel)
+	updateMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, updateModel)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
@@ -132,7 +132,7 @@ func (r *userKeyRepositoryImpl) UpdateUserKey(ctx context.Context, findModel ent
 }
 
 func (r *userKeyRepositoryImpl) SoftDeleteUserKey(ctx context.Context, findModel entity.FindUserKey) error {
-	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(findModel)
+	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return err

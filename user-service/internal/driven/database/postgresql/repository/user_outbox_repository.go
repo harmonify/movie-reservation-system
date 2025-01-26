@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/harmonify/movie-reservation-system/pkg/database"
-	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
+	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
@@ -63,7 +63,7 @@ func (r *outboxRepositoryImpl) SaveOutbox(ctx context.Context, createModel entit
 	err := r.pgErrTl.Translate(result.Error)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
-		return nil, error_constant.ErrInternalServerError
+		return nil, error_pkg.InternalServerError
 	}
 
 	return outboxModel.ToEntity(), err

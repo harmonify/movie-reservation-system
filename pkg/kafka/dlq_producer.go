@@ -118,7 +118,7 @@ func constructDlqHeaders(message *sarama.ConsumerMessage, dlqErrors []DLQError) 
 	for _, err := range dlqErrors {
 		errorDetails = append(errorDetails, DLQErrorHeader{
 			RouteID:      err.RouteID,
-			ErrorType:    reflect.ValueOf(err).Type().Name(),
+			ErrorType:    reflect.ValueOf(err.Error).Type().Name(),
 			ErrorMessage: err.Error.Error(),
 			// ErrorStackTrace: stackTrace(3, 5),
 		})

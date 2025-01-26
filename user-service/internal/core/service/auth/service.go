@@ -7,7 +7,7 @@ import (
 
 	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/database"
-	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
+	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/mail"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
@@ -98,7 +98,7 @@ func (s *authServiceImpl) Register(ctx context.Context, p RegisterParam) error {
 
 	if !span.SpanContext().TraceID().IsValid() {
 		s.logger.WithCtx(ctx).Error("Failed to get valid trace id", zap.String("email", p.Email), zap.String("phone_number", p.PhoneNumber))
-		return error_constant.ErrInternalServerError
+		return error_pkg.InternalServerError
 	}
 
 	// Hash user password
@@ -241,7 +241,7 @@ func (s *authServiceImpl) Login(ctx context.Context, p LoginParam) (*LoginResult
 
 	if !span.SpanContext().TraceID().IsValid() {
 		s.logger.WithCtx(ctx).Error("Failed to get valid trace id", zap.String("username", p.Username), zap.String("ip_address", p.IpAddress), zap.String("user_agent", p.UserAgent))
-		return nil, error_constant.ErrInternalServerError
+		return nil, error_pkg.InternalServerError
 	}
 
 	// Get user record
@@ -249,7 +249,7 @@ func (s *authServiceImpl) Login(ctx context.Context, p LoginParam) (*LoginResult
 	if err != nil {
 		var terr *database.RecordNotFoundError
 		if errors.As(err, &terr) {
-			return nil, ErrAccountNotFound
+			return nil, AccountNotFoundError
 		}
 		s.logger.WithCtx(ctx).Error(err.Error())
 		return nil, err
@@ -270,7 +270,7 @@ func (s *authServiceImpl) Login(ctx context.Context, p LoginParam) (*LoginResult
 		return nil, err
 	} else if !match {
 		s.logger.WithCtx(ctx).Info("Password didn't match")
-		return nil, ErrIncorrectPassword
+		return nil, IncorrectPasswordError
 	}
 
 	// Generate and encrypt user session
@@ -377,7 +377,7 @@ func (s *authServiceImpl) Logout(ctx context.Context, p LogoutParam) error {
 		var terr *database.RecordNotFoundError
 		if errors.As(err, &terr) {
 			// Assume that the session is already expired
-			return ErrRefreshTokenAlreadyExpired
+			return RefreshTokenAlreadyExpiredError
 		}
 		s.logger.WithCtx(ctx).Error(err.Error())
 		return err

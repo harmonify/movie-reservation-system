@@ -1,7 +1,6 @@
 package auth_rest
 
 import (
-	"errors"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -178,7 +177,6 @@ func (h *authRestHandlerImpl) getToken(c *gin.Context) {
 	cookieName := http_pkg.HttpCookiePrefix + "token"
 	refreshToken, err := c.Cookie(cookieName)
 	if err != nil {
-		err = h.response.BuildError(auth_service.InvalidRefreshToken, err)
 		h.response.Send(c, nil, err)
 		return
 	}
@@ -208,7 +206,7 @@ func (h *authRestHandlerImpl) postLogout(c *gin.Context) {
 	cookieName := http_pkg.HttpCookiePrefix + "token"
 	refreshToken, err := c.Cookie(cookieName)
 	if err != nil {
-		h.response.Send(c, nil, auth_service.ErrRefreshTokenAlreadyExpired)
+		h.response.Send(c, nil, err)
 		return
 	}
 
@@ -223,7 +221,7 @@ func (h *authRestHandlerImpl) postLogout(c *gin.Context) {
 	cookiePath := "/user/token"
 	c.SetCookie(cookieName, cookieValue, cookieMaxAge, cookiePath, cookieDomain, true, true)
 
-	if err != nil && !errors.Is(err, auth_service.ErrRefreshTokenAlreadyExpired) {
+	if err != nil {
 		h.response.Send(c, nil, err)
 	}
 

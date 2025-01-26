@@ -11,6 +11,7 @@ import (
 
 	"github.com/harmonify/movie-reservation-system/notification-service/internal/core/shared"
 	"github.com/harmonify/movie-reservation-system/pkg/config"
+	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/mailgun/mailgun-go"
@@ -63,11 +64,11 @@ func NewMailgunEmailProvider(p MailgunEmailProviderParam) MailgunEmailProviderRe
 }
 
 // https://mailgun-docs.redoc.ly/docs/mailgun/api-reference/openapi-final/tag/Messages/#tag/Messages/operation/POST-v3--domain-name--messages
-func (m *mailgunEmailProviderImpl) Send(ctx context.Context, message shared.EmailMessage) (id string, err error) {
+func (m *mailgunEmailProviderImpl) Send(ctx context.Context, message shared.EmailMessage) (string, error) {
 	ctx, span := m.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	_, id, err = m.mg.Send(m.mg.NewMessage(
+	_, id, err := m.mg.Send(m.mg.NewMessage(
 		m.cfg.MailgunDefaultSender,
 		message.Subject,
 		message.Body,
@@ -76,30 +77,33 @@ func (m *mailgunEmailProviderImpl) Send(ctx context.Context, message shared.Emai
 	if err != nil {
 		// Check for HTTP 429 error
 		var httpErr *mailgun.UnexpectedResponseError
-		if errors.As(err, &httpErr) && httpErr.Actual == http.StatusTooManyRequests {
-			var resp sendHttpResponse
-			err := json.Unmarshal(httpErr.Data, &resp)
-			if err != nil {
-				fmt.Printf("Failed to unmarshal HTTP error message: %v\n", err)
-				return "", err
+		if errors.As(err, &httpErr) {
+			if httpErr.Actual == http.StatusTooManyRequests {
+				var resp sendHttpResponse
+				err := json.Unmarshal(httpErr.Data, &resp)
+				if err != nil {
+					fmt.Printf("Failed to unmarshal HTTP error message: %v\n", err)
+					return "", err
+				}
+				retryAfter, parseErr := m.extractRetryAfter(resp.Message)
+				if parseErr != nil {
+					fmt.Printf("Failed to extract retry-after: %v\n", parseErr)
+					return "", parseErr
+				}
+				return "", error_pkg.NewRateLimitExceededError(retryAfter)
+			} else if httpErr.Actual >= 400 && httpErr.Actual < 500 {
+				return "", error_pkg.InternalServerError
+			} else if httpErr.Actual >= 500 {
+				return "", error_pkg.BadGatewayError
 			}
-
-			// Parse the retry-after seconds from the error message
-			retryAfter, parseErr := m.extractRetryAfter(resp.Message)
-			if parseErr != nil {
-				fmt.Printf("Failed to extract retry-after: %v\n", parseErr)
-				return "", parseErr
-			}
-
-			return "", shared.NewRateLimitError(err, retryAfter)
 		}
 
 		// Handle other errors
 		fmt.Printf("Failed to send email: %v\n", err)
-		return
+		return "", error_pkg.InternalServerError
 	}
 
-	return id, err
+	return id, nil
 }
 
 func (m *mailgunEmailProviderImpl) extractRetryAfter(message string) (int, error) {

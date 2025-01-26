@@ -88,7 +88,8 @@ func NewHttpServer(p HttpServerParam) (HttpServerResult, error) {
 
 	p.Lifecycle.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
-			return h.Start(ctx)
+			go h.Start(ctx)
+			return nil
 		},
 		OnStop: func(ctx context.Context) error {
 			return h.Shutdown(ctx)
@@ -106,7 +107,7 @@ func (h *HttpServer) Start(ctx context.Context) error {
 	if err = h.Server.ListenAndServe(); err == nil {
 		h.logger.WithCtx(ctx).Info(">> HTTP server started on port " + h.cfg.ServiceHttpPort)
 	} else {
-		h.logger.WithCtx(ctx).Error(">> HTTP server failed to start. Error: " + err.Error())
+		h.logger.WithCtx(ctx).Info(">> HTTP server is closed: " + err.Error())
 	}
 	return err
 }
@@ -116,7 +117,7 @@ func (h *HttpServer) Shutdown(ctx context.Context) error {
 	if err = h.Server.Shutdown(ctx); err == nil {
 		h.logger.WithCtx(ctx).Info(">> HTTP server shutdown")
 	} else {
-		h.logger.WithCtx(ctx).Warn(">> HTTP server failed to shutdown")
+		h.logger.WithCtx(ctx).Warn(">> HTTP server failed to shutdown: " + err.Error())
 	}
 	return err
 }

@@ -3,14 +3,13 @@ package internal
 import (
 	"context"
 	"fmt"
-	"maps"
 	"path"
 	"runtime"
 
 	"github.com/harmonify/movie-reservation-system/pkg/cache"
 	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/database"
-	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
+	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	"github.com/harmonify/movie-reservation-system/pkg/kafka"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
@@ -20,8 +19,6 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/service"
-	auth_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/auth"
-	otp_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/otp"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven"
 	http_driver "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http"
 	"go.uber.org/fx"
@@ -60,6 +57,7 @@ func NewApp(p ...fx.Option) *fx.App {
 		logger.LoggerModule,
 		tracer.TracerModule,
 		metrics.MetricsModule,
+		error_pkg.ErrorModule,
 		util.UtilModule,
 		fx.Provide(
 			kafka.NewKafkaProducer,
@@ -76,13 +74,6 @@ func NewApp(p ...fx.Option) *fx.App {
 		driven.DrivenModule,
 
 		// API (DRIVER)
-		fx.Provide(
-			func() *error_constant.CustomErrorMap {
-				maps.Copy(error_constant.DefaultCustomErrorMap, auth_service.AuthServiceErrorMap)
-				maps.Copy(error_constant.DefaultCustomErrorMap, otp_service.OtpServiceErrorMap)
-				return &error_constant.DefaultCustomErrorMap
-			},
-		),
 		http_pkg.HttpModule,
 		http_driver.HttpModule,
 	}

@@ -3,44 +3,44 @@ package http_pkg
 import (
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"net/http"
-	"runtime"
-	"strings"
 
 	"github.com/gin-gonic/gin"
-	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
+	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	struct_util "github.com/harmonify/movie-reservation-system/pkg/util/struct"
 	"github.com/harmonify/movie-reservation-system/pkg/util/validation"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-	"go.uber.org/zap/zapcore"
+	"go.uber.org/zap"
 )
 
 type HttpResponse interface {
 	Send(c *gin.Context, data interface{}, err error)
-	SendWithResponseCode(c *gin.Context, httpCode int, data interface{}, err error)
-	Build(ctx context.Context, httpCode int, data interface{}, err error) (int, BaseResponseSchema, error)
-	BuildError(code string, err error) *HttpErrorHandlerImpl
-	BuildValidationError(code string, err error, errorFields []validation.BaseValidationErrorSchema) *HttpErrorHandlerImpl
+	SendWithResponseCode(c *gin.Context, successHttpCode int, data interface{}, err error)
+	// Build is a function to build the response schema
+	// Build takes in the ctx, success http code (only respected when err is nil), data, and err
+	// Build returns the http code, response schema, and error
+	// The error is an instance of HttpError and is useful for debugging
+	// You typically don't need to call this function directly
+	// Instead, use Send or SendWithResponseCode
+	Build(ctx context.Context, successHttpCode int, data interface{}, err *error_pkg.ErrorWithDetails) (responseHttpCode int, responseBody *Response, responseError *HttpError)
 }
 
 type httpResponseImpl struct {
-	logger         logger.Logger
-	tracer         tracer.Tracer
-	structUtil     struct_util.StructUtil
-	customErrorMap *error_constant.CustomErrorMap
+	logger      logger.Logger
+	tracer      tracer.Tracer
+	structUtil  struct_util.StructUtil
+	errorMapper error_pkg.ErrorMapper
 }
 
-func NewHttpResponse(logger logger.Logger, tracer tracer.Tracer, structUtil struct_util.StructUtil, customHttpErrorMap *error_constant.CustomErrorMap) HttpResponse {
+func NewHttpResponse(logger logger.Logger, tracer tracer.Tracer, structUtil struct_util.StructUtil, errorMapper error_pkg.ErrorMapper) HttpResponse {
 	return &httpResponseImpl{
-		logger:         logger,
-		tracer:         tracer,
-		structUtil:     structUtil,
-		customErrorMap: customHttpErrorMap,
+		logger:      logger,
+		tracer:      tracer,
+		structUtil:  structUtil,
+		errorMapper: errorMapper,
 	}
 }
 
@@ -48,25 +48,25 @@ func (r *httpResponseImpl) Send(c *gin.Context, data interface{}, err error) {
 	ctx, span := r.tracer.StartSpanWithCaller(c.Request.Context())
 	defer span.End()
 
-	code, response, responseError := r.Build(ctx, http.StatusOK, data, err)
-
+	detailedError, _ := r.errorMapper.FromError(err)
+	code, response, responseError := r.Build(ctx, http.StatusOK, data, detailedError)
 	r.logResponse(ctx, code, response, responseError)
 
 	c.JSON(code, response)
 }
 
-func (r *httpResponseImpl) SendWithResponseCode(c *gin.Context, httpCode int, data interface{}, err error) {
+func (r *httpResponseImpl) SendWithResponseCode(c *gin.Context, successHttpCode int, data interface{}, err error) {
 	ctx, span := r.tracer.StartSpanWithCaller(c.Request.Context())
 	defer span.End()
 
-	code, response, responseError := r.Build(ctx, httpCode, data, err)
-
+	detailedError, _ := r.errorMapper.FromError(err)
+	code, response, responseError := r.Build(ctx, successHttpCode, data, detailedError)
 	r.logResponse(ctx, code, response, responseError)
 
 	c.JSON(code, response)
 }
 
-func (r *httpResponseImpl) Build(ctx context.Context, responseCode int, data interface{}, err error) (httpCode int, response BaseResponseSchema, responseError error) {
+func (r *httpResponseImpl) Build(ctx context.Context, successHttpCode int, data interface{}, err *error_pkg.ErrorWithDetails) (int, *Response, *HttpError) {
 	_, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -76,176 +76,67 @@ func (r *httpResponseImpl) Build(ctx context.Context, responseCode int, data int
 		metadata    interface{}
 	)
 
-	response = BaseResponseSchema{
+	response := &Response{
 		Success:  true,
 		TraceId:  traceId,
-		Error:    r.structUtil.SetValueIfNotEmpty(errMetaData),
-		Metadata: r.structUtil.SetValueIfNotEmpty(metadata),
-		Result:   r.structUtil.SetValueIfNotEmpty(data),
+		Error:    r.structUtil.SetNonPrimitiveDefaultValue(ctx, errMetaData),
+		Metadata: r.structUtil.SetNonPrimitiveDefaultValue(ctx, metadata),
+		Result:   r.structUtil.SetNonPrimitiveDefaultValue(ctx, data),
 	}
 
 	if err != nil {
 		response.Success = false
-
-		var responseError *HttpErrorHandlerImpl
-		if !errors.As(err, &responseError) {
-			// responseError = &HttpErrorHandlerImpl{
-			// 	Code:     constant.InternalServerError,
-			// 	Original: err,
-			// }
-			responseError = r.buildErrorV2(err.Error(), err)
+		response.Error = ErrorResponse{
+			Code:    err.Code.String(),
+			Message: err.Message,
+			Errors:  r.structUtil.SetNonPrimitiveDefaultValue(ctx, []validation.ValidationError{}),
 		}
 
-		if _, ok := (*r.customErrorMap)[responseError.Code]; !ok {
-			(*r.customErrorMap)[responseError.Code] = error_constant.DefaultCustomErrorMap[error_constant.InternalServerError]
-		}
+		errWithStack := error_pkg.NewErrorWithStack(err, error_pkg.InvalidRequestBodyError)
+		httpErr := NewHttpError(errWithStack)
 
-		if responseError.Errors == nil {
-			responseError.Errors = r.structUtil.SetValueIfNotEmpty([]validation.BaseValidationErrorSchema{})
-		}
-
-		response.Error = BaseErrorResponseSchema{
-			Code:    responseError.Code,
-			Message: (*r.customErrorMap)[responseError.Code].Message,
-			Errors:  responseError.Errors,
-		}
-
-		return (*r.customErrorMap)[responseError.Code].HttpCode, response, responseError
+		return err.HttpCode, response, httpErr
 	}
 
-	return responseCode, response, nil
+	return successHttpCode, response, nil
 }
 
-func (r *httpResponseImpl) logResponse(ctx context.Context, httpCode int, response BaseResponseSchema, responseError error) {
+func (r *httpResponseImpl) logResponse(ctx context.Context, httpCode int, response *Response, httpError *HttpError) {
 	span := trace.SpanFromContext(ctx)
 
-	fields := []zapcore.Field{
-		{
-			Key:    "traceId",
-			Type:   zapcore.StringType,
-			String: span.SpanContext().TraceID().String(),
-		},
-		{
-			Key:     "statusCode",
-			Type:    zapcore.Int64Type,
-			Integer: int64(httpCode),
-		},
+	fields := []zap.Field{
+		zap.String("traceId", span.SpanContext().TraceID().String()),
+		zap.Int("statusCode", httpCode),
 	}
 
-	var respError *HttpErrorHandlerImpl
-	if !errors.As(responseError, &respError) {
-		respError = &HttpErrorHandlerImpl{
-			Code:     error_constant.InternalServerError,
-			Original: responseError,
-		}
-	}
-	if respError.Original != nil {
-		stacks, _ := json.Marshal(respError.stack)
-		fields = append(fields, zapcore.Field{
-			Key:    "source",
-			Type:   zapcore.StringType,
-			String: respError.source,
-		}, zapcore.Field{
-			Key:    "functionName",
-			Type:   zapcore.StringType,
-			String: respError.fn,
-		}, zapcore.Field{
-			Key:     "line",
-			Type:    zapcore.Int64Type,
-			Integer: int64(respError.line),
-		}, zapcore.Field{
-			Key:    "path",
-			Type:   zapcore.StringType,
-			String: respError.path,
-		}, zapcore.Field{
-			Key:    "stack",
-			Type:   zapcore.StringType,
-			String: string(stacks),
-		})
+	if httpError != nil {
+		stacks, _ := json.Marshal(httpError.Stack)
+		fields = append(
+			fields,
+			zap.String("original", httpError.Original.Error()),
+			zap.String("error", httpError.Error()),
+			zap.String("source", httpError.Source),
+			zap.String("functionName", httpError.Fn),
+			zap.Int("line", httpError.Line),
+			zap.String("path", httpError.Path),
+			zap.String("stack", string(stacks)),
+		)
 	}
 
-	if httpCode >= http.StatusInternalServerError || r.logger.Level() == zapcore.DebugLevel {
+	var stringResponse string
+	if httpCode >= http.StatusInternalServerError || r.logger.Level() == zap.DebugLevel {
 		byteResponse, _ := json.Marshal(response)
-		stringResponse := string(byteResponse)
+		stringResponse = string(byteResponse)
+		fields = append(fields, zap.Any("response", stringResponse))
+	}
 
-		if httpCode >= http.StatusInternalServerError {
-			span.SetStatus(codes.Error, stringResponse)
-			span.RecordError(responseError)
-			r.logger.WithCtx(ctx).Error(stringResponse, fields...)
-		} else {
-			r.logger.WithCtx(ctx).Debug(stringResponse, fields...)
+	if httpCode >= http.StatusInternalServerError {
+		span.SetStatus(codes.Error, stringResponse)
+		if httpError != nil {
+			span.RecordError(httpError)
 		}
-	}
-}
-
-func (r *httpResponseImpl) BuildError(code string, err error) *HttpErrorHandlerImpl {
-	source, fn, ln, path, stack := r.getSource(runtime.Caller(1))
-
-	return &HttpErrorHandlerImpl{
-		Code:     code,
-		Original: err,
-		source:   source,
-		fn:       fn,
-		line:     ln,
-		path:     path,
-		stack:    stack,
-	}
-}
-
-func (r *httpResponseImpl) getSource(pc uintptr, file string, line int, ok bool) (source string, fn string, ln int, path string, stack []string) {
-	if details := runtime.FuncForPC(pc); details != nil {
-		titles := strings.Split(details.Name(), ".")
-		fn = titles[len(titles)-1]
-	}
-
-	if ok {
-		source = fmt.Sprintf("Called from %s, line #%d, func: %v", file, line, fn)
-	}
-
-	return source, fn, line, file, r.stackTrace(3)
-}
-
-func (r *httpResponseImpl) stackTrace(skip int) []string {
-	var stacks []string
-	for {
-		pc, path, line, ok := runtime.Caller(skip)
-		if !ok {
-			break
-		}
-		fn := runtime.FuncForPC(pc)
-
-		stacks = append(stacks, fmt.Sprintf("%s:%d %s()", path, line, fn.Name()))
-		skip++
-	}
-
-	return stacks
-}
-
-func (r *httpResponseImpl) BuildValidationError(code string, err error, errorFields []validation.BaseValidationErrorSchema) *HttpErrorHandlerImpl {
-	source, fn, ln, path, stack := r.getSource(runtime.Caller(1))
-
-	return &HttpErrorHandlerImpl{
-		Code:     code,
-		Original: err,
-		Errors:   errorFields,
-		source:   source,
-		fn:       fn,
-		line:     ln,
-		path:     path,
-		stack:    stack,
-	}
-}
-
-func (r *httpResponseImpl) buildErrorV2(code string, err error) *HttpErrorHandlerImpl {
-	source, fn, ln, path, stack := r.getSource(runtime.Caller(3))
-
-	return &HttpErrorHandlerImpl{
-		Code:     code,
-		Original: err,
-		source:   source,
-		fn:       fn,
-		line:     ln,
-		path:     path,
-		stack:    stack,
+		r.logger.WithCtx(ctx).Error("Response error", fields...)
+	} else if r.logger.Level() == zap.DebugLevel {
+		r.logger.WithCtx(ctx).Debug("Response debug", fields...)
 	}
 }

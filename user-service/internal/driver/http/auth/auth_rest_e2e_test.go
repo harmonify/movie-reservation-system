@@ -16,6 +16,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/database"
 	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
+	"github.com/harmonify/movie-reservation-system/pkg/util/validation"
 	"github.com/harmonify/movie-reservation-system/user-service/internal"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	auth_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/auth"
@@ -197,11 +198,11 @@ func (s *AuthRestTestSuite) TestAuthRest_PostRegister() {
 			if testCase.Expectation.ResponseBodyErrorObject != nil {
 				s.Require().True(responseError.Get("errors").IsArray(), "Expected 'errors' to be an array")
 				for i, errData := range testCase.Expectation.ResponseBodyErrorObject {
-					if expectedErrorObject, ok := errData.(http_pkg.BaseValidationErrorSchema); ok {
+					if expectedErrorObject, ok := errData.(validation.ValidationError); ok {
 						s.Equal(expectedErrorObject.Field, responseError.Get("errors").Array()[i].Get("field").String())
 						s.Equal(expectedErrorObject.Message, responseError.Get("errors").Array()[i].Get("message").String())
 					} else {
-						s.T().Fatalf("Expected error object to be %s, but got %s", reflect.TypeFor[http_pkg.BaseValidationErrorSchema]().Name(), reflect.TypeOf(errData).Name())
+						s.T().Fatalf("Expected error object to be %s, but got %s", reflect.TypeFor[validation.ValidationError]().Name(), reflect.TypeOf(errData).Name())
 					}
 				}
 			}

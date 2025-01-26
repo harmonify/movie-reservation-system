@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/harmonify/movie-reservation-system/pkg/database"
-	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
+	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
@@ -69,14 +69,14 @@ func (r *userRepositoryImpl) SaveUser(ctx context.Context, createModel entity.Sa
 		switch e := (err).(type) {
 		case *database.DuplicatedKeyError:
 			if e.ColumnName == "username" {
-				return nil, auth_service.ErrDuplicateUsername
+				return nil, auth_service.DuplicateUsernameError
 			} else if e.ColumnName == "email" {
-				return nil, auth_service.ErrDuplicateEmail
+				return nil, auth_service.DuplicateEmailError
 			} else if e.ColumnName == "phone_number" {
-				return nil, auth_service.ErrDuplicatePhoneNumber
+				return nil, auth_service.DuplicatePhoneNumberError
 			}
 		default:
-			return nil, error_constant.ErrInternalServerError
+			return nil, error_pkg.InternalServerError
 		}
 	}
 
@@ -87,7 +87,7 @@ func (r *userRepositoryImpl) FindUser(ctx context.Context, findModel entity.Find
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(findModel)
+	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
@@ -108,13 +108,13 @@ func (r *userRepositoryImpl) UpdateUser(ctx context.Context, findModel entity.Fi
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	updateMap, err := r.util.StructUtil.ConvertSqlStructToMap(updateModel)
+	updateMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, updateModel)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
 	}
 
-	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(findModel)
+	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
@@ -145,7 +145,7 @@ func (r *userRepositoryImpl) UpdateUser(ctx context.Context, findModel entity.Fi
 }
 
 func (r *userRepositoryImpl) SoftDeleteUser(ctx context.Context, findModel entity.FindUser) error {
-	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(findModel)
+	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return err

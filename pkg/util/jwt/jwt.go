@@ -9,7 +9,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/harmonify/movie-reservation-system/pkg/config"
-	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
+	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	"github.com/harmonify/movie-reservation-system/pkg/util/encryption"
 )
 
@@ -144,12 +144,12 @@ func (i *jwtUtilImpl) JWTVerify(tokenString string) (*JWTBodyPayload, error) {
 	}
 
 	if !parsedToken.Valid {
-		return nil, error_constant.ErrInvalidJwt
+		return nil, error_pkg.InvalidJwtError
 	}
 
 	claims, ok := parsedToken.Claims.(*JWTCustomClaims)
 	if !ok {
-		return nil, error_constant.ErrInvalidJwtClaims
+		return nil, error_pkg.InvalidJwtClaimsError
 	}
 
 	return &claims.Data, nil

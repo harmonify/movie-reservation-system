@@ -12,8 +12,8 @@ import (
 )
 
 type StructValidator interface {
-	Validate(schema interface{}) (original error, errorFields []BaseValidationErrorSchema)
-	ConstructValidationErrorFields(err error) (processed bool, errorFields []BaseValidationErrorSchema)
+	Validate(schema interface{}) (original error, errorFields []ValidationError)
+	ConstructValidationErrorFields(err error) (processed bool, errorFields []ValidationError)
 }
 
 type structValidatorImpl struct {
@@ -81,7 +81,7 @@ func (v *structValidatorImpl) registerCustomValidations() error {
 	return nil
 }
 
-func (v *structValidatorImpl) Validate(schema interface{}) (original error, errorFields []BaseValidationErrorSchema) {
+func (v *structValidatorImpl) Validate(schema interface{}) (original error, errorFields []ValidationError) {
 	if err := v.validator.Struct(schema); err != nil {
 		_, errFields := v.ConstructValidationErrorFields(err)
 		return err, errFields
@@ -92,12 +92,12 @@ func (v *structValidatorImpl) Validate(schema interface{}) (original error, erro
 // ConstructValidationErrorFields constructs validation error fields
 // Accepts error (will only process if the type is validator.ValidationErrors)
 // Returns boolean (true if error is validator.ValidationErrors) and array of constructed error fields
-func (v *structValidatorImpl) ConstructValidationErrorFields(err error) (processed bool, errorFields []BaseValidationErrorSchema) {
+func (v *structValidatorImpl) ConstructValidationErrorFields(err error) (processed bool, errorFields []ValidationError) {
 	var val validator.ValidationErrors
 
 	processed = errors.As(err, &val)
 	if processed {
-		errorFields = make([]BaseValidationErrorSchema, len(val))
+		errorFields = make([]ValidationError, len(val))
 		for i, fe := range val {
 			// Use tag name whenever possible
 			fieldPath := fe.Field()
@@ -108,7 +108,7 @@ func (v *structValidatorImpl) ConstructValidationErrorFields(err error) (process
 			}
 
 			// Construct validation error fields
-			errorFields[i] = BaseValidationErrorSchema{
+			errorFields[i] = ValidationError{
 				Field:   fieldPath,
 				Message: fe.Translate(v.trans),
 			}

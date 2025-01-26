@@ -5,36 +5,32 @@ import (
 	"os"
 	"path"
 	"runtime"
+	"slices"
 )
 
-type EmailTemplateId string
-
-func (p EmailTemplateId) String() string {
-	return string(p)
-}
-
-type EmailTemplatePath string
-
-func (p EmailTemplatePath) String() string {
-	return string(p)
-}
-
 const (
-	EmailTopicV1_0_0 = `notifications_email_v1.0.0`
-	SmsTopicV1_0_0   = `notifications_sms_v1.0.0`
-
 	EmailVerificationTemplateId EmailTemplateId = "email-verification"
 )
 
 var (
-	RegisteredTopics = []string{
-		EmailTopicV1_0_0,
-		SmsTopicV1_0_0,
-	}
-
 	templatesDirPath                                = path.Join(path.Dir(getCurrentFilePath()), "..", "templates")
 	EmailVerificationTemplatePath EmailTemplatePath = EmailTemplatePath(path.Join(templatesDirPath, "email-verification.gohtml"))
 )
+
+func ValidateEmailTemplateId(id string) bool {
+	return slices.Contains([]string{
+		EmailVerificationTemplateId.String(),
+	}, id)
+}
+
+func MapEmailTemplateIdToPath(id EmailTemplateId) EmailTemplatePath {
+	switch id {
+	case EmailVerificationTemplateId:
+		return EmailVerificationTemplatePath
+	default:
+		return ""
+	}
+}
 
 func init() {
 	if _, err := os.Stat(templatesDirPath); os.IsNotExist(err) {
@@ -51,4 +47,16 @@ func getCurrentFilePath() string {
 		panic(fmt.Sprintf("failed to retrieve correct path"))
 	}
 	return file
+}
+
+type EmailTemplateId string
+
+func (p EmailTemplateId) String() string {
+	return string(p)
+}
+
+type EmailTemplatePath string
+
+func (p EmailTemplatePath) String() string {
+	return string(p)
 }

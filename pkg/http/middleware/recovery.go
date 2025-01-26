@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
+	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"go.uber.org/zap"
@@ -19,7 +19,7 @@ import (
 // logs requests with OTel + Loki + Zap. stack means whether to output the stack info.
 // This middleware MUST be registered only after the otelgin middleware is registered.
 // Otelgin: go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin
-func NewRecoveryHttpMiddleware(response http_pkg.HttpResponse, logger logger.Logger, stack bool) gin.HandlerFunc {
+func NewRecoveryHttpMiddleware(response http_pkg.HttpResponse, errorMapper error_pkg.ErrorMapper, logger logger.Logger, stack bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
@@ -63,7 +63,7 @@ func NewRecoveryHttpMiddleware(response http_pkg.HttpResponse, logger logger.Log
 						zap.String("request", string(httpRequest)),
 					)
 				}
-				response.Send(c, nil, error_constant.ErrInternalServerError)
+				response.Send(c, nil, error_pkg.InternalServerError)
 			}
 		}()
 		c.Next()

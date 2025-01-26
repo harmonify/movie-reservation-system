@@ -1,10 +1,13 @@
 package struct_util
 
 import (
+	"context"
 	"database/sql"
+	"fmt"
 	"reflect"
 
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
+	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	util_shared "github.com/harmonify/movie-reservation-system/pkg/util/shared"
 	"github.com/iancoleman/strcase"
 	"go.uber.org/fx"
@@ -12,14 +15,21 @@ import (
 )
 
 type StructUtil interface {
-	SetValueIfNotEmpty(data any) (result any)
-	ConvertSqlStructToMap(input interface{}) (map[string]interface{}, error)
+	// SetNonPrimitiveDefaultValue sets the default value for non-primitive data types.
+	// It returns nil if the data is nil or zero value.
+	// It returns the data if the data is not nil or zero value.
+	SetNonPrimitiveDefaultValue(ctx context.Context, data interface{}) (result interface{})
+
+	// ConvertSqlStructToMap converts a struct with SQL nullable types to a map with snake_case keys,
+	// excluding invalid nullable types.
+	ConvertSqlStructToMap(ctx context.Context, input interface{}) (map[string]interface{}, error)
 }
 
 type StructUtilParam struct {
 	fx.In
 
 	Logger logger.Logger
+	Tracer tracer.Tracer
 }
 
 type StructUtilResult struct {
@@ -30,62 +40,108 @@ type StructUtilResult struct {
 
 type structUtilImpl struct {
 	logger logger.Logger
+	tracer tracer.Tracer
 }
 
 func NewStructUtil(p StructUtilParam) StructUtilResult {
 	return StructUtilResult{
 		StructUtil: &structUtilImpl{
 			logger: p.Logger,
+			tracer: p.Tracer,
 		},
 	}
 }
 
-func (u *structUtilImpl) SetValueIfNotEmpty(data any) (result any) {
-	if data == nil {
-		return struct{}{}
+func (u *structUtilImpl) SetNonPrimitiveDefaultValue(ctx context.Context, data any) (result any) {
+	ctx, span := u.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
+	defer func() {
+		if r := recover(); r != nil {
+			err, ok := r.(error)
+			if ok {
+				u.logger.WithCtx(ctx).Error(fmt.Sprintf("Recovered from panic: %v", err))
+			} else {
+				u.logger.WithCtx(ctx).Error(fmt.Sprintf("Recovered from panic: %v", r))
+			}
+			result = nil
+		}
+	}()
+
+	val := reflect.ValueOf(data)
+	// Cast the data to non-pointer if it is a pointer
+	if val.Kind() == reflect.Pointer || val.Kind() == reflect.Interface {
+		val = val.Elem()
 	}
-
-	rt := reflect.TypeOf(data)
-
-	if !reflect.ValueOf(data).IsZero() {
+	if val.Kind() != reflect.Invalid && !val.IsZero() {
 		return data
 	}
 
-	if rt != nil {
-		switch expression := rt.Kind(); expression {
-		case reflect.Struct:
-			result = make(map[string]interface{}, 0)
-		case reflect.Ptr:
-			dataInterface := reflect.New(rt.Elem()).Interface()
-			dataKind := reflect.TypeOf(dataInterface).Kind()
-			switch dataKind {
-			case reflect.Struct:
-				result = make(map[string]interface{}, 0)
-			default:
-				result = make([]interface{}, 0)
-			}
-		default:
-			result = make([]interface{}, 0)
-		}
-	} else {
+	rt := reflect.TypeOf(data)
+	if rt == nil {
 		result = make(map[string]interface{}, 0)
+		return
+	}
+	// Cast the data to non-pointer if it is a pointer
+	if rt.Kind() == reflect.Pointer {
+		rt = rt.Elem()
+	}
+
+	// Get default value based on the data type
+	switch expression := rt.Kind(); expression {
+	case reflect.Interface:
+		result = make(map[string]interface{}, 0)
+	case reflect.Struct:
+		result = make(map[string]interface{}, 0)
+	case reflect.Map:
+		result = make(map[string]interface{}, 0)
+	case reflect.Slice:
+		result = make([]interface{}, 0)
+	case reflect.Array:
+		result = make([]interface{}, 0)
+	case reflect.Invalid:
+		result = nil
+	case reflect.Chan:
+		result = nil
+	case reflect.Func:
+		result = nil
+	case reflect.Uintptr:
+		result = nil
+	case reflect.UnsafePointer:
+		result = nil
+	default:
+		result = nil
 	}
 
 	return
 }
 
-// ConvertSqlStructToMap converts a struct with SQL nullable types to a map with snake_case keys,
-// excluding fields with empty values.
-func (u *structUtilImpl) ConvertSqlStructToMap(input interface{}) (map[string]interface{}, error) {
-	result := make(map[string]interface{})
-	val := reflect.ValueOf(input)
+func (u *structUtilImpl) ConvertSqlStructToMap(ctx context.Context, input interface{}) (result map[string]interface{}, err error) {
+	ctx, span := u.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
+	defer func() {
+		if r := recover(); r != nil {
+			e, ok := r.(error)
+			if ok {
+				u.logger.WithCtx(ctx).Error(fmt.Sprintf("Recovered from panic: %v", e))
+				err = e
+			} else {
+				u.logger.WithCtx(ctx).Error(fmt.Sprintf("Recovered from panic: %v", r))
+				err = fmt.Errorf("recovered from panic: %v", r)
+			}
+		}
+	}()
+
+	result = make(map[string]interface{})
 
 	// Ensure the input is a struct or a pointer to struct
+	val := reflect.ValueOf(input)
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()
 	}
 	if val.Kind() != reflect.Struct {
-		return result, &util_shared.UtilInvalidError{
+		err = &util_shared.UtilInvalidError{
 			Params: []util_shared.InvalidParam{
 				{
 					Key:    "input",
@@ -94,6 +150,7 @@ func (u *structUtilImpl) ConvertSqlStructToMap(input interface{}) (map[string]in
 				},
 			},
 		}
+		return
 	}
 
 	typ := val.Type()
@@ -145,5 +202,6 @@ func (u *structUtilImpl) ConvertSqlStructToMap(input interface{}) (map[string]in
 			}
 		}
 	}
-	return result, nil
+
+	return
 }

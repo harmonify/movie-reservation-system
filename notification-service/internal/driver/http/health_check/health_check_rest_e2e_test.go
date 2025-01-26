@@ -15,8 +15,8 @@ import (
 	"github.com/harmonify/movie-reservation-system/notification-service/internal"
 	http_driver "github.com/harmonify/movie-reservation-system/notification-service/internal/driver/http"
 	health_rest "github.com/harmonify/movie-reservation-system/notification-service/internal/driver/http/health_check"
-	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
+	"github.com/harmonify/movie-reservation-system/pkg/util/validation"
 	"github.com/stretchr/testify/suite"
 	"github.com/tidwall/gjson"
 	"go.uber.org/fx"
@@ -142,11 +142,11 @@ func (s *HealthCheckRestTestSuite) TestHealthCheckRest_GetHealthCheck() {
 			if testCase.Expectation.ResponseBodyErrorObject != nil {
 				s.Require().True(responseError.Get("errors").IsArray(), "Expected 'errors' to be an array")
 				for i, errData := range testCase.Expectation.ResponseBodyErrorObject {
-					if expectedErrorObject, ok := errData.(http_pkg.BaseValidationErrorSchema); ok {
+					if expectedErrorObject, ok := errData.(validation.ValidationError); ok {
 						s.Equal(expectedErrorObject.Field, responseError.Get("errors").Array()[i].Get("field").String())
 						s.Equal(expectedErrorObject.Message, responseError.Get("errors").Array()[i].Get("message").String())
 					} else {
-						s.T().Fatalf("Expected error object to be %s, but got %s", reflect.TypeFor[http_pkg.BaseValidationErrorSchema](), reflect.TypeOf(errData).Name())
+						s.T().Fatalf("Expected error object to be %s, but got %s", reflect.TypeFor[validation.ValidationError](), reflect.TypeOf(errData).Name())
 					}
 				}
 			}
