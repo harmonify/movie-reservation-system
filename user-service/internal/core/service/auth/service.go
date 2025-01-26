@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 
 	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/database"
@@ -17,8 +16,10 @@ import (
 	otp_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/otp"
 	token_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/token"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
+	user_proto "github.com/harmonify/movie-reservation-system/user-service/internal/driven/proto/user"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/proto"
 )
 
 type (
@@ -40,6 +41,7 @@ type (
 		UserKeyStorage     shared.UserKeyStorage
 		UserSessionStorage shared.UserSessionStorage
 		RbacStorage        shared.RbacStorage
+		OutboxStorage      shared.OutboxStorage
 		Mailer             mail.Mailer
 		Util               *util.Util
 		Config             *config.Config
@@ -61,6 +63,7 @@ type (
 		userKeyStorage     shared.UserKeyStorage
 		userSessionStorage shared.UserSessionStorage
 		rbacStorage        shared.RbacStorage
+		outboxStorage      shared.OutboxStorage
 		mailer             mail.Mailer
 		util               *util.Util
 		config             *config.Config
@@ -78,6 +81,7 @@ func NewAuthService(p AuthServiceParam) AuthServiceResult {
 			userStorage:        p.UserStorage,
 			userSessionStorage: p.UserSessionStorage,
 			userKeyStorage:     p.UserKeyStorage,
+			outboxStorage:      p.OutboxStorage,
 			rbacStorage:        p.RbacStorage,
 			mailer:             p.Mailer,
 			util:               p.Util,
@@ -108,6 +112,12 @@ func (s *authServiceImpl) Register(ctx context.Context, p RegisterParam) error {
 	userKey, err := s.tokenService.GenerateUserKey(ctx)
 	if err != nil {
 		s.logger.WithCtx(ctx).Error("Failed to generate user key", zap.Error(err))
+		return err
+	}
+
+	spanCtxBytes, err := span.SpanContext().MarshalJSON()
+	if err != nil {
+		s.logger.WithCtx(ctx).Error("Failed to marshal span context into JSON", zap.Error(err))
 		return err
 	}
 
@@ -151,6 +161,32 @@ func (s *authServiceImpl) Register(ctx context.Context, p RegisterParam) error {
 			return err
 		}
 
+		payload, err := proto.Marshal(&user_proto.UserRegistered{
+			Uuid:        user.UUID.String(),
+			Email:       user.Email,
+			Username:    user.Username,
+			PhoneNumber: user.PhoneNumber,
+			FirstName:   user.FirstName,
+			LastName:    user.LastName,
+		})
+		s.logger.WithCtx(ctx).Debug("User outbox payload", zap.String("payload", string(payload)))
+		if err != nil {
+			s.logger.WithCtx(ctx).Error("Failed to marshal user outbox payload", zap.Error(err))
+			return err
+		}
+
+		_, err = s.outboxStorage.WithTx(tx).SaveOutbox(ctx, entity.SaveUserOutbox{
+			ID:                 span.SpanContext().TraceID().String(),
+			AggregateType:      entity.AggregateTypeRegistered,
+			AggregateID:        user.UUID.String(),
+			Payload:            payload,
+			Tracingspancontext: spanCtxBytes,
+		})
+		if err != nil {
+			s.logger.WithCtx(ctx).Error("Failed to save outbox record", zap.Error(err))
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -158,15 +194,16 @@ func (s *authServiceImpl) Register(ctx context.Context, p RegisterParam) error {
 		return err
 	}
 
+	// TODO: send email verification link to user email by subscribing to outbox event
 	// Send email verification link
-	err = s.otpService.SendEmailVerificationLink(ctx, otp_service.SendEmailVerificationLinkParam{
-		Name:  fmt.Sprintf("%s %s", p.FirstName, p.LastName),
-		Email: p.Email,
-	})
-	if err != nil {
-		s.logger.WithCtx(ctx).Error("Failed to send email verification link", zap.Error(err))
-		return err
-	}
+	// err = s.otpService.SendEmailVerificationLink(ctx, otp_service.SendEmailVerificationLinkParam{
+	// 	Name:  fmt.Sprintf("%s %s", p.FirstName, p.LastName),
+	// 	Email: p.Email,
+	// })
+	// if err != nil {
+	// 	s.logger.WithCtx(ctx).Error("Failed to send email verification link", zap.Error(err))
+	// 	return err
+	// }
 
 	return err
 }

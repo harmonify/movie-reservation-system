@@ -47,4 +47,9 @@ type (
 		GetPhoneOtpAttempt(ctx context.Context, phoneNumber string) (int, error)
 		DeletePhoneOtpAttempt(ctx context.Context, phoneNumber string) (bool, error)
 	}
+
+	OutboxStorage interface {
+		WithTx(tx *database.Transaction) OutboxStorage
+		SaveOutbox(ctx context.Context, createModel entity.SaveUserOutbox) (*entity.UserOutbox, error)
+	}
 )
