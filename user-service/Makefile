@@ -86,12 +86,13 @@ migration\:postgresql\:down: ## Run migrations down
 
 .PHONY: debezium\:register-postgresql-source-connector
 debezium\:register-postgresql-source-connector: ## Register PostgreSQL source connector
-	curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @./deploy/local/run/config/postgresql-source-connector.json
+	curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @./deploy/local/run/config/postgresql-user-outbox-table-source-connector.json
 
 .PHONY: debezium\:deregister-postgresql-source-connector
 debezium\:deregister-postgresql-source-connector: ## Deregister PostgreSQL source connector
-	curl -i -X DELETE -H "Accept:application/json" -H "Content-Type:application/json" http://localhost:8083/connectors/users-connector
+	curl -i -X DELETE -H "Accept:application/json" -H "Content-Type:application/json" http://localhost:8083/connectors/postgresql-user-outbox-table-source-connector
 
-.PHONY: debezium\:register-elasticsearch-sink-connector
-debezium\:register-elasticsearch-sink-connector: ## Register Elasticsearch sink connector
-	curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @./deploy/local/run/config/elasticsearch-sink-connector.json
+.PHONY: debezium\:reregister-postgresql-source-connector
+debezium\:reregister-postgresql-source-connector: ## Reregister PostgreSQL source connector
+	make debezium\:deregister-postgresql-source-connector
+	make debezium\:register-postgresql-source-connector

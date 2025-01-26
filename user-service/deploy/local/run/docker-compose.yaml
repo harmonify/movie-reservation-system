@@ -1,6 +1,6 @@
 services:
     user-service-postgres:
-        image: debezium/postgres:17-alpine
+        image: debezium/postgres:16-alpine
         restart: "on-failure:5"
         environment:
             POSTGRES_USER: root
@@ -19,9 +19,9 @@ services:
         environment:
             BOOTSTRAP_SERVERS: kafka:29092
             GROUP_ID: "1"
-            CONFIG_STORAGE_TOPIC: user_connect_configs
-            OFFSET_STORAGE_TOPIC: user_connect_offsets
-            STATUS_STORAGE_TOPIC: user_connect_statuses
+            CONFIG_STORAGE_TOPIC: private.user.connect_configs.v1
+            OFFSET_STORAGE_TOPIC: private.user.connect_offsets.v1
+            STATUS_STORAGE_TOPIC: private.user.connect_statuses.v1
             # https://kafka.apache.org/documentation/#connect_running
             CONNECT_REST_ADVERTISED_LISTENER: connect
             CONNECT_REST_HOST: 0.0.0.0
@@ -34,6 +34,8 @@ services:
         networks:
             - user-service-net
             - core-net
+        # volumes:
+        #     - ./debezium-connector-postgres:/kafka/connect/debezium-connector-postgres
 
     user-service-postgres-exporter:
         image: prometheuscommunity/postgres-exporter:latest

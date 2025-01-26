@@ -1,0 +1,26 @@
+{
+    "name": "postgresql-user-outbox-table-source-connector",
+    "config": {
+        "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+        "database.hostname": "user-service-postgres",
+        "database.port": "5432",
+        "database.user": "root",
+        "database.password": "root",
+        "database.dbname": "mvs-user-service",
+        "table.field.event.id": "id",
+        "table.field.event.key": "aggregateid",
+        "table.field.event.payload": "payload",
+        "table.include.list": "public.user_outbox",
+        "tasks.max": "1",
+        "tombstones.on.delete": "false",
+        "topic.prefix": "private",
+        "tracing.operation.name": "debezium-read",
+        "tracing.span.context.field": "context",
+        "tracing.with.context.field.only": "true",
+        "transforms": "outbox",
+        "transforms.outbox.route.topic.replacement": "public.user.${routedByValue}.v1",
+        "transforms.outbox.type": "io.debezium.transforms.outbox.EventRouter",
+        "route.by.field": "aggregatetype",
+        "value.converter": "io.debezium.converters.BinaryDataConverter"
+    }
+}
