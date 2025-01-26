@@ -20,7 +20,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type Sms struct {
+type SendSmsRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -29,8 +29,8 @@ type Sms struct {
 	Body      string `protobuf:"bytes,2,opt,name=body,proto3" json:"body,omitempty"`
 }
 
-func (x *Sms) Reset() {
-	*x = Sms{}
+func (x *SendSmsRequest) Reset() {
+	*x = SendSmsRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_notification_sms_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -38,13 +38,13 @@ func (x *Sms) Reset() {
 	}
 }
 
-func (x *Sms) String() string {
+func (x *SendSmsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Sms) ProtoMessage() {}
+func (*SendSmsRequest) ProtoMessage() {}
 
-func (x *Sms) ProtoReflect() protoreflect.Message {
+func (x *SendSmsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_notification_sms_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -56,36 +56,35 @@ func (x *Sms) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Sms.ProtoReflect.Descriptor instead.
-func (*Sms) Descriptor() ([]byte, []int) {
+// Deprecated: Use SendSmsRequest.ProtoReflect.Descriptor instead.
+func (*SendSmsRequest) Descriptor() ([]byte, []int) {
 	return file_notification_sms_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Sms) GetRecipient() string {
+func (x *SendSmsRequest) GetRecipient() string {
 	if x != nil {
 		return x.Recipient
 	}
 	return ""
 }
 
-func (x *Sms) GetBody() string {
+func (x *SendSmsRequest) GetBody() string {
 	if x != nil {
 		return x.Body
 	}
 	return ""
 }
 
-type BulkSms struct {
+type SendSmsResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Recipients []string `protobuf:"bytes,1,rep,name=recipients,proto3" json:"recipients,omitempty"`
-	Body       string   `protobuf:"bytes,2,opt,name=body,proto3" json:"body,omitempty"`
+	SmsId string `protobuf:"bytes,1,opt,name=smsId,proto3" json:"smsId,omitempty"`
 }
 
-func (x *BulkSms) Reset() {
-	*x = BulkSms{}
+func (x *SendSmsResponse) Reset() {
+	*x = SendSmsResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_notification_sms_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -93,13 +92,13 @@ func (x *BulkSms) Reset() {
 	}
 }
 
-func (x *BulkSms) String() string {
+func (x *SendSmsResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*BulkSms) ProtoMessage() {}
+func (*SendSmsResponse) ProtoMessage() {}
 
-func (x *BulkSms) ProtoReflect() protoreflect.Message {
+func (x *SendSmsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_notification_sms_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -111,23 +110,118 @@ func (x *BulkSms) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use BulkSms.ProtoReflect.Descriptor instead.
-func (*BulkSms) Descriptor() ([]byte, []int) {
+// Deprecated: Use SendSmsResponse.ProtoReflect.Descriptor instead.
+func (*SendSmsResponse) Descriptor() ([]byte, []int) {
 	return file_notification_sms_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *BulkSms) GetRecipients() []string {
+func (x *SendSmsResponse) GetSmsId() string {
+	if x != nil {
+		return x.SmsId
+	}
+	return ""
+}
+
+type BulkSendSmsRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Recipients []string `protobuf:"bytes,1,rep,name=recipients,proto3" json:"recipients,omitempty"`
+	Body       string   `protobuf:"bytes,2,opt,name=body,proto3" json:"body,omitempty"`
+}
+
+func (x *BulkSendSmsRequest) Reset() {
+	*x = BulkSendSmsRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_notification_sms_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BulkSendSmsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BulkSendSmsRequest) ProtoMessage() {}
+
+func (x *BulkSendSmsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_notification_sms_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BulkSendSmsRequest.ProtoReflect.Descriptor instead.
+func (*BulkSendSmsRequest) Descriptor() ([]byte, []int) {
+	return file_notification_sms_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *BulkSendSmsRequest) GetRecipients() []string {
 	if x != nil {
 		return x.Recipients
 	}
 	return nil
 }
 
-func (x *BulkSms) GetBody() string {
+func (x *BulkSendSmsRequest) GetBody() string {
 	if x != nil {
 		return x.Body
 	}
 	return ""
+}
+
+type BulkSendSmsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	SmsIds []string `protobuf:"bytes,1,rep,name=smsIds,proto3" json:"smsIds,omitempty"`
+}
+
+func (x *BulkSendSmsResponse) Reset() {
+	*x = BulkSendSmsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_notification_sms_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BulkSendSmsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BulkSendSmsResponse) ProtoMessage() {}
+
+func (x *BulkSendSmsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_notification_sms_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BulkSendSmsResponse.ProtoReflect.Descriptor instead.
+func (*BulkSendSmsResponse) Descriptor() ([]byte, []int) {
+	return file_notification_sms_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *BulkSendSmsResponse) GetSmsIds() []string {
+	if x != nil {
+		return x.SmsIds
+	}
+	return nil
 }
 
 var File_notification_sms_proto protoreflect.FileDescriptor
@@ -137,15 +231,22 @@ var file_notification_sms_proto_rawDesc = []byte{
 	0x6d, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x2f, 0x68, 0x61, 0x72, 0x6d, 0x6f, 0x6e,
 	0x69, 0x66, 0x79, 0x2e, 0x6d, 0x6f, 0x76, 0x69, 0x65, 0x5f, 0x72, 0x65, 0x73, 0x65, 0x72, 0x76,
 	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6d, 0x2e, 0x6e, 0x6f, 0x74,
-	0x69, 0x66, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x37, 0x0a, 0x03, 0x53, 0x6d, 0x73,
-	0x12, 0x1c, 0x0a, 0x09, 0x72, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x09, 0x72, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x12, 0x12,
-	0x0a, 0x04, 0x62, 0x6f, 0x64, 0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x62, 0x6f,
-	0x64, 0x79, 0x22, 0x3d, 0x0a, 0x07, 0x42, 0x75, 0x6c, 0x6b, 0x53, 0x6d, 0x73, 0x12, 0x1e, 0x0a,
-	0x0a, 0x72, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28,
-	0x09, 0x52, 0x0a, 0x72, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x73, 0x12, 0x12, 0x0a,
-	0x04, 0x62, 0x6f, 0x64, 0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x62, 0x6f, 0x64,
-	0x79, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x69, 0x66, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x42, 0x0a, 0x0e, 0x53, 0x65, 0x6e,
+	0x64, 0x53, 0x6d, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1c, 0x0a, 0x09, 0x72,
+	0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09,
+	0x72, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x62, 0x6f, 0x64,
+	0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x62, 0x6f, 0x64, 0x79, 0x22, 0x27, 0x0a,
+	0x0f, 0x53, 0x65, 0x6e, 0x64, 0x53, 0x6d, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x12, 0x14, 0x0a, 0x05, 0x73, 0x6d, 0x73, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x05, 0x73, 0x6d, 0x73, 0x49, 0x64, 0x22, 0x48, 0x0a, 0x12, 0x42, 0x75, 0x6c, 0x6b, 0x53, 0x65,
+	0x6e, 0x64, 0x53, 0x6d, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1e, 0x0a, 0x0a,
+	0x72, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09,
+	0x52, 0x0a, 0x72, 0x65, 0x63, 0x69, 0x70, 0x69, 0x65, 0x6e, 0x74, 0x73, 0x12, 0x12, 0x0a, 0x04,
+	0x62, 0x6f, 0x64, 0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x62, 0x6f, 0x64, 0x79,
+	0x22, 0x2d, 0x0a, 0x13, 0x42, 0x75, 0x6c, 0x6b, 0x53, 0x65, 0x6e, 0x64, 0x53, 0x6d, 0x73, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x6d, 0x73, 0x49, 0x64,
+	0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x06, 0x73, 0x6d, 0x73, 0x49, 0x64, 0x73, 0x62,
+	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -160,10 +261,12 @@ func file_notification_sms_proto_rawDescGZIP() []byte {
 	return file_notification_sms_proto_rawDescData
 }
 
-var file_notification_sms_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_notification_sms_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_notification_sms_proto_goTypes = []interface{}{
-	(*Sms)(nil),     // 0: harmonify.movie_reservation_system.notification.Sms
-	(*BulkSms)(nil), // 1: harmonify.movie_reservation_system.notification.BulkSms
+	(*SendSmsRequest)(nil),      // 0: harmonify.movie_reservation_system.notification.SendSmsRequest
+	(*SendSmsResponse)(nil),     // 1: harmonify.movie_reservation_system.notification.SendSmsResponse
+	(*BulkSendSmsRequest)(nil),  // 2: harmonify.movie_reservation_system.notification.BulkSendSmsRequest
+	(*BulkSendSmsResponse)(nil), // 3: harmonify.movie_reservation_system.notification.BulkSendSmsResponse
 }
 var file_notification_sms_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -180,7 +283,7 @@ func file_notification_sms_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_notification_sms_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Sms); i {
+			switch v := v.(*SendSmsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -192,7 +295,31 @@ func file_notification_sms_proto_init() {
 			}
 		}
 		file_notification_sms_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*BulkSms); i {
+			switch v := v.(*SendSmsResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_notification_sms_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BulkSendSmsRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_notification_sms_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*BulkSendSmsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -210,7 +337,7 @@ func file_notification_sms_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_notification_sms_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

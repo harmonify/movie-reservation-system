@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package harmonify.movie_reservation_system.notification;
+
+import "notification/email.proto";
+import "notification/sms.proto";
+
+service NotificationService {
+    rpc SendEmail(SendEmailRequest) returns (SendEmailResponse);
+    rpc SendSms(SendSmsRequest) returns (SendSmsResponse);
+    rpc BulkSendSms(BulkSendSmsRequest) returns (BulkSendSmsResponse);
+}
