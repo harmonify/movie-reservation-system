@@ -1,9 +1,7 @@
-package kafka
+package kafka_migration
 
 import (
-	v_1_0_0 "github.com/harmonify/movie-reservation-system/cli/migrations/kafka/v1.0.0"
 	"github.com/harmonify/movie-reservation-system/cli/shared"
-
 	"go.uber.org/fx"
 )
 
@@ -11,11 +9,7 @@ var (
 	MigrationModule = fx.Module(
 		"migrations",
 		fx.Provide(
-			AsMigration(v_1_0_0.NewCreateNewOrderTopicMigration),
-			// fx.Annotate(
-			// ,
-			// fx.ParamTags(`group:"migrations"`)
-			// ),
+			AsMigration(NewCreatePublicUserRegisteredV1TopicMigration),
 		),
 	)
 )

@@ -1,17 +1,11 @@
 package shared
 
-var (
-	topics = [...]string{
-		"new-order",
-	}
-)
-
 const (
-	NewOrderTopic Topic = iota
+	PublicUserRegisteredV1Topic Topic = "public.user.registered.v1"
 )
 
-type Topic int
+type Topic string
 
 func (t Topic) String() string {
-	return topics[t]
+	return string(t)
 }

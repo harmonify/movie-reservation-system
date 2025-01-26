@@ -9,11 +9,6 @@ import (
 	"go.uber.org/fx"
 )
 
-type migrationStorageImpl struct {
-	db     *sql.DB
-	logger *log.Logger
-}
-
 func NewMigrationStorage(cfg *Config, logger *log.Logger, lc fx.Lifecycle) (MigrationStorage, error) {
 	db, err := sql.Open("sqlite3", cfg.SqlitePath)
 	if err != nil {
@@ -37,10 +32,15 @@ func NewMigrationStorage(cfg *Config, logger *log.Logger, lc fx.Lifecycle) (Migr
 		},
 	})
 
-	return &migrationStorageImpl{db: db, logger: logger}, nil
+	return &sqliteMigrationStorageImpl{db: db, logger: logger}, nil
 }
 
-func (ms *migrationStorageImpl) LoadState() (map[string]bool, error) {
+type sqliteMigrationStorageImpl struct {
+	db     *sql.DB
+	logger *log.Logger
+}
+
+func (ms *sqliteMigrationStorageImpl) LoadState() (map[string]bool, error) {
 	rows, err := ms.db.Query("SELECT identifier, applied FROM migrations")
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func (ms *migrationStorageImpl) LoadState() (map[string]bool, error) {
 	return state, nil
 }
 
-func (ms *migrationStorageImpl) SaveState(identifier string, applied bool) error {
+func (ms *sqliteMigrationStorageImpl) SaveState(identifier string, applied bool) error {
 	_, err := ms.db.Exec(`
 		INSERT INTO migrations (identifier, applied)
 		VALUES (?, ?)
