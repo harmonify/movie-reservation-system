@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/IBM/sarama"
-	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/kafka"
 	"github.com/harmonify/movie-reservation-system/pkg/kafka/test"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
@@ -45,13 +44,6 @@ type KafkaTestSuite struct {
 func (s *KafkaTestSuite) SetupSuite() {
 	s.app = fx.New(
 		fx.Provide(
-			func() *config.Config {
-				return &config.Config{
-					KafkaBrokers:       "localhost:9092",
-					KafkaVersion:       "3.9.0",
-					KafkaConsumerGroup: "pkg",
-				}
-			},
 			logger.NewConsoleLogger,
 			tracer.NewConsoleTracer,
 			kafka.NewKafkaAdmin,

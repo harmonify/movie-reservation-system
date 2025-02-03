@@ -3,11 +3,22 @@ package logger
 import (
 	"time"
 
-	"github.com/harmonify/movie-reservation-system/pkg/config"
-	"go.uber.org/fx"
+	"github.com/go-playground/validator/v10"
 )
 
-func NewLogger(cfg *config.Config) (Logger, error) {
+type LoggerConfig struct {
+	Env               string `validate:"required,oneof=dev test prod"`
+	ServiceIdentifier string `validate:"required"`
+	LogType           string `validate:"required,oneof=nop loki console"`
+	LogLevel          string `validate:"required,oneof=debug info warn error"`
+	LokiUrl           string `validate:"required_if=LogType loki"`
+}
+
+func NewLogger(cfg *LoggerConfig) (Logger, error) {
+	if err := validator.New(validator.WithRequiredStructEnabled()).Struct(cfg); err != nil {
+		return nil, err
+	}
+
 	switch cfg.LogType {
 	case "nop":
 		{
@@ -39,7 +50,3 @@ func NewLogger(cfg *config.Config) (Logger, error) {
 		}
 	}
 }
-
-var (
-	LoggerModule = fx.Provide(NewLogger)
-)

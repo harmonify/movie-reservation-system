@@ -5,14 +5,16 @@ import (
 	"go.uber.org/fx"
 )
 
+var registeredEmailTemplatePaths = []shared.EmailTemplatePath{
+	shared.EmailVerificationTemplatePath,
+}
+
 var ServiceModule = fx.Module(
 	"service",
 	fx.Provide(
 		fx.Annotate(
 			func() []shared.EmailTemplatePath {
-				return []shared.EmailTemplatePath{
-					shared.EmailVerificationTemplatePath,
-				}
+				return registeredEmailTemplatePaths
 			},
 			fx.ResultTags(`group:"email-template-paths"`),
 		),

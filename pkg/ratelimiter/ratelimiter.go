@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/go-redsync/redsync/v4/redis/goredis/v9"
 	"github.com/harmonify/movie-reservation-system/pkg/cache"
-	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/mennanov/limiters"
 	"go.uber.org/fx"
@@ -34,7 +34,6 @@ type RateLimiterRegistryParam struct {
 
 	Logger logger.Logger
 	Redis  *cache.Redis
-	Config *config.Config
 }
 
 type rateLimiterRegistryImpl struct {
@@ -49,11 +48,8 @@ type rateLimiterRegistryImpl struct {
 }
 
 func NewRateLimiterRegistry(p RateLimiterRegistryParam, c *RateLimiterConfig) (RateLimiterRegistry, error) {
-	if c.Capacity <= 0 {
-		c.Capacity = defaultCapacity
-	}
-	if c.RefillRate <= 0 {
-		c.RefillRate = defaultRefillRate
+	if err := validator.New(validator.WithRequiredStructEnabled()).Struct(c); err != nil {
+		return nil, err
 	}
 
 	registry := limiters.NewRegistry()
@@ -73,7 +69,7 @@ func NewRateLimiterRegistry(p RateLimiterRegistryParam, c *RateLimiterConfig) (R
 		redis:         p.Redis,
 		registry:      registry,
 		clock:         clock,
-		keyPrefix:     p.Config.ServiceIdentifier,
+		keyPrefix:     c.ServiceIdentifier,
 		capacity:      c.Capacity,
 		refillRate:    c.RefillRate,
 	}

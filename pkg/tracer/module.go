@@ -3,14 +3,10 @@ package tracer
 import (
 	"context"
 
-	"github.com/harmonify/movie-reservation-system/pkg/config"
+	"github.com/go-playground/validator/v10"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/fx"
-)
-
-var (
-	TracerModule = fx.Module("tracer", fx.Provide(NewJaegerTracer))
 )
 
 // Tracer provides a set of methods for working with distributed tracing using OpenTelemetry.
@@ -26,15 +22,24 @@ type Tracer interface {
 	Extract(ctx context.Context, carrier propagation.TextMapCarrier) context.Context
 }
 
-type TracerParam struct {
-	fx.In
-
-	Config    *config.Config
-	Lifecycle fx.Lifecycle
+type TracerConfig struct {
+	Env               string `validate:"required,oneof=dev test prod"`
+	ServiceIdentifier string `validate:"required"`
+	Type              string `validate:"required,oneof=jaeger console nop"`
+	OtelEndpoint      string `validate:"required_if=Type jaeger"`
 }
 
-type TracerResult struct {
-	fx.Out
+func NewTracer(lc fx.Lifecycle, cfg *TracerConfig) (Tracer, error) {
+	if err := validator.New(validator.WithRequiredStructEnabled()).Struct(cfg); err != nil {
+		return nil, err
+	}
 
-	Tracer Tracer
+	switch cfg.Type {
+	case "jaeger":
+		return NewJaegerTracer(cfg, lc)
+	case "console":
+		return NewConsoleTracer(cfg)
+	default:
+		return NewNopTracer(cfg), nil
+	}
 }

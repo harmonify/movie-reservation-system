@@ -6,7 +6,7 @@ import (
 
 var (
 	MailgunMailerModule = fx.Module(
-		"driven-mail-mailgun",
+		"driven-email-mailgun",
 		fx.Provide(
 			NewMailgunEmailProvider,
 		),

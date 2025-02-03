@@ -13,6 +13,7 @@ import (
 	"github.com/failsafe-go/failsafe-go"
 	"github.com/failsafe-go/failsafe-go/retrypolicy"
 	"github.com/failsafe-go/failsafe-go/timeout"
+	"github.com/go-playground/validator/v10"
 	"go.uber.org/zap"
 )
 
@@ -57,8 +58,12 @@ type KafkaDLQProducer struct {
 	moveMessageToDLQExecutor failsafe.Executor[any]
 }
 
-func NewKafkaDLQProducer(p KafkaProducerParam) (*KafkaDLQProducer, error) {
-	kp, err := NewKafkaProducer(p)
+func NewKafkaDLQProducer(p KafkaProducerParam, cfg *KafkaProducerConfig) (*KafkaDLQProducer, error) {
+	if err := validator.New(validator.WithRequiredStructEnabled()).Struct(cfg); err != nil {
+		return nil, err
+	}
+
+	kp, err := NewKafkaProducer(p, cfg)
 	if err != nil {
 		return nil, err
 	}

@@ -5,17 +5,16 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/database"
 	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
-	"github.com/harmonify/movie-reservation-system/pkg/mail"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	otp_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/otp"
 	token_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/token"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/config"
 	user_proto "github.com/harmonify/movie-reservation-system/user-service/internal/driven/proto/user"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -42,9 +41,8 @@ type (
 		UserSessionStorage shared.UserSessionStorage
 		RbacStorage        shared.RbacStorage
 		OutboxStorage      shared.OutboxStorage
-		Mailer             mail.Mailer
 		Util               *util.Util
-		Config             *config.Config
+		Config             *config.UserServiceConfig
 		TokenService       token_service.TokenService
 		OtpService         otp_service.OtpService
 	}
@@ -64,9 +62,8 @@ type (
 		userSessionStorage shared.UserSessionStorage
 		rbacStorage        shared.RbacStorage
 		outboxStorage      shared.OutboxStorage
-		mailer             mail.Mailer
 		util               *util.Util
-		config             *config.Config
+		config             *config.UserServiceConfig
 		tokenService       token_service.TokenService
 		otpService         otp_service.OtpService
 	}
@@ -83,7 +80,6 @@ func NewAuthService(p AuthServiceParam) AuthServiceResult {
 			userKeyStorage:     p.UserKeyStorage,
 			outboxStorage:      p.OutboxStorage,
 			rbacStorage:        p.RbacStorage,
-			mailer:             p.Mailer,
 			util:               p.Util,
 			config:             p.Config,
 			tokenService:       p.TokenService,
@@ -193,17 +189,6 @@ func (s *authServiceImpl) Register(ctx context.Context, p RegisterParam) error {
 		s.logger.WithCtx(ctx).Error("Failed to save records", zap.Error(err))
 		return err
 	}
-
-	// TODO: send email verification link to user email by subscribing to outbox event
-	// Send email verification link
-	// err = s.otpService.SendEmailVerificationLink(ctx, otp_service.SendEmailVerificationLinkParam{
-	// 	Name:  fmt.Sprintf("%s %s", p.FirstName, p.LastName),
-	// 	Email: p.Email,
-	// })
-	// if err != nil {
-	// 	s.logger.WithCtx(ctx).Error("Failed to send email verification link", zap.Error(err))
-	// 	return err
-	// }
 
 	return err
 }

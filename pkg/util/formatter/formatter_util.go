@@ -2,35 +2,20 @@ package formatter
 
 import (
 	"regexp"
-
-	"go.uber.org/fx"
 )
 
 type FormatterUtil interface {
 	FormatPhoneNumberToE164(phoneNumber, countryCode string) string
 }
 
-type FormatterUtilParam struct {
-	fx.In
-}
+type formatterUtilImpl struct{}
 
-type FormatterUtilResult struct {
-	fx.Out
-
-	FormatterUtil FormatterUtil
-}
-
-type formatterUtilImpl struct {
-}
-
-func NewFormatterUtil(p FormatterUtilParam) FormatterUtilResult {
-	return FormatterUtilResult{
-		FormatterUtil: &formatterUtilImpl{},
-	}
+func NewFormatterUtil() FormatterUtil {
+	return &formatterUtilImpl{}
 }
 
 // FormatPhoneNumberToE164 formats a phone number into E.164 format
-func (u *formatterUtilImpl) FormatPhoneNumberToE164(phoneNumber, countryCode string) string {
+func (*formatterUtilImpl) FormatPhoneNumberToE164(phoneNumber, countryCode string) string {
 	// Remove any spaces, parenthesis or other punctuation.
 	e164Number := regexp.MustCompile(`\D`).ReplaceAllString(phoneNumber, "")
 

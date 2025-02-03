@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"runtime"
 
+	"github.com/go-playground/validator/v10"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -17,6 +18,10 @@ import (
 var lokiSinkRegistered bool
 
 func NewLokiZapLogger(cfg *LokiZapConfig) (Logger, error) {
+	if err := validator.New(validator.WithRequiredStructEnabled()).Struct(cfg); err != nil {
+		return nil, err
+	}
+
 	zapConfig := zap.NewProductionConfig()
 	zapConfig.EncoderConfig.CallerKey = zapcore.OmitKey
 	logLevel, err := zap.ParseAtomicLevel(cfg.LogLevel)

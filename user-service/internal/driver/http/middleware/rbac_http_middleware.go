@@ -4,13 +4,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/harmonify/movie-reservation-system/pkg/config"
 	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/config"
 	"go.uber.org/fx"
 )
 
@@ -26,7 +26,7 @@ type (
 		Tracer      tracer.Tracer
 		Response    http_pkg.HttpResponse
 		RbacStorage shared.RbacStorage
-		Config      *config.Config
+		Config      *config.UserServiceConfig
 	}
 
 	RbacHttpMiddlewareResult struct {
@@ -40,7 +40,7 @@ type (
 		tracer      tracer.Tracer
 		response    http_pkg.HttpResponse
 		rbacStorage shared.RbacStorage
-		config      *config.Config
+		config      *config.UserServiceConfig
 	}
 )
 

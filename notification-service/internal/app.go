@@ -7,16 +7,18 @@ import (
 	"runtime"
 
 	"github.com/harmonify/movie-reservation-system/notification-service/internal/core/services"
+	"github.com/harmonify/movie-reservation-system/notification-service/internal/driven/config"
 	"github.com/harmonify/movie-reservation-system/notification-service/internal/driven/email/mailgun"
 	"github.com/harmonify/movie-reservation-system/notification-service/internal/driven/sms/twilio"
+	grpc_driver "github.com/harmonify/movie-reservation-system/notification-service/internal/driver/grpc"
 	http_driver "github.com/harmonify/movie-reservation-system/notification-service/internal/driver/http"
-	"github.com/harmonify/movie-reservation-system/pkg/config"
 	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
-	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/metrics"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
+	"github.com/harmonify/movie-reservation-system/pkg/util/encryption"
+	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
 	"go.uber.org/fx"
 )
 
@@ -39,22 +41,45 @@ func StartApp() error {
 // This is a function to initialize all services and invoke their functions.
 func NewApp(p ...fx.Option) *fx.App {
 	options := []fx.Option{
+		// LIB
 		fx.Provide(
-			func() *config.ConfigFile {
+			func() (*config.NotificationServiceConfig, error) {
 				_, filename, _, _ := runtime.Caller(0)
-				return &config.ConfigFile{
-					Path: path.Join(filename, "..", "..", ".env"),
+				configFile := path.Join(filename, "..", "..", ".env")
+				return config.NewNotificationServiceConfig(configFile)
+			},
+			func(cfg *config.NotificationServiceConfig) (logger.Logger, error) {
+				return logger.NewLogger(&logger.LoggerConfig{
+					Env:               cfg.Env,
+					ServiceIdentifier: cfg.ServiceIdentifier,
+					LogType:           cfg.LogType,
+					LogLevel:          cfg.LogLevel,
+					LokiUrl:           cfg.LokiUrl,
+				})
+			},
+			func(lc fx.Lifecycle, cfg *config.NotificationServiceConfig) (tracer.Tracer, error) {
+				return tracer.NewTracer(lc, &tracer.TracerConfig{
+					Env:               cfg.Env,
+					ServiceIdentifier: cfg.ServiceIdentifier,
+					Type:              cfg.TracerType,
+					OtelEndpoint:      cfg.OtelEndpoint,
+				})
+			},
+			func(cfg *config.NotificationServiceConfig) *encryption.AESEncryptionConfig {
+				return &encryption.AESEncryptionConfig{
+					AppSecret: cfg.AppSecret,
+				}
+			},
+			func(cfg *config.NotificationServiceConfig) *jwt_util.JwtUtilConfig {
+				return &jwt_util.JwtUtilConfig{
+					AppJwtAudiences:    cfg.AppJwtAudiences,
+					ServiceHttpBaseUrl: cfg.ServiceHttpBaseUrl,
 				}
 			},
 		),
-		config.ConfigModule,
-
-		// Libraries
-		logger.LoggerModule,
-		tracer.TracerModule,
-		metrics.MetricsModule,
 		error_pkg.ErrorModule,
 		util.UtilModule,
+		metrics.MetricsModule,
 
 		// CORE
 		services.ServiceModule,
@@ -64,8 +89,8 @@ func NewApp(p ...fx.Option) *fx.App {
 		twilio.TwilioSmsModule,
 
 		// API (DRIVER)
-		http_pkg.HttpModule,
 		http_driver.HttpModule,
+		grpc_driver.GrpcModule,
 	}
 
 	// Override dependencies

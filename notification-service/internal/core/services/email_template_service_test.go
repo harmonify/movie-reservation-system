@@ -10,7 +10,6 @@ import (
 
 	"github.com/harmonify/movie-reservation-system/notification-service/internal/core/services"
 	"github.com/harmonify/movie-reservation-system/notification-service/internal/core/shared"
-	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
@@ -49,9 +48,6 @@ type EmailTemplateServiceTestSuite struct {
 func (s *EmailTemplateServiceTestSuite) SetupSuite() {
 	s.app = fx.New(
 		fx.Provide(
-			func() *config.Config {
-				return &config.Config{}
-			},
 			logger.NewConsoleLogger,
 			tracer.NewNopTracer,
 			services.NewEmailTemplateService,

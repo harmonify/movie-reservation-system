@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/harmonify/movie-reservation-system/pkg/config"
 	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
 	"github.com/harmonify/movie-reservation-system/pkg/util/encryption"
 	generator_util "github.com/harmonify/movie-reservation-system/pkg/util/generator"
@@ -85,17 +84,13 @@ type JwtUtilTestSuite struct {
 
 func (s *JwtUtilTestSuite) SetupSuite() {
 	s.app = fx.New(
-		fx.Provide(func() *config.Config {
-			return &config.Config{
-				AppSecret:          "1233334556905407",
-				ServiceHttpBaseUrl: "http://localhost:8080",
-				AppJwtAudiences:    "http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084",
-			}
-		}),
 		generator_util.GeneratorUtilModule,
 		encryption.EncryptionModule,
-		fx.Invoke(func(config *config.Config, encryption *encryption.Encryption) {
-			s.jwtUtil, _ = jwt_util.NewJwtUtil(encryption, config)
+		fx.Invoke(func(encryption *encryption.Encryption) {
+			s.jwtUtil, _ = jwt_util.NewJwtUtil(encryption, &jwt_util.JwtUtilConfig{
+				ServiceHttpBaseUrl: "http://localhost:8080",
+				AppJwtAudiences:    "http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084",
+			})
 		}),
 
 		fx.NopLogger,
@@ -163,8 +158,8 @@ func (s *JwtUtilTestSuite) TestJwtUtil_JWTVerify() {
 		{
 			Description: "Should return no error",
 			Setup: func() jwt_util.JwtUtil {
-				jwtUtil, err := buildJwtUtil(&config.Config{
-					AppSecret:          "1233334556905407",
+				jwtUtil, err := buildJwtUtil(&jwt_util.JwtUtilConfig{
+					AppJwtAudiences:    "user-service",
 					ServiceHttpBaseUrl: "http://localhost:8080",
 				})
 				s.Require().Nil(err)
@@ -219,17 +214,17 @@ func (s *JwtUtilTestSuite) TestJwtUtil_JWTVerify() {
 	}
 }
 
-func buildJwtUtil(cfg *config.Config) (jwt_util.JwtUtil, error) {
+func buildJwtUtil(cfg *jwt_util.JwtUtilConfig) (jwt_util.JwtUtil, error) {
 	var jwtUtil jwt_util.JwtUtil
 	var err error
 
 	app := fx.New(
-		fx.Provide(func() *config.Config {
+		fx.Provide(func() *jwt_util.JwtUtilConfig {
 			return cfg // Use the provided configuration
 		}),
 		generator_util.GeneratorUtilModule,
 		encryption.EncryptionModule,
-		fx.Invoke(func(config *config.Config, encryption *encryption.Encryption) {
+		fx.Invoke(func(config *jwt_util.JwtUtilConfig, encryption *encryption.Encryption) {
 			jwtUtil, err = jwt_util.NewJwtUtil(encryption, cfg)
 		}),
 

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
@@ -18,29 +17,28 @@ import (
 )
 
 type jaegerTracerImpl struct {
-	cfg           *config.Config
 	provider      trace.TracerProvider
 	propagator    propagation.TextMapPropagator
 	defaultTracer trace.Tracer
 }
 
-func NewJaegerTracer(p TracerParam) (TracerResult, error) {
+func NewJaegerTracer(cfg *TracerConfig, lc fx.Lifecycle) (Tracer, error) {
 	exporter := otlptrace.NewUnstarted(
 		otlptracegrpc.NewClient(
 			otlptracegrpc.WithInsecure(),
-			otlptracegrpc.WithEndpoint(p.Config.OtelEndpoint),
+			otlptracegrpc.WithEndpoint(cfg.OtelEndpoint),
 		),
 	)
 
 	resources, err := resource.New(
 		context.Background(),
 		resource.WithAttributes(
-			attribute.String("service.name", p.Config.ServiceIdentifier),
-			attribute.String("service.environment", p.Config.Env),
+			attribute.String("service.name", cfg.ServiceIdentifier),
+			attribute.String("service.environment", cfg.Env),
 		),
 	)
 	if err != nil {
-		fmt.Printf("Could not set OTel resources: %v\n", err)
+		return nil, fmt.Errorf("could not set OTel resources: %v\n", err)
 	}
 
 	propagator := propagation.NewCompositeTextMapPropagator(
@@ -62,13 +60,12 @@ func NewJaegerTracer(p TracerParam) (TracerResult, error) {
 	}))
 
 	t := &jaegerTracerImpl{
-		cfg:           p.Config,
 		propagator:    propagator,
 		provider:      provider,
-		defaultTracer: provider.Tracer(p.Config.ServiceIdentifier),
+		defaultTracer: provider.Tracer(cfg.ServiceIdentifier),
 	}
 
-	p.Lifecycle.Append(fx.Hook{
+	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			if err := exporter.Start(ctx); err != nil {
 				fmt.Printf("Failed to connect to OTel exporter: %v\n", err)
@@ -85,9 +82,7 @@ func NewJaegerTracer(p TracerParam) (TracerResult, error) {
 		},
 	})
 
-	return TracerResult{
-		Tracer: t,
-	}, nil
+	return t, nil
 }
 
 func (t *jaegerTracerImpl) Start(ctx context.Context, spanName string) (context.Context, trace.Span) {

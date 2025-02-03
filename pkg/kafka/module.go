@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/IBM/sarama"
-	"github.com/harmonify/movie-reservation-system/pkg/config"
+	"github.com/go-playground/validator/v10"
 	"go.uber.org/fx"
 )
 
@@ -41,7 +41,15 @@ func AsRoute(f any, anns ...fx.Annotation) any {
 	)
 }
 
-func buildKafkaConfig(cfg *config.Config) (*sarama.Config, error) {
+type KafkaConfig struct {
+	KafkaVersion string `validate:"required"`
+}
+
+func BuildKafkaConfig(cfg *KafkaConfig) (*sarama.Config, error) {
+	if err := validator.New(validator.WithRequiredStructEnabled()).Struct(cfg); err != nil {
+		return nil, err
+	}
+
 	version, err := sarama.ParseKafkaVersion(cfg.KafkaVersion)
 	if err != nil {
 		return nil, err

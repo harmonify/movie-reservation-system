@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/harmonify/movie-reservation-system/pkg/config"
+	"github.com/go-playground/validator/v10"
 	generator_util "github.com/harmonify/movie-reservation-system/pkg/util/generator"
 	"go.uber.org/fx"
 	"golang.org/x/crypto/pbkdf2"
@@ -23,13 +23,13 @@ type AESEncryption interface {
 
 type AESEncryptionParam struct {
 	fx.In
-
-	Config        *config.Config
 	GeneratorUtil generator_util.GeneratorUtil
 }
 
-type AesGcmPbkdf2EncryptionConfig struct {
-	PBKDF2Iterations int
+type AESEncryptionResult struct {
+	fx.Out
+
+	AESEncryption AESEncryption
 }
 
 type AesGcmPbkdf2EncryptionImpl struct {
@@ -38,19 +38,25 @@ type AesGcmPbkdf2EncryptionImpl struct {
 	secret           string
 }
 
+type AESEncryptionConfig struct {
+	AppSecret string `validate:"required"`
+}
+
 type AesGcmPbkdf2CipherParam struct {
 	Salt             []byte // 32 bytes salt
 	PBKDF2Iterations int    // using the class PBKDF2Iterations when encrypting, and the value from the cipher text when decrypting
 }
 
-func NewAESEncryption(p AESEncryptionParam, cfg *AesGcmPbkdf2EncryptionConfig) (AESEncryption, error) {
-	if p.Config.AppSecret == "" {
-		return nil, fmt.Errorf("app secret is required")
+func NewAESEncryption(p AESEncryptionParam, cfg *AESEncryptionConfig) (AESEncryptionResult, error) {
+	if err := validator.New().Struct(cfg); err != nil {
+		return AESEncryptionResult{}, fmt.Errorf("failed to validate AESEncryptionConfig. Error: %s", err.Error())
 	}
-	return &AesGcmPbkdf2EncryptionImpl{
-		generatorUtil:    p.GeneratorUtil,
-		secret:           p.Config.AppSecret,
-		PBKDF2Iterations: cfg.PBKDF2Iterations,
+	return AESEncryptionResult{
+		AESEncryption: &AesGcmPbkdf2EncryptionImpl{
+			generatorUtil:    p.GeneratorUtil,
+			secret:           cfg.AppSecret,
+			PBKDF2Iterations: 15000,
+		},
 	}, nil
 }
 

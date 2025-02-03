@@ -19,10 +19,10 @@ type consoleTracerImpl struct {
 	propagator propagation.TextMapPropagator
 }
 
-func NewConsoleTracer(p TracerParam) (TracerResult, error) {
+func NewConsoleTracer(cfg *TracerConfig) (Tracer, error) {
 	exp, err := stdouttrace.New(stdouttrace.WithPrettyPrint())
 	if err != nil {
-		return TracerResult{}, err
+		return nil, err
 	}
 
 	bsp := sdktrace.NewBatchSpanProcessor(exp)
@@ -30,8 +30,8 @@ func NewConsoleTracer(p TracerParam) (TracerResult, error) {
 	resources, err := resource.New(
 		context.Background(),
 		resource.WithAttributes(
-			attribute.String("service.name", p.Config.ServiceIdentifier),
-			attribute.String("service.environment", p.Config.Env),
+			attribute.String("service.name", cfg.ServiceIdentifier),
+			attribute.String("service.environment", cfg.Env),
 		),
 	)
 	if err != nil {
@@ -45,7 +45,7 @@ func NewConsoleTracer(p TracerParam) (TracerResult, error) {
 	)
 	otel.SetTracerProvider(tp)
 
-	tracer := tp.Tracer(p.Config.ServiceIdentifier)
+	tracer := tp.Tracer(cfg.ServiceIdentifier)
 
 	propagator := propagation.NewCompositeTextMapPropagator(
 		propagation.TraceContext{},
@@ -53,11 +53,9 @@ func NewConsoleTracer(p TracerParam) (TracerResult, error) {
 	)
 	otel.SetTextMapPropagator(propagator)
 
-	return TracerResult{
-		Tracer: &consoleTracerImpl{
-			tracer:     tracer,
-			propagator: propagator,
-		},
+	return &consoleTracerImpl{
+		tracer:     tracer,
+		propagator: propagator,
 	}, nil
 }
 

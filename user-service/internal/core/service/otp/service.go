@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/harmonify/movie-reservation-system/pkg/config"
 	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/config"
 	notification_proto "github.com/harmonify/movie-reservation-system/user-service/internal/driven/proto/notification"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -29,7 +29,7 @@ type (
 	OtpServiceParam struct {
 		fx.In
 
-		Config               *config.Config
+		Config               *config.UserServiceConfig
 		Logger               logger.Logger
 		Tracer               tracer.Tracer
 		NotificationProvider shared.NotificationProvider
@@ -44,7 +44,7 @@ type (
 	}
 
 	otpServiceImpl struct {
-		config               *config.Config
+		config               *config.UserServiceConfig
 		logger               logger.Logger
 		tracer               tracer.Tracer
 		notificationProvider shared.NotificationProvider
@@ -85,7 +85,7 @@ func (s *otpServiceImpl) SendEmailVerificationLink(ctx context.Context, p SendEm
 
 	savedToken, err := s.otpStorage.GetEmailVerificationToken(ctx, p.Email)
 	var ed *error_pkg.ErrorWithDetails
-	if err != nil && errors.As(err, &ed) && ed.Code != error_pkg.NotFoundError.Code {
+	if err != nil && errors.As(err, &ed) && ed.Code != VerificationTokenNotFoundError.Code {
 		s.logger.WithCtx(ctx).Error("Failed to get existing verification token", zap.Error(err))
 		return error_pkg.InternalServerError
 	}
@@ -141,7 +141,7 @@ func (s *otpServiceImpl) VerifyEmail(ctx context.Context, p VerifyEmailParam) er
 	token, err := s.otpStorage.GetEmailVerificationToken(ctx, p.Email)
 	var ed *error_pkg.ErrorWithDetails
 	if err != nil && errors.As(err, &ed) {
-		if ed.Code == error_pkg.NotFoundError.Code {
+		if ed.Code == VerificationTokenNotFoundError.Code {
 			return VerificationTokenNotFoundError
 		} else {
 			s.logger.WithCtx(ctx).Error("Failed to get existing verification token", zap.Error(err))
@@ -166,7 +166,7 @@ func (s *otpServiceImpl) SendPhoneOtp(ctx context.Context, p SendPhoneOtpParam) 
 
 	savedOtp, err := s.otpStorage.GetPhoneOtp(ctx, p.PhoneNumber)
 	var ed *error_pkg.ErrorWithDetails
-	if err != nil && errors.As(err, &ed) && ed.Code != error_pkg.NotFoundError.Code {
+	if err != nil && errors.As(err, &ed) && ed.Code != VerificationTokenNotFoundError.Code {
 		s.logger.WithCtx(ctx).Error("Failed to get existing OTP", zap.Error(err))
 		return error_pkg.InternalServerError
 	}
@@ -209,7 +209,7 @@ func (s *otpServiceImpl) VerifyPhoneOtp(ctx context.Context, p VerifyPhoneOtpPar
 	attempt, err := s.otpStorage.GetPhoneOtpAttempt(ctx, p.PhoneNumber)
 	if err != nil {
 		var ed *error_pkg.ErrorWithDetails
-		if errors.As(err, &ed) && ed.Code == error_pkg.NotFoundError.Code {
+		if errors.As(err, &ed) && ed.Code == VerificationTokenNotFoundError.Code {
 			return ed
 		} else {
 			s.logger.WithCtx(ctx).Error("Failed to get existing phone OTP attempt", zap.Error(err))
@@ -224,7 +224,7 @@ func (s *otpServiceImpl) VerifyPhoneOtp(ctx context.Context, p VerifyPhoneOtpPar
 	otp, err := s.otpStorage.GetPhoneOtp(ctx, p.PhoneNumber)
 	if err != nil {
 		var ed *error_pkg.ErrorWithDetails
-		if errors.As(err, &ed) && ed.Code == error_pkg.NotFoundError.Code {
+		if errors.As(err, &ed) && ed.Code == VerificationTokenNotFoundError.Code {
 			return ed
 		} else {
 			s.logger.WithCtx(ctx).Error("Failed to get existing phone OTP", zap.Error(err))

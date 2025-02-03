@@ -7,20 +7,19 @@ import (
 	"runtime"
 
 	"github.com/harmonify/movie-reservation-system/pkg/cache"
-	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/database"
 	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
-	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
-	"github.com/harmonify/movie-reservation-system/pkg/kafka"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
-	"github.com/harmonify/movie-reservation-system/pkg/mail"
-	"github.com/harmonify/movie-reservation-system/pkg/messaging"
 	"github.com/harmonify/movie-reservation-system/pkg/metrics"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
+	"github.com/harmonify/movie-reservation-system/pkg/util/encryption"
+	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/service"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/config"
 	http_driver "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http"
+	kafka_driver "github.com/harmonify/movie-reservation-system/user-service/internal/driver/kafka"
 	"go.uber.org/fx"
 )
 
@@ -43,39 +42,75 @@ func StartApp() error {
 // This is a function to initialize all services and invoke their functions.
 func NewApp(p ...fx.Option) *fx.App {
 	options := []fx.Option{
+		// LIB
 		fx.Provide(
-			func() *config.ConfigFile {
+			func() (*config.UserServiceConfig, error) {
 				_, filename, _, _ := runtime.Caller(0)
-				return &config.ConfigFile{
-					Path: path.Join(filename, "..", "..", ".env"),
+				configFile := path.Join(filename, "..", "..", ".env")
+				return config.NewUserServiceConfig(configFile)
+			},
+			func(cfg *config.UserServiceConfig) (logger.Logger, error) {
+				return logger.NewLogger(&logger.LoggerConfig{
+					Env:               cfg.Env,
+					ServiceIdentifier: cfg.ServiceIdentifier,
+					LogType:           cfg.LogType,
+					LogLevel:          cfg.LogLevel,
+					LokiUrl:           cfg.LokiUrl,
+				})
+			},
+			func(lc fx.Lifecycle, cfg *config.UserServiceConfig) (tracer.Tracer, error) {
+				return tracer.NewTracer(lc, &tracer.TracerConfig{
+					Env:               cfg.Env,
+					ServiceIdentifier: cfg.ServiceIdentifier,
+					Type:              cfg.TracerType,
+					OtelEndpoint:      cfg.OtelEndpoint,
+				})
+			},
+			func(cfg *config.UserServiceConfig) *encryption.AESEncryptionConfig {
+				return &encryption.AESEncryptionConfig{
+					AppSecret: cfg.AppSecret,
 				}
 			},
+			func(cfg *config.UserServiceConfig) *jwt_util.JwtUtilConfig {
+				return &jwt_util.JwtUtilConfig{
+					AppJwtAudiences:    cfg.AppJwtAudiences,
+					ServiceHttpBaseUrl: cfg.ServiceHttpBaseUrl,
+				}
+			},
+			func(p database.DatabaseParam, cfg *config.UserServiceConfig) (database.DatabaseResult, error) {
+				return database.NewDatabase(p, &database.DatabaseConfig{
+					Env:                   cfg.Env,
+					DbHost:                cfg.DbHost,
+					DbPort:                cfg.DbPort,
+					DbUser:                cfg.DbUser,
+					DbPassword:            cfg.DbPassword,
+					DbName:                cfg.DbName,
+					DbMaxIdleConn:         cfg.DbMaxIdleConn,
+					DbMaxOpenConn:         cfg.DbMaxOpenConn,
+					DbMaxLifetimeInMinute: cfg.DbMaxLifetimeInMinute,
+				})
+			},
+			func(cfg *config.UserServiceConfig) (*cache.Redis, error) {
+				return cache.NewRedis(&cache.RedisConfig{
+					RedisHost: cfg.RedisHost,
+					RedisPort: cfg.RedisPort,
+					RedisPass: cfg.RedisPass,
+				})
+			},
 		),
-		config.ConfigModule,
-
-		// Libraries
-		logger.LoggerModule,
-		tracer.TracerModule,
-		metrics.MetricsModule,
 		error_pkg.ErrorModule,
 		util.UtilModule,
-		fx.Provide(
-			kafka.NewKafkaProducer,
-		),
+		metrics.MetricsModule,
 
 		// CORE
 		service.ServiceModule,
 
-		// INFRA (DRIVEN)
-		database.DatabaseModule,
-		cache.RedisModule,
-		mail.MailerModule,
-		messaging.MessagingModule,
+		// DRIVEN
 		driven.DrivenModule,
 
 		// API (DRIVER)
-		http_pkg.HttpModule,
 		http_driver.HttpModule,
+		kafka_driver.KafkaConsumerModule,
 	}
 
 	// Override dependencies

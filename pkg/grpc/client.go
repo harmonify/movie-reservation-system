@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/harmonify/movie-reservation-system/pkg/config"
+	"github.com/go-playground/validator/v10"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/sdk/metric"
@@ -17,10 +17,6 @@ import (
 type GrpcClient struct {
 	Conn   *grpc.ClientConn
 	logger logger.Logger
-}
-
-type ClientConfig struct {
-	Address string
 }
 
 // see https://github.com/grpc/grpc/blob/master/doc/service_config.md to know more about service config
@@ -42,15 +38,18 @@ type GrpcClientParam struct {
 	fx.In
 	fx.Lifecycle
 
-	Config *config.Config
 	Logger logger.Logger
 }
 
 type GrpcClientConfig struct {
-	Address string
+	Address string `validate:"required,hostname_rfc1123"`
 }
 
-func NewGrpcClient(p GrpcClientParam, c *GrpcClientConfig) (*GrpcClient, error) {
+func NewGrpcClient(p GrpcClientParam, cfg *GrpcClientConfig) (*GrpcClient, error) {
+	if err := validator.New(validator.WithRequiredStructEnabled()).Struct(cfg); err != nil {
+		return nil, err
+	}
+
 	exporter, err := prometheus.New()
 	if err != nil {
 		p.Logger.Error(fmt.Sprintf("Failed to start prometheus exporter: %v", err))
@@ -60,7 +59,7 @@ func NewGrpcClient(p GrpcClientParam, c *GrpcClientConfig) (*GrpcClient, error) 
 
 	// Create a connection with timeout and other options
 	conn, err := grpc.NewClient(
-		c.Address,
+		cfg.Address,
 		grpc.WithDefaultServiceConfig(defaultServiceConfig),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		opentelemetry.DialOption(opentelemetry.Options{MetricsOptions: opentelemetry.MetricsOptions{MeterProvider: provider}}),
@@ -75,7 +74,7 @@ func NewGrpcClient(p GrpcClientParam, c *GrpcClientConfig) (*GrpcClient, error) 
 		return conn.Close()
 	}))
 
-	p.Logger.Info(fmt.Sprintf("Connected to gRPC server at %s", c.Address))
+	p.Logger.Info(fmt.Sprintf("Connected to gRPC server at %s", cfg.Address))
 
 	return &GrpcClient{
 		Conn: conn,

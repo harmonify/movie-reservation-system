@@ -10,7 +10,7 @@ import (
 	"strconv"
 
 	"github.com/harmonify/movie-reservation-system/notification-service/internal/core/shared"
-	"github.com/harmonify/movie-reservation-system/pkg/config"
+	"github.com/harmonify/movie-reservation-system/notification-service/internal/driven/config"
 	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
@@ -27,7 +27,7 @@ type (
 	MailgunEmailProviderParam struct {
 		fx.In
 
-		Config *config.Config
+		Config *config.NotificationServiceConfig
 		Logger logger.Logger
 		Tracer tracer.Tracer
 	}
@@ -39,7 +39,7 @@ type (
 	}
 
 	mailgunEmailProviderImpl struct {
-		cfg    *config.Config
+		cfg    *config.NotificationServiceConfig
 		logger logger.Logger
 		tracer tracer.Tracer
 		mg     mailgun.Mailgun // https://github.com/mailgun/mailgun-go/blob/master/examples/examples.go

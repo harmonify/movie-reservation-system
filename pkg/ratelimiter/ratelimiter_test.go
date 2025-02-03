@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/harmonify/movie-reservation-system/pkg/cache"
-	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/ratelimiter"
 	"github.com/stretchr/testify/suite"
@@ -29,7 +28,7 @@ func TestRateLimiterRegistryTestSuite(t *testing.T) {
 }
 
 func (s *RateLimiterRegistryTestSuite) SetupSuite() {
-	app, rateLimiterRegistry, err := createNewRegistry()
+	app, rateLimiterRegistry, err := createNewRegistry(s.T())
 	if err != nil {
 		s.T().Fatal(">> App failed to start. Error:", err)
 	}
@@ -154,7 +153,7 @@ func (s *RateLimiterRegistryTestSuite) TestRateLimiterRegistry_GetHttpRequestRat
 }
 
 func (s *RateLimiterRegistryTestSuite) TestRateLimiter_Len() {
-	app, rateLimiterRegistry, err := createNewRegistry()
+	app, rateLimiterRegistry, err := createNewRegistry(s.T())
 	defer app.Done()
 
 	s.Require().NoError(err)
@@ -244,22 +243,14 @@ func (s *RateLimiterRegistryTestSuite) TestRateLimiter_Len() {
 // 	return context.Background()
 // }
 
-func createNewRegistry() (*fx.App, ratelimiter.RateLimiterRegistry, error) {
+func createNewRegistry(t *testing.T) (*fx.App, ratelimiter.RateLimiterRegistry, error) {
 	var registry ratelimiter.RateLimiterRegistry
 
 	app := fx.New(
 		fx.Provide(
-			func() *config.Config {
-				return &config.Config{
-					Env:                "test",
-					AppSecret:          "1233334556905407",
+			func() *ratelimiter.RateLimiterConfig {
+				return &ratelimiter.RateLimiterConfig{
 					ServiceIdentifier:  "user-service",
-					ServiceHttpBaseUrl: "http://localhost:8080",
-					LogLevel:           "debug",
-					LogType:            "console",
-					RedisHost:          "localhost",
-					RedisPort:          "6379",
-					RedisPass:          "secret",
 				}
 			},
 			func() *ratelimiter.RateLimiterConfig {
@@ -268,8 +259,16 @@ func createNewRegistry() (*fx.App, ratelimiter.RateLimiterRegistry, error) {
 					RefillRate: 3 * time.Second,
 				}
 			},
+			func () logger.Logger {
+				l, err := logger.NewLogger(&logger.LoggerConfig{
+					LogLevel: "debug",
+				})
+				if err != nil {
+					t.Fatal("Failed to create logger")
+				}
+				return l
+			},
 		),
-		logger.LoggerModule,
 		cache.RedisModule,
 		ratelimiter.RateLimiterModule,
 		fx.Invoke(

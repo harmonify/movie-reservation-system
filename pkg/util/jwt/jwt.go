@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/harmonify/movie-reservation-system/pkg/config"
 	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	"github.com/harmonify/movie-reservation-system/pkg/util/encryption"
 )
@@ -47,26 +47,22 @@ type jwtUtilImpl struct {
 }
 
 type JwtUtilConfig struct {
-	AppJwtAudiences    string
-	ServiceHttpBaseUrl string
+	AppJwtAudiences    string `validate:"required"`
+	ServiceHttpBaseUrl string `validate:"required"`
 }
 
 func NewJwtUtil(
 	encryption *encryption.Encryption,
-	config *config.Config,
+	cfg *JwtUtilConfig,
 ) (JwtUtil, error) {
-	if config.AppJwtAudiences == "" {
-		return nil, fmt.Errorf("AppJwtAudiences is empty")
+	if err := validator.New(validator.WithRequiredStructEnabled()).Struct(cfg); err != nil {
+		return nil, err
 	}
-	if config.ServiceHttpBaseUrl == "" {
-		return nil, fmt.Errorf("ServiceHttpBaseUrl is empty")
-	}
-
 	return &jwtUtilImpl{
 		encryption: encryption,
 		config: &JwtUtilConfig{
-			AppJwtAudiences:    config.AppJwtAudiences,
-			ServiceHttpBaseUrl: config.ServiceHttpBaseUrl,
+			AppJwtAudiences:    cfg.AppJwtAudiences,
+			ServiceHttpBaseUrl: cfg.ServiceHttpBaseUrl,
 		},
 	}, nil
 }

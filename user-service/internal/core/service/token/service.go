@@ -6,13 +6,13 @@ import (
 	"encoding/base64"
 	"time"
 
-	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
 	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/config"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -30,7 +30,7 @@ type (
 
 		Logger             logger.Logger
 		Tracer             tracer.Tracer
-		Config             *config.Config
+		Config             *config.UserServiceConfig
 		Util               *util.Util
 		UserSessionStorage shared.UserSessionStorage
 	}
@@ -44,7 +44,7 @@ type (
 	tokenServiceImpl struct {
 		logger             logger.Logger
 		tracer             tracer.Tracer
-		config             *config.Config
+		config             *config.UserServiceConfig
 		util               *util.Util
 		userSessionStorage shared.UserSessionStorage
 

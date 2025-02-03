@@ -6,7 +6,7 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/dnwe/otelsarama"
-	"github.com/harmonify/movie-reservation-system/pkg/config"
+	"github.com/go-playground/validator/v10"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"go.uber.org/fx"
@@ -24,19 +24,27 @@ type KafkaProducerParam struct {
 	fx.In
 	fx.Lifecycle
 
-	Config *config.Config
 	Logger logger.Logger
 	Tracer tracer.Tracer
 }
 
+type KafkaProducerConfig struct {
+	*KafkaConfig
+	KafkaBrokers string `validate:"required"`
+}
+
 // NewKafkaProducer initializes the Kafka producer.
-func NewKafkaProducer(p KafkaProducerParam) (*KafkaProducer, error) {
-	kafkaConfig, err := buildKafkaConfig(p.Config)
+func NewKafkaProducer(p KafkaProducerParam, cfg *KafkaProducerConfig) (*KafkaProducer, error) {
+	if err := validator.New(validator.WithRequiredStructEnabled()).Struct(cfg); err != nil {
+		return nil, err
+	}
+
+	kafkaConfig, err := BuildKafkaConfig(cfg.KafkaConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	client, err := sarama.NewSyncProducer(strings.Split(p.Config.KafkaBrokers, ","), kafkaConfig)
+	client, err := sarama.NewSyncProducer(strings.Split(cfg.KafkaBrokers, ","), kafkaConfig)
 	if err != nil {
 		return nil, err
 	}

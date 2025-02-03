@@ -14,15 +14,13 @@ type nopTracerImpl struct {
 	propagator propagation.TextMapPropagator
 }
 
-func NewNopTracer(p TracerParam) TracerResult {
-	return TracerResult{
-		Tracer: &nopTracerImpl{
-			tracer: noop.NewTracerProvider().Tracer(p.Config.ServiceIdentifier),
-			propagator: propagation.NewCompositeTextMapPropagator(
-				propagation.TraceContext{},
-				propagation.Baggage{},
-			),
-		},
+func NewNopTracer(cfg *TracerConfig) Tracer {
+	return &nopTracerImpl{
+		tracer: noop.NewTracerProvider().Tracer(cfg.ServiceIdentifier),
+		propagator: propagation.NewCompositeTextMapPropagator(
+			propagation.TraceContext{},
+			propagation.Baggage{},
+		),
 	}
 }
 

@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/harmonify/movie-reservation-system/pkg/config"
 	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
@@ -49,17 +48,10 @@ type testExpectation struct {
 
 func (s *ResponseTestSuite) SetupSuite() {
 	s.app = fx.New(
-		logger.LoggerModule,
-		tracer.TracerModule,
 		error_pkg.ErrorModule,
 		fx.Provide(
-			func() *config.Config {
-				return &config.Config{
-					Env:      "test",
-					LogType:  "nop",
-					LogLevel: "debug",
-				}
-			},
+			logger.NewConsoleLogger,
+			tracer.NewConsoleTracer,
 			struct_util.NewStructUtil,
 			http_pkg.NewHttpResponse,
 		),

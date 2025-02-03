@@ -10,6 +10,7 @@ import (
 	grpc_pkg "github.com/harmonify/movie-reservation-system/pkg/grpc"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -29,6 +30,7 @@ func RegisterNotificationServiceServer(
 }
 
 type NotificationServiceServerParam struct {
+	fx.In
 	Logger               logger.Logger
 	Tracer               tracer.Tracer
 	ErrorMapper          error_pkg.ErrorMapper

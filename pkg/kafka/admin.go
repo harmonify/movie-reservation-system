@@ -5,10 +5,9 @@ import (
 	"strings"
 
 	"github.com/IBM/sarama"
-	"go.uber.org/fx"
-
-	"github.com/harmonify/movie-reservation-system/pkg/config"
+	"github.com/go-playground/validator/v10"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
+	"go.uber.org/fx"
 )
 
 // KafkaAdmin wraps a Sarama ClusterAdmin.
@@ -18,9 +17,18 @@ type KafkaAdmin struct {
 	logger logger.Logger
 }
 
+type KafkaAdminConfig struct {
+	*KafkaConfig
+	KafkaBrokers string `validate:"required"`
+}
+
 // NewKafkaAdmin initializes the Kafka admin.
-func NewKafkaAdmin(lc fx.Lifecycle, cfg *config.Config, logger logger.Logger) (*KafkaAdmin, error) {
-	kafkaConfig, err := buildKafkaConfig(cfg)
+func NewKafkaAdmin(lc fx.Lifecycle, cfg *KafkaAdminConfig, logger logger.Logger) (*KafkaAdmin, error) {
+	if err := validator.New(validator.WithRequiredStructEnabled()).Struct(cfg); err != nil {
+		return nil, err
+	}
+
+	kafkaConfig, err := BuildKafkaConfig(cfg.KafkaConfig)
 	if err != nil {
 		return nil, err
 	}

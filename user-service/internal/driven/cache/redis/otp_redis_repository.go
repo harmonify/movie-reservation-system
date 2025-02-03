@@ -7,12 +7,12 @@ import (
 	"strconv"
 
 	"github.com/harmonify/movie-reservation-system/pkg/cache"
-	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
 	otp_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/otp"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/config"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -26,7 +26,7 @@ type (
 		Logger logger.Logger
 		Tracer tracer.Tracer
 		Util   *util.Util
-		Config *config.Config
+		Config *config.UserServiceConfig
 	}
 
 	OtpRedisRepositoryResult struct {

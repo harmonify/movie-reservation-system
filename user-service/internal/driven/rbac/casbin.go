@@ -7,11 +7,11 @@ import (
 
 	"github.com/casbin/casbin/v2"
 	gormadapter "github.com/casbin/gorm-adapter/v3"
-	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/database"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/config"
 	"go.uber.org/fx"
 )
 
@@ -22,7 +22,7 @@ type (
 		Database *database.Database
 		Tracer   tracer.Tracer
 		Logger   logger.Logger
-		Config   *config.Config
+		Config   *config.UserServiceConfig
 	}
 
 	CasbinResult struct {
@@ -35,7 +35,7 @@ type (
 		enforcer *casbin.Enforcer
 		tracer   tracer.Tracer
 		logger   logger.Logger
-		config   *config.Config
+		config   *config.UserServiceConfig
 	}
 )
 

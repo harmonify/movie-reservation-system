@@ -4,9 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
-
-	generator_util "github.com/harmonify/movie-reservation-system/pkg/util/generator"
-	"go.uber.org/fx"
 )
 
 var (
@@ -18,18 +15,6 @@ type SHA256Hasher interface {
 	Compare(hash, value string) (bool, error)
 }
 
-type SHA256HasherParam struct {
-	fx.In
-
-	GeneratorUtil generator_util.GeneratorUtil
-}
-
-type SHA256HasherResult struct {
-	fx.Out
-
-	SHA256Hasher SHA256Hasher
-}
-
 type sha256HasherImpl struct {
 	Memory      uint32
 	Iterations  uint32
@@ -38,10 +23,8 @@ type sha256HasherImpl struct {
 	KeyLength   uint32
 }
 
-func NewSHA256Hasher(p SHA256HasherParam) SHA256HasherResult {
-	return SHA256HasherResult{
-		SHA256Hasher: &sha256HasherImpl{},
-	}
+func NewSHA256Hasher() SHA256Hasher {
+	return &sha256HasherImpl{}
 }
 
 func (h *sha256HasherImpl) Hash(value string) (string, error) {

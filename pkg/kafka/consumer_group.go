@@ -7,7 +7,7 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/dnwe/otelsarama"
-	"github.com/harmonify/movie-reservation-system/pkg/config"
+	"github.com/go-playground/validator/v10"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -20,9 +20,19 @@ type KafkaConsumerGroup struct {
 	logger logger.Logger
 }
 
+type KafkaConsumerGroupConfig struct {
+	*KafkaConfig
+	KafkaBrokers       string `validate:"required"`
+	KafkaConsumerGroup string `validate:"required"`
+}
+
 // NewKafkaConsumerGroup initializes the Kafka consumer.
-func NewKafkaConsumerGroup(lc fx.Lifecycle, cfg *config.Config, logger logger.Logger) (*KafkaConsumerGroup, error) {
-	kafkaConfig, err := buildKafkaConfig(cfg)
+func NewKafkaConsumerGroup(lc fx.Lifecycle, cfg *KafkaConsumerGroupConfig, logger logger.Logger) (*KafkaConsumerGroup, error) {
+	if err := validator.New(validator.WithRequiredStructEnabled()).Struct(cfg); err != nil {
+		return nil, err
+	}
+
+	kafkaConfig, err := BuildKafkaConfig(cfg.KafkaConfig)
 	if err != nil {
 		return nil, err
 	}

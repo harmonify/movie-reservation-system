@@ -24,8 +24,7 @@ type lokiPusherImpl struct {
 
 func newLokiPusher(cfg *LokiZapConfig) *lokiPusherImpl {
 	c := &http.Client{}
-	cfg.Url = strings.TrimSuffix(cfg.Url, "/")
-	cfg.Url = fmt.Sprintf("%s/loki/api/v1/push", cfg.Url)
+	cfg.Url = fmt.Sprintf("%s/loki/api/v1/push", strings.TrimSuffix(cfg.Url, "/"))
 
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
 

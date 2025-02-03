@@ -1,18 +1,22 @@
 package grpc_driver
 
 import (
-	// email_grpc "github.com/harmonify/movie-reservation-system/notification-service/internal/driver/grpc/email"
-	"go.uber.org/fx"
+	"github.com/harmonify/movie-reservation-system/notification-service/internal/driven/config"
 	grpc_pkg "github.com/harmonify/movie-reservation-system/pkg/grpc"
+	"go.uber.org/fx"
 )
 
 var (
 	GrpcModule = fx.Module(
 		"grpc-driver",
-		grpc_pkg.GrpcModule,
+		fx.Provide(
+			func(p grpc_pkg.GrpcServerParam, cfg *config.NotificationServiceConfig) (grpc_pkg.GrpcServerResult, error) {
+				return grpc_pkg.NewGrpcServer(p, &grpc_pkg.GrpcServerConfig{
+					GrpcPort: cfg.GrpcPort,
+				})
+			},
+			NewNotificationServiceServer,
+		),
 		fx.Invoke(RegisterNotificationServiceServer),
-		fx.Invoke(BootstrapGrpcServer),
 	)
 )
-
-func BootstrapGrpcServer(h *grpc_pkg.GrpcServer) {}

@@ -7,11 +7,10 @@ type (
 	Route interface {
 		// Identifier returns the route identifier. This identifier is useful for error debugging
 		Identifier() string
-		// Decode decodes incoming message value
-		Decode(ctx context.Context, value []byte) (interface{}, error)
-		// Match determines if the route should handle the incoming event (message that has been decoded)
+		// Match determines if the route should handle the incoming event.
+		// Match should return true if the route should handle the incoming event.
 		Match(ctx context.Context, event *Event) (bool, error)
-		// Handle handles the incoming event. If the function returned an error, the router will NOT mark the incoming message as read.
+		// Handle handles the incoming event. If Handle returned an error, the router will mark the incoming message as read and send it to DLQ.
 		Handle(ctx context.Context, event *Event) error
 		// AddEventListener adds listener that will be triggered on incoming event. Mainly used for testing purposes.
 		AddEventListener(listener EventListener)

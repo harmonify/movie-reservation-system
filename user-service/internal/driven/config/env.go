@@ -1,7 +1,7 @@
 package config
 
-type Config struct {
-	Env string `mapstructure:"ENV" validate:"required,oneof=development staging production"`
+type UserServiceConfig struct {
+	Env string `mapstructure:"ENV" validate:"required,oneof=dev test prod"`
 
 	AppName                   string `mapstructure:"APP_NAME" validate:"required"`
 	AppDefaultCountryDialCode string `mapstructure:"APP_DEFAULT_COUNTRY_DIAL_CODE"`
@@ -14,7 +14,7 @@ type Config struct {
 	ServiceHttpBasePath     string `mapstructure:"SERVICE_HTTP_BASE_PATH" validate:"required"`
 	ServiceHttpReadTimeOut  string `mapstructure:"SERVICE_HTTP_READ_TIMEOUT" validate:"required"`
 	ServiceHttpWriteTimeOut string `mapstructure:"SERVICE_HTTP_WRITE_TIMEOUT" validate:"required"`
-	ServiceHttpEnableCors   bool   `mapstructure:"SERVICE_HTTP_ENABLE_CORS" validate:"required,boolean"`
+	ServiceHttpEnableCors   bool   `mapstructure:"SERVICE_HTTP_ENABLE_CORS" validate:"boolean"`
 
 	FrontEndUrl string `mapstructure:"FRONTEND_URL"`
 
@@ -32,25 +32,19 @@ type Config struct {
 	RedisPort string `mapstructure:"REDIS_PORT"`
 	RedisPass string `mapstructure:"REDIS_PASS"`
 
-	GrpcPort                       string `mapstructure:"GRPC_PORT" validate:"numeric"`
-	NotificationServiceGrpcAddress string `mapstructure:"NOTIFICATION_SERVICE_GRPC_ADDRESS" validate:"required,url"`
+	GrpcPort                   string `mapstructure:"GRPC_PORT" validate:"numeric"`
+	GrpcNotificationServiceUrl string `mapstructure:"GRPC_NOTIFICATION_SERVICE_URL" validate:"required,url"`
 
-	KafkaBrokers       string `mapstructure:"KAFKA_BROKERS" validate:"required"`
-	KafkaVersion       string `mapstructure:"KAFKA_VERSION" validate:"required"`
-	KafkaConsumerGroup string `mapstructure:"KAFKA_CONSUMER_GROUP" validate:"required"`
+	KafkaBrokers               string `mapstructure:"KAFKA_BROKERS" validate:"required"`
+	KafkaVersion               string `mapstructure:"KAFKA_VERSION" validate:"required"`
+	KafkaConsumerGroup         string `mapstructure:"KAFKA_CONSUMER_GROUP" validate:"required"`
+	KafkaTopicUserRegisteredV1 string `mapstructure:"KAFKA_TOPIC_USER_REGISTERED_V1" validate:"required"`
 
 	LogType  string `mapstructure:"LOG_TYPE" validate:"required"`
 	LogLevel string `mapstructure:"LOG_LEVEL" validate:"required"`
 	LokiUrl  string `mapstructure:"LOKI_URL" validate:"required_if=LogType loki"`
 
+	TracerType   string `mapstructure:"TRACER_TYPE" validate:"required,oneof=jaeger console nop"`
 	OtelEndpoint string `mapstructure:"OTEL_ENDPOINT" validate:"required"`
 	OtelInsecure bool   `mapstructure:"OTEL_INSECURE" validate:"required,boolean"`
-
-	MailgunDefaultSender string `mapstructure:"MAILGUN_DEFAULT_SENDER"`
-	MailgunDomain        string `mapstructure:"MAILGUN_DOMAIN"`
-	MailgunApiKey        string `mapstructure:"MAILGUN_API_KEY"`
-
-	TwilioAccountSid string `mapstructure:"TWILIO_ACCOUNT_SID"`
-	TwilioAuthToken  string `mapstructure:"TWILIO_AUTH_TOKEN"`
-	TwilioServiceSID string `mapstructure:"TWILIO_SERVICE_SID"`
 }
