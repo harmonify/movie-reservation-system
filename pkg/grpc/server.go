@@ -40,7 +40,7 @@ type GrpcServer struct {
 }
 
 type GrpcServerConfig struct {
-	GrpcPort string `validate:"required,numeric,min=1024,max=65535"`
+	GrpcPort int `validate:"required,numeric,min=1024,max=65535"`
 }
 
 func NewGrpcServer(
@@ -88,13 +88,13 @@ func NewGrpcServer(
 
 func (g *GrpcServer) Start(ctx context.Context) error {
 	if g.getStarted() {
-		g.logger.WithCtx(ctx).Warn(fmt.Sprintf(">> gRPC server is already running on port: %s", g.cfg.GrpcPort))
+		g.logger.WithCtx(ctx).Warn(fmt.Sprintf(">> gRPC server is already running on port: %d", g.cfg.GrpcPort))
 		return nil
 	}
 
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%s", g.cfg.GrpcPort))
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", g.cfg.GrpcPort))
 	if err != nil {
-		g.logger.WithCtx(ctx).Error(fmt.Sprintf(">> gRPC server failed to listen on port %s. error: %s", g.cfg.GrpcPort, err.Error()))
+		g.logger.WithCtx(ctx).Error(fmt.Sprintf(">> gRPC server failed to listen on port %d. error: %v", g.cfg.GrpcPort, err.Error()))
 		return err
 	}
 
@@ -112,11 +112,11 @@ func (g *GrpcServer) Start(ctx context.Context) error {
 
 	time.Sleep(1 * time.Second)
 	if g.getStarted() {
-		g.logger.WithCtx(ctx).Info(fmt.Sprintf(">> gRPC server is running on port: %s", g.cfg.GrpcPort))
+		g.logger.WithCtx(ctx).Info(fmt.Sprintf(">> gRPC server is running on port: %d", g.cfg.GrpcPort))
 		return nil
 	} else {
-		g.logger.WithCtx(ctx).Error(fmt.Sprintf(">> gRPC server failed to start on port: %s", g.cfg.GrpcPort))
-		return fmt.Errorf("gRPC server failed to start on port: %s", g.cfg.GrpcPort)
+		g.logger.WithCtx(ctx).Error(fmt.Sprintf(">> gRPC server failed to start on port: %d", g.cfg.GrpcPort))
+		return fmt.Errorf("gRPC server failed to start on port: %d", g.cfg.GrpcPort)
 	}
 }
 

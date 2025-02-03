@@ -1,10 +1,11 @@
 package kafka_driver
 
 import (
-	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ThreeDotsLabs/watermill/message"
+	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	"github.com/harmonify/movie-reservation-system/pkg/kafka"
 	watermill_pkg "github.com/harmonify/movie-reservation-system/pkg/kafka/watermill"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
@@ -50,21 +51,16 @@ func (r *userRegisteredRouteImpl) Register(router *message.Router, subscriber me
 		r.Identifier(),
 		shared.PublicUserRegisteredV1.String(),
 		subscriber,
-		r.Handle,
+		r.handle,
 	)
 	return nil
 }
 
-func (r *userRegisteredRouteImpl) Match(ctx context.Context, event *kafka.Event) (bool, error) {
-	ctx, span := r.tracer.StartSpanWithCaller(ctx)
-	defer span.End()
-
-	return event.Topic == shared.PublicUserRegisteredV1.String(), nil
-}
-
-func (r *userRegisteredRouteImpl) Handle(message *message.Message) error {
+func (r *userRegisteredRouteImpl) handle(message *message.Message) error {
 	ctx, span := r.tracer.StartSpanWithCaller(message.Context())
 	defer span.End()
+
+	r.logger.WithCtx(ctx).Debug("Received UserRegistered event")
 
 	// Notify listeners
 	for _, listener := range r.listeners {
@@ -77,16 +73,26 @@ func (r *userRegisteredRouteImpl) Handle(message *message.Message) error {
 		return kafka.ErrMalformedMessage
 	}
 
-	r.logger.WithCtx(ctx).Debug("Received UserRegistered event", zap.Any("user_registered", val))
+	r.logger.WithCtx(ctx).Debug("UserRegistered event payload", zap.Any("user_registered", val))
 
 	// Send email verification link
 	err := r.otpService.SendEmailVerificationLink(ctx, otp_service.SendEmailVerificationLinkParam{
 		Name:  fmt.Sprintf("%s %s", val.GetFirstName(), val.GetLastName()),
 		Email: val.GetEmail(),
 	})
+	var ed *error_pkg.ErrorWithDetails
 	if err != nil {
-		r.logger.WithCtx(ctx).Error("Failed to send email verification link", zap.Error(err))
-		return err
+		if errors.As(err, &ed) {
+			if ed.Code == otp_service.OtpAlreadySentError.Code {
+				r.logger.WithCtx(ctx).Info("Email verification link already sent. Skipping sending email verification link")
+			} else {
+				r.logger.WithCtx(ctx).Error("Failed to send email verification link", zap.Error(err), zap.Object("ed", ed))
+				return err
+			}
+		} else {
+			r.logger.WithCtx(ctx).Error("Failed to send email verification link", zap.Error(err))
+			return err
+		}
 	}
 
 	return nil

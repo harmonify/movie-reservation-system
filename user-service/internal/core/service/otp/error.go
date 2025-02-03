@@ -50,8 +50,8 @@ var (
 		Message:  "Your OTP may be expired. Please try to request a new OTP.",
 	}
 
-	OtpAlreadyExistError = &error_pkg.ErrorWithDetails{
-		Code:     "OTP_ALREADY_EXIST",
+	OtpAlreadySentError = &error_pkg.ErrorWithDetails{
+		Code:     "OTP_ALREADY_SENT",
 		HttpCode: http.StatusTooManyRequests,
 		GrpcCode: codes.ResourceExhausted,
 		Message:  "OTP is already sent to your inbox. Please try again later.",

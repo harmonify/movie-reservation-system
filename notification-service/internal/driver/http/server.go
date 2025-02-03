@@ -42,7 +42,7 @@ type HttpServerConfig struct {
 	ServiceHttpBasePath     string `validate:"required"`
 	ServiceHttpReadTimeOut  string `validate:"required"`
 	ServiceHttpWriteTimeOut string `validate:"required"`
-	ServiceHttpEnableCors   bool   `validate:"required,boolean"`
+	ServiceHttpEnableCors   bool   `validate:"boolean"`
 }
 
 type HttpServerParam struct {

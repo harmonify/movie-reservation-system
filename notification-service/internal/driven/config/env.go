@@ -18,7 +18,7 @@ type NotificationServiceConfig struct {
 
 	FrontEndUrl string `mapstructure:"FRONTEND_URL" validate:"required,url"`
 
-	GrpcPort string `mapstructure:"GRPC_PORT" validate:"numeric"`
+	GrpcPort int `mapstructure:"GRPC_PORT" validate:"required,numeric,min=1024,max=65535"`
 
 	KafkaBrokers               string `mapstructure:"KAFKA_BROKERS" validate:"required"`
 	KafkaVersion               string `mapstructure:"KAFKA_VERSION" validate:"required"`

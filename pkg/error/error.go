@@ -5,6 +5,7 @@ import (
 	"runtime"
 	"strings"
 
+	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc/codes"
 )
 
@@ -31,6 +32,14 @@ func (e *ErrorWithDetails) Error() string {
 func (e *ErrorWithDetails) As(target interface{}) bool {
 	_, ok := target.(*ErrorWithDetails)
 	return ok
+}
+
+func (e *ErrorWithDetails) MarshalLogObject(encoder zapcore.ObjectEncoder) error {
+	encoder.AddString("code", e.Code.String())
+	encoder.AddInt("http_code", e.HttpCode)
+	encoder.AddString("grpc_code", e.GrpcCode.String())
+	encoder.AddString("message", e.Message)
+	return encoder.AddReflected("data", e.Data)
 }
 
 type ErrorWithStack struct {
@@ -66,6 +75,21 @@ func (e *ErrorWithStack) As(target interface{}) bool {
 
 func (e *ErrorWithStack) Unwrap() error {
 	return e.ErrorWithDetails
+}
+
+func (e *ErrorWithStack) MarshalLogObject(encoder zapcore.ObjectEncoder) error {
+	encoder.AddString("source", e.Source)
+	encoder.AddString("fn", e.Fn)
+	encoder.AddInt("line", e.Line)
+	encoder.AddString("path", e.Path)
+	encoder.AddString("error", e.Error())
+	if err := encoder.AddReflected("stack", e.Stack); err != nil {
+		return err
+	}
+	if err := encoder.AddObject("details", e.ErrorWithDetails); err != nil {
+		return err
+	}
+	return nil
 }
 
 func getSource(pc uintptr, file string, line int, ok bool) (source string, fn string, ln int, path string, stack []string) {

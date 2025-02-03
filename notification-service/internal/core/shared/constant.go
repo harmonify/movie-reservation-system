@@ -9,6 +9,9 @@ import (
 )
 
 const (
+	EmailTypeHtml  EmailType = "html"
+	EmailTypePlain EmailType = "plain"
+
 	EmailVerificationTemplateId EmailTemplateId = "email-verification"
 )
 
@@ -47,6 +50,12 @@ func getCurrentFilePath() string {
 		panic(fmt.Sprintf("failed to retrieve correct path"))
 	}
 	return file
+}
+
+type EmailType string
+
+func (p EmailType) String() string {
+	return string(p)
 }
 
 type EmailTemplateId string

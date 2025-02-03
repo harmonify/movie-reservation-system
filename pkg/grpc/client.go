@@ -42,7 +42,7 @@ type GrpcClientParam struct {
 }
 
 type GrpcClientConfig struct {
-	Address string `validate:"required,hostname_rfc1123"`
+	Address string `validate:"required"`
 }
 
 func NewGrpcClient(p GrpcClientParam, cfg *GrpcClientConfig) (*GrpcClient, error) {

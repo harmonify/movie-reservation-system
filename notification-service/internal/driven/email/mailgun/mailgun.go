@@ -68,12 +68,8 @@ func (m *mailgunEmailProviderImpl) Send(ctx context.Context, message shared.Emai
 	ctx, span := m.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	_, id, err := m.mg.Send(m.mg.NewMessage(
-		m.cfg.MailgunDefaultSender,
-		message.Subject,
-		message.Body,
-		message.Recipients...,
-	))
+	msg := m.constructMessage(message)
+	_, id, err := m.mg.Send(msg)
 	if err != nil {
 		// Check for HTTP 429 error
 		var httpErr *mailgun.UnexpectedResponseError
@@ -120,4 +116,28 @@ func (m *mailgunEmailProviderImpl) extractRetryAfter(message string) (int, error
 	}
 
 	return retryAfter, nil
+}
+
+func (m *mailgunEmailProviderImpl) constructMessage(message shared.EmailMessage) *mailgun.Message {
+	var msg *mailgun.Message
+
+	switch message.Type {
+	case shared.EmailTypeHtml:
+		msg = m.mg.NewMessage(
+			m.cfg.MailgunDefaultSender,
+			message.Subject,
+			"",
+			message.Recipients...,
+		)
+		msg.SetHtml(message.Body)
+	default:
+		msg = m.mg.NewMessage(
+			m.cfg.MailgunDefaultSender,
+			message.Subject,
+			message.Body,
+			message.Recipients...,
+		)
+	}
+
+	return msg
 }

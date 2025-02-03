@@ -21,7 +21,7 @@ type DatabaseResult struct {
 }
 
 type DatabaseConfig struct {
-	Env                   string `validate:"required,oneof=development testing staging production"`
+	Env                   string `validate:"required,oneof=dev test prod"`
 	DbHost                string `validate:"required"`
 	DbPort                int    `validate:"required,min=1,max=65535"`
 	DbUser                string `validate:"required"`

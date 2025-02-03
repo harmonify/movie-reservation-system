@@ -90,7 +90,7 @@ func (s *otpServiceImpl) SendEmailVerificationLink(ctx context.Context, p SendEm
 		return error_pkg.InternalServerError
 	}
 	if savedToken != "" {
-		return OtpAlreadyExistError
+		return OtpAlreadySentError
 	}
 
 	token, err := s.util.GeneratorUtil.GenerateRandomHex(32)
@@ -99,9 +99,7 @@ func (s *otpServiceImpl) SendEmailVerificationLink(ctx context.Context, p SendEm
 		return error_pkg.InternalServerError
 	}
 
-	// TODO ERROR
-	var templateData *anypb.Any
-	err = templateData.MarshalFrom(&notification_proto.EmailVerificationTemplateData{
+	templateData, err := anypb.New(&notification_proto.EmailVerificationTemplateData{
 		Name:             p.Name,
 		VerificationLink: s.constructEmailVerificationLink(p.Email, token),
 	})
@@ -171,7 +169,7 @@ func (s *otpServiceImpl) SendPhoneOtp(ctx context.Context, p SendPhoneOtpParam) 
 		return error_pkg.InternalServerError
 	}
 	if savedOtp != "" {
-		return OtpAlreadyExistError
+		return OtpAlreadySentError
 	}
 
 	otp, err := s.util.GeneratorUtil.GenerateRandomNumber(6)

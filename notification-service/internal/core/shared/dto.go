@@ -5,6 +5,7 @@ type (
 		Recipients []string // emails
 		Subject    string
 		Body       string
+		Type       EmailType // html or plain, default is plain
 	}
 
 	SmsMessage struct {

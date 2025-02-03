@@ -94,8 +94,8 @@ func (s *notificationServiceServerImpl) SendEmail(
 		return nil, s.errorMapper.ToGrpcError(shared.InvalidTemplateIdError)
 	}
 
-	var tmplData *notification_proto.EmailVerificationTemplateData
-	if err := anypb.UnmarshalTo(req.GetTemplateData(), tmplData, proto.UnmarshalOptions{}); err != nil {
+	tmplData, err := anypb.UnmarshalNew(req.GetTemplateData(), proto.UnmarshalOptions{})
+	if err != nil {
 		s.logger.WithCtx(ctx).Error("Failed to unmarshal email template data proto", zap.Error(err))
 		return nil, s.errorMapper.ToGrpcError(shared.InvalidTemplateDataError)
 	}
@@ -109,6 +109,7 @@ func (s *notificationServiceServerImpl) SendEmail(
 		Recipients: req.GetRecipients(),
 		Subject:    req.GetSubject(),
 		Body:       content,
+		Type:       shared.EmailTypeHtml,
 	})
 	if err != nil {
 		return nil, s.errorMapper.ToGrpcError(err)

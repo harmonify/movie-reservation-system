@@ -46,7 +46,7 @@ var (
 				otp_service.VerificationTokenInvalidError,
 				otp_service.SendOtpFailedError,
 				otp_service.OtpNotFoundError,
-				otp_service.OtpAlreadyExistError,
+				otp_service.OtpAlreadySentError,
 				otp_service.OtpInvalidError,
 				otp_service.OtpTooManyAttemptError,
 			)
