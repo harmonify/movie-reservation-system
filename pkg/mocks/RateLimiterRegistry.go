@@ -20,9 +20,9 @@ func (_m *RateLimiterRegistry) EXPECT() *RateLimiterRegistry_Expecter {
 	return &RateLimiterRegistry_Expecter{mock: &_m.Mock}
 }
 
-// GetHttpRequestRateLimiter provides a mock function with given fields: p
-func (_m *RateLimiterRegistry) GetHttpRequestRateLimiter(p ratelimiter.HttpRequestRateLimiterParam) (ratelimiter.RateLimiter, error) {
-	ret := _m.Called(p)
+// GetHttpRequestRateLimiter provides a mock function with given fields: p, c
+func (_m *RateLimiterRegistry) GetHttpRequestRateLimiter(p *ratelimiter.HttpRequestRateLimiterParam, c *ratelimiter.RateLimiterConfig) (ratelimiter.RateLimiter, error) {
+	ret := _m.Called(p, c)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetHttpRequestRateLimiter")
@@ -30,19 +30,19 @@ func (_m *RateLimiterRegistry) GetHttpRequestRateLimiter(p ratelimiter.HttpReque
 
 	var r0 ratelimiter.RateLimiter
 	var r1 error
-	if rf, ok := ret.Get(0).(func(ratelimiter.HttpRequestRateLimiterParam) (ratelimiter.RateLimiter, error)); ok {
-		return rf(p)
+	if rf, ok := ret.Get(0).(func(*ratelimiter.HttpRequestRateLimiterParam, *ratelimiter.RateLimiterConfig) (ratelimiter.RateLimiter, error)); ok {
+		return rf(p, c)
 	}
-	if rf, ok := ret.Get(0).(func(ratelimiter.HttpRequestRateLimiterParam) ratelimiter.RateLimiter); ok {
-		r0 = rf(p)
+	if rf, ok := ret.Get(0).(func(*ratelimiter.HttpRequestRateLimiterParam, *ratelimiter.RateLimiterConfig) ratelimiter.RateLimiter); ok {
+		r0 = rf(p, c)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(ratelimiter.RateLimiter)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(ratelimiter.HttpRequestRateLimiterParam) error); ok {
-		r1 = rf(p)
+	if rf, ok := ret.Get(1).(func(*ratelimiter.HttpRequestRateLimiterParam, *ratelimiter.RateLimiterConfig) error); ok {
+		r1 = rf(p, c)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -56,14 +56,15 @@ type RateLimiterRegistry_GetHttpRequestRateLimiter_Call struct {
 }
 
 // GetHttpRequestRateLimiter is a helper method to define mock.On call
-//   - p ratelimiter.HttpRequestRateLimiterParam
-func (_e *RateLimiterRegistry_Expecter) GetHttpRequestRateLimiter(p interface{}) *RateLimiterRegistry_GetHttpRequestRateLimiter_Call {
-	return &RateLimiterRegistry_GetHttpRequestRateLimiter_Call{Call: _e.mock.On("GetHttpRequestRateLimiter", p)}
+//   - p *ratelimiter.HttpRequestRateLimiterParam
+//   - c *ratelimiter.RateLimiterConfig
+func (_e *RateLimiterRegistry_Expecter) GetHttpRequestRateLimiter(p interface{}, c interface{}) *RateLimiterRegistry_GetHttpRequestRateLimiter_Call {
+	return &RateLimiterRegistry_GetHttpRequestRateLimiter_Call{Call: _e.mock.On("GetHttpRequestRateLimiter", p, c)}
 }
 
-func (_c *RateLimiterRegistry_GetHttpRequestRateLimiter_Call) Run(run func(p ratelimiter.HttpRequestRateLimiterParam)) *RateLimiterRegistry_GetHttpRequestRateLimiter_Call {
+func (_c *RateLimiterRegistry_GetHttpRequestRateLimiter_Call) Run(run func(p *ratelimiter.HttpRequestRateLimiterParam, c *ratelimiter.RateLimiterConfig)) *RateLimiterRegistry_GetHttpRequestRateLimiter_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(ratelimiter.HttpRequestRateLimiterParam))
+		run(args[0].(*ratelimiter.HttpRequestRateLimiterParam), args[1].(*ratelimiter.RateLimiterConfig))
 	})
 	return _c
 }
@@ -73,7 +74,7 @@ func (_c *RateLimiterRegistry_GetHttpRequestRateLimiter_Call) Return(_a0 ratelim
 	return _c
 }
 
-func (_c *RateLimiterRegistry_GetHttpRequestRateLimiter_Call) RunAndReturn(run func(ratelimiter.HttpRequestRateLimiterParam) (ratelimiter.RateLimiter, error)) *RateLimiterRegistry_GetHttpRequestRateLimiter_Call {
+func (_c *RateLimiterRegistry_GetHttpRequestRateLimiter_Call) RunAndReturn(run func(*ratelimiter.HttpRequestRateLimiterParam, *ratelimiter.RateLimiterConfig) (ratelimiter.RateLimiter, error)) *RateLimiterRegistry_GetHttpRequestRateLimiter_Call {
 	_c.Call.Return(run)
 	return _c
 }

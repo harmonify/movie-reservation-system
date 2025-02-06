@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -20,9 +22,9 @@ func (_m *JwtUtil) EXPECT() *JwtUtil_Expecter {
 	return &JwtUtil_Expecter{mock: &_m.Mock}
 }
 
-// JWTSign provides a mock function with given fields: payload
-func (_m *JwtUtil) JWTSign(payload jwt_util.JWTSignParam) (string, error) {
-	ret := _m.Called(payload)
+// JWTSign provides a mock function with given fields: ctx, payload
+func (_m *JwtUtil) JWTSign(ctx context.Context, payload jwt_util.JWTSignParam) (string, error) {
+	ret := _m.Called(ctx, payload)
 
 	if len(ret) == 0 {
 		panic("no return value specified for JWTSign")
@@ -30,17 +32,17 @@ func (_m *JwtUtil) JWTSign(payload jwt_util.JWTSignParam) (string, error) {
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(jwt_util.JWTSignParam) (string, error)); ok {
-		return rf(payload)
+	if rf, ok := ret.Get(0).(func(context.Context, jwt_util.JWTSignParam) (string, error)); ok {
+		return rf(ctx, payload)
 	}
-	if rf, ok := ret.Get(0).(func(jwt_util.JWTSignParam) string); ok {
-		r0 = rf(payload)
+	if rf, ok := ret.Get(0).(func(context.Context, jwt_util.JWTSignParam) string); ok {
+		r0 = rf(ctx, payload)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(jwt_util.JWTSignParam) error); ok {
-		r1 = rf(payload)
+	if rf, ok := ret.Get(1).(func(context.Context, jwt_util.JWTSignParam) error); ok {
+		r1 = rf(ctx, payload)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -54,14 +56,15 @@ type JwtUtil_JWTSign_Call struct {
 }
 
 // JWTSign is a helper method to define mock.On call
+//   - ctx context.Context
 //   - payload jwt_util.JWTSignParam
-func (_e *JwtUtil_Expecter) JWTSign(payload interface{}) *JwtUtil_JWTSign_Call {
-	return &JwtUtil_JWTSign_Call{Call: _e.mock.On("JWTSign", payload)}
+func (_e *JwtUtil_Expecter) JWTSign(ctx interface{}, payload interface{}) *JwtUtil_JWTSign_Call {
+	return &JwtUtil_JWTSign_Call{Call: _e.mock.On("JWTSign", ctx, payload)}
 }
 
-func (_c *JwtUtil_JWTSign_Call) Run(run func(payload jwt_util.JWTSignParam)) *JwtUtil_JWTSign_Call {
+func (_c *JwtUtil_JWTSign_Call) Run(run func(ctx context.Context, payload jwt_util.JWTSignParam)) *JwtUtil_JWTSign_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(jwt_util.JWTSignParam))
+		run(args[0].(context.Context), args[1].(jwt_util.JWTSignParam))
 	})
 	return _c
 }
@@ -71,14 +74,14 @@ func (_c *JwtUtil_JWTSign_Call) Return(_a0 string, _a1 error) *JwtUtil_JWTSign_C
 	return _c
 }
 
-func (_c *JwtUtil_JWTSign_Call) RunAndReturn(run func(jwt_util.JWTSignParam) (string, error)) *JwtUtil_JWTSign_Call {
+func (_c *JwtUtil_JWTSign_Call) RunAndReturn(run func(context.Context, jwt_util.JWTSignParam) (string, error)) *JwtUtil_JWTSign_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// JWTVerify provides a mock function with given fields: token
-func (_m *JwtUtil) JWTVerify(token string) (*jwt_util.JWTBodyPayload, error) {
-	ret := _m.Called(token)
+// JWTVerify provides a mock function with given fields: ctx, token
+func (_m *JwtUtil) JWTVerify(ctx context.Context, token string) (*jwt_util.JWTBodyPayload, error) {
+	ret := _m.Called(ctx, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for JWTVerify")
@@ -86,19 +89,19 @@ func (_m *JwtUtil) JWTVerify(token string) (*jwt_util.JWTBodyPayload, error) {
 
 	var r0 *jwt_util.JWTBodyPayload
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*jwt_util.JWTBodyPayload, error)); ok {
-		return rf(token)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*jwt_util.JWTBodyPayload, error)); ok {
+		return rf(ctx, token)
 	}
-	if rf, ok := ret.Get(0).(func(string) *jwt_util.JWTBodyPayload); ok {
-		r0 = rf(token)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *jwt_util.JWTBodyPayload); ok {
+		r0 = rf(ctx, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*jwt_util.JWTBodyPayload)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(token)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, token)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -112,14 +115,15 @@ type JwtUtil_JWTVerify_Call struct {
 }
 
 // JWTVerify is a helper method to define mock.On call
+//   - ctx context.Context
 //   - token string
-func (_e *JwtUtil_Expecter) JWTVerify(token interface{}) *JwtUtil_JWTVerify_Call {
-	return &JwtUtil_JWTVerify_Call{Call: _e.mock.On("JWTVerify", token)}
+func (_e *JwtUtil_Expecter) JWTVerify(ctx interface{}, token interface{}) *JwtUtil_JWTVerify_Call {
+	return &JwtUtil_JWTVerify_Call{Call: _e.mock.On("JWTVerify", ctx, token)}
 }
 
-func (_c *JwtUtil_JWTVerify_Call) Run(run func(token string)) *JwtUtil_JWTVerify_Call {
+func (_c *JwtUtil_JWTVerify_Call) Run(run func(ctx context.Context, token string)) *JwtUtil_JWTVerify_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -129,7 +133,7 @@ func (_c *JwtUtil_JWTVerify_Call) Return(_a0 *jwt_util.JWTBodyPayload, _a1 error
 	return _c
 }
 
-func (_c *JwtUtil_JWTVerify_Call) RunAndReturn(run func(string) (*jwt_util.JWTBodyPayload, error)) *JwtUtil_JWTVerify_Call {
+func (_c *JwtUtil_JWTVerify_Call) RunAndReturn(run func(context.Context, string) (*jwt_util.JWTBodyPayload, error)) *JwtUtil_JWTVerify_Call {
 	_c.Call.Return(run)
 	return _c
 }

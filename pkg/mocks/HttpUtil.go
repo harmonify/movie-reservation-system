@@ -5,6 +5,8 @@ package mocks
 import (
 	http "net/http"
 
+	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -63,6 +65,64 @@ func (_c *HttpUtil_GetUserIP_Call) Return(_a0 string) *HttpUtil_GetUserIP_Call {
 }
 
 func (_c *HttpUtil_GetUserIP_Call) RunAndReturn(run func(*http.Request) string) *HttpUtil_GetUserIP_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetUserInfo provides a mock function with given fields: r
+func (_m *HttpUtil) GetUserInfo(r *http.Request) (*jwt_util.JWTBodyPayload, error) {
+	ret := _m.Called(r)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUserInfo")
+	}
+
+	var r0 *jwt_util.JWTBodyPayload
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*http.Request) (*jwt_util.JWTBodyPayload, error)); ok {
+		return rf(r)
+	}
+	if rf, ok := ret.Get(0).(func(*http.Request) *jwt_util.JWTBodyPayload); ok {
+		r0 = rf(r)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*jwt_util.JWTBodyPayload)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(*http.Request) error); ok {
+		r1 = rf(r)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// HttpUtil_GetUserInfo_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserInfo'
+type HttpUtil_GetUserInfo_Call struct {
+	*mock.Call
+}
+
+// GetUserInfo is a helper method to define mock.On call
+//   - r *http.Request
+func (_e *HttpUtil_Expecter) GetUserInfo(r interface{}) *HttpUtil_GetUserInfo_Call {
+	return &HttpUtil_GetUserInfo_Call{Call: _e.mock.On("GetUserInfo", r)}
+}
+
+func (_c *HttpUtil_GetUserInfo_Call) Run(run func(r *http.Request)) *HttpUtil_GetUserInfo_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*http.Request))
+	})
+	return _c
+}
+
+func (_c *HttpUtil_GetUserInfo_Call) Return(_a0 *jwt_util.JWTBodyPayload, _a1 error) *HttpUtil_GetUserInfo_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *HttpUtil_GetUserInfo_Call) RunAndReturn(run func(*http.Request) (*jwt_util.JWTBodyPayload, error)) *HttpUtil_GetUserInfo_Call {
 	_c.Call.Return(run)
 	return _c
 }

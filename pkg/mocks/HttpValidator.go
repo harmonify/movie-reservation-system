@@ -4,6 +4,7 @@ package mocks
 
 import (
 	gin "github.com/gin-gonic/gin"
+
 	mock "github.com/stretchr/testify/mock"
 )
 

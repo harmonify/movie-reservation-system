@@ -359,6 +359,67 @@ func (_c *Logger_Warn_Call) RunAndReturn(run func(string, ...zapcore.Field)) *Lo
 	return _c
 }
 
+// With provides a mock function with given fields: fields
+func (_m *Logger) With(fields ...zapcore.Field) logger.Logger {
+	_va := make([]interface{}, len(fields))
+	for _i := range fields {
+		_va[_i] = fields[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for With")
+	}
+
+	var r0 logger.Logger
+	if rf, ok := ret.Get(0).(func(...zapcore.Field) logger.Logger); ok {
+		r0 = rf(fields...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(logger.Logger)
+		}
+	}
+
+	return r0
+}
+
+// Logger_With_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'With'
+type Logger_With_Call struct {
+	*mock.Call
+}
+
+// With is a helper method to define mock.On call
+//   - fields ...zapcore.Field
+func (_e *Logger_Expecter) With(fields ...interface{}) *Logger_With_Call {
+	return &Logger_With_Call{Call: _e.mock.On("With",
+		append([]interface{}{}, fields...)...)}
+}
+
+func (_c *Logger_With_Call) Run(run func(fields ...zapcore.Field)) *Logger_With_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]zapcore.Field, len(args)-0)
+		for i, a := range args[0:] {
+			if a != nil {
+				variadicArgs[i] = a.(zapcore.Field)
+			}
+		}
+		run(variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *Logger_With_Call) Return(_a0 logger.Logger) *Logger_With_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Logger_With_Call) RunAndReturn(run func(...zapcore.Field) logger.Logger) *Logger_With_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // WithCtx provides a mock function with given fields: ctx
 func (_m *Logger) WithCtx(ctx context.Context) logger.Logger {
 	ret := _m.Called(ctx)

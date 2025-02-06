@@ -6,6 +6,8 @@ import (
 	context "context"
 
 	mock "github.com/stretchr/testify/mock"
+	propagation "go.opentelemetry.io/otel/propagation"
+
 	trace "go.opentelemetry.io/otel/trace"
 )
 
@@ -22,48 +24,85 @@ func (_m *Tracer) EXPECT() *Tracer_Expecter {
 	return &Tracer_Expecter{mock: &_m.Mock}
 }
 
-// Shutdown provides a mock function with given fields: ctx
-func (_m *Tracer) Shutdown(ctx context.Context) error {
-	ret := _m.Called(ctx)
+// Extract provides a mock function with given fields: ctx, carrier
+func (_m *Tracer) Extract(ctx context.Context, carrier propagation.TextMapCarrier) context.Context {
+	ret := _m.Called(ctx, carrier)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Shutdown")
+		panic("no return value specified for Extract")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
-		r0 = rf(ctx)
+	var r0 context.Context
+	if rf, ok := ret.Get(0).(func(context.Context, propagation.TextMapCarrier) context.Context); ok {
+		r0 = rf(ctx, carrier)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(context.Context)
+		}
 	}
 
 	return r0
 }
 
-// Tracer_Shutdown_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Shutdown'
-type Tracer_Shutdown_Call struct {
+// Tracer_Extract_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Extract'
+type Tracer_Extract_Call struct {
 	*mock.Call
 }
 
-// Shutdown is a helper method to define mock.On call
+// Extract is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *Tracer_Expecter) Shutdown(ctx interface{}) *Tracer_Shutdown_Call {
-	return &Tracer_Shutdown_Call{Call: _e.mock.On("Shutdown", ctx)}
+//   - carrier propagation.TextMapCarrier
+func (_e *Tracer_Expecter) Extract(ctx interface{}, carrier interface{}) *Tracer_Extract_Call {
+	return &Tracer_Extract_Call{Call: _e.mock.On("Extract", ctx, carrier)}
 }
 
-func (_c *Tracer_Shutdown_Call) Run(run func(ctx context.Context)) *Tracer_Shutdown_Call {
+func (_c *Tracer_Extract_Call) Run(run func(ctx context.Context, carrier propagation.TextMapCarrier)) *Tracer_Extract_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		run(args[0].(context.Context), args[1].(propagation.TextMapCarrier))
 	})
 	return _c
 }
 
-func (_c *Tracer_Shutdown_Call) Return(_a0 error) *Tracer_Shutdown_Call {
+func (_c *Tracer_Extract_Call) Return(_a0 context.Context) *Tracer_Extract_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *Tracer_Shutdown_Call) RunAndReturn(run func(context.Context) error) *Tracer_Shutdown_Call {
+func (_c *Tracer_Extract_Call) RunAndReturn(run func(context.Context, propagation.TextMapCarrier) context.Context) *Tracer_Extract_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Inject provides a mock function with given fields: ctx, carrier
+func (_m *Tracer) Inject(ctx context.Context, carrier propagation.TextMapCarrier) {
+	_m.Called(ctx, carrier)
+}
+
+// Tracer_Inject_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Inject'
+type Tracer_Inject_Call struct {
+	*mock.Call
+}
+
+// Inject is a helper method to define mock.On call
+//   - ctx context.Context
+//   - carrier propagation.TextMapCarrier
+func (_e *Tracer_Expecter) Inject(ctx interface{}, carrier interface{}) *Tracer_Inject_Call {
+	return &Tracer_Inject_Call{Call: _e.mock.On("Inject", ctx, carrier)}
+}
+
+func (_c *Tracer_Inject_Call) Run(run func(ctx context.Context, carrier propagation.TextMapCarrier)) *Tracer_Inject_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(propagation.TextMapCarrier))
+	})
+	return _c
+}
+
+func (_c *Tracer_Inject_Call) Return() *Tracer_Inject_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *Tracer_Inject_Call) RunAndReturn(run func(context.Context, propagation.TextMapCarrier)) *Tracer_Inject_Call {
 	_c.Call.Return(run)
 	return _c
 }
