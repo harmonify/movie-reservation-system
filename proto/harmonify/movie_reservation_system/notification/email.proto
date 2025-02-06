@@ -15,7 +15,14 @@ message SendEmailResponse {
     string emailId = 1;
 }
 
-message EmailVerificationTemplateData {
-    string name = 1;
-    string verificationLink = 2;
+message SignupEmailVerificationTemplateData {
+    string firstName = 1;
+    string lastName = 2;
+    string url = 3;
+}
+
+message UpdateEmailVerificationTemplateData {
+    string firstName = 1;
+    string lastName = 2;
+    string url = 3;
 }

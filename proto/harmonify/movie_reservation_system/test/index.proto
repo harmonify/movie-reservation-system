@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package harmonify.movie_reservation_system.test;
+
+message ComplexTestMessage {
+    string message = 1;
+    repeated string repeatedMessage = 2;
+    NestedTestMessage nestedTestMessage = 3;
+    repeated NestedTestMessage repeatedNestedTestMessage = 4;
+}
+
+message NestedTestMessage {
+    string nestedMessage = 1;
+}

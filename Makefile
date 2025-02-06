@@ -26,15 +26,9 @@ setup: ## Setup the project
 	docker plugin install grafana/loki-docker-driver:2.9.2 --alias loki --grant-all-permissions
 	echo "Done..."
 
-.PHONY: update
-update: ## Update the project setup
-	echo "Update Docker plugin"
-	docker plugin disable loki --force
-	docker plugin upgrade loki grafana/loki-docker-driver:2.9.2 --grant-all-permissions
-	docker plugin enable loki
-	# echo "Restart Docker service"
-	# systemctl restart docker
-	echo "Done..."
+.PHONY: start
+start: ## Deploy infrastructure
+	docker-compose up -d
 
 .PHONY: build-cli
 build-cli: ## Build MRS CLI
@@ -42,11 +36,11 @@ build-cli: ## Build MRS CLI
 
 .PHONY: gen-proto
 gen-proto: ## Generate protobuf code for Golang in specified output directory
-	@if [ -z "$(target)" ]; then \
+	@if [ -z "$(output)" ]; then \
 		echo "Example usage: make gen-proto output=user-service/internal/driven/proto"; \
 		exit 1; \
 	fi
-	bin/gen_proto.sh "$(target)"
+	bin/gen_proto.sh "$(output)"
 
 .PHONY: export-puml
 export-puml: ## ex: make export-puml darkmode=true
