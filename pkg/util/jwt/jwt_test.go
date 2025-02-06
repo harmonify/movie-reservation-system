@@ -7,7 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
+	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util/encryption"
 	generator_util "github.com/harmonify/movie-reservation-system/pkg/util/generator"
 	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
@@ -86,11 +88,31 @@ func (s *JwtUtilTestSuite) SetupSuite() {
 	s.app = fx.New(
 		generator_util.GeneratorUtilModule,
 		encryption.EncryptionModule,
-		fx.Invoke(func(encryption *encryption.Encryption) {
-			s.jwtUtil, _ = jwt_util.NewJwtUtil(encryption, &jwt_util.JwtUtilConfig{
-				ServiceHttpBaseUrl: "http://localhost:8080",
-				AppJwtAudiences:    "http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084",
-			})
+		fx.Provide(
+			logger.NewConsoleLogger,
+			func() *encryption.AESEncryptionConfig {
+				return &encryption.AESEncryptionConfig{
+					AppSecret: "123456",
+				}
+			},
+			func(lc fx.Lifecycle) (tracer.Tracer, error) {
+				return tracer.NewTracer(lc, &tracer.TracerConfig{
+					Env:               "test",
+					ServiceIdentifier: "test",
+					Type:              "console",
+				})
+			},
+			func(p jwt_util.JwtUtilParam) (jwt_util.JwtUtilResult, error) {
+				return jwt_util.NewJwtUtil(p, &jwt_util.JwtUtilConfig{
+					ServiceIdentifier:      "user-service",
+					JwtAudienceIdentifiers: "user-service,notification-service,movie-service,theater-service,reservation-service",
+					JwtIssuerIdentifier:    "user-service",
+				})
+			},
+		),
+
+		fx.Invoke(func(jwtUtil jwt_util.JwtUtil) {
+			s.jwtUtil = jwtUtil
 		}),
 
 		fx.NopLogger,
@@ -133,7 +155,7 @@ func (s *JwtUtilTestSuite) TestJwtUtil_JWTSign() {
 				testCase.BeforeCall(testCase.Config)
 			}
 
-			_, err := s.jwtUtil.JWTSign(testCase.Config.Data)
+			_, err := s.jwtUtil.JWTSign(context.Background(), testCase.Config.Data)
 
 			if testCase.AfterCall != nil {
 				testCase.AfterCall()
@@ -159,8 +181,9 @@ func (s *JwtUtilTestSuite) TestJwtUtil_JWTVerify() {
 			Description: "Should return no error",
 			Setup: func() jwt_util.JwtUtil {
 				jwtUtil, err := buildJwtUtil(&jwt_util.JwtUtilConfig{
-					AppJwtAudiences:    "user-service",
-					ServiceHttpBaseUrl: "http://localhost:8080",
+					ServiceIdentifier:      "user-service",
+					JwtAudienceIdentifiers: "user-service,notification-service,movie-service,theater-service,reservation-service",
+					JwtIssuerIdentifier:    "user-service",
 				})
 				s.Require().Nil(err)
 				return jwtUtil
@@ -190,7 +213,7 @@ func (s *JwtUtilTestSuite) TestJwtUtil_JWTVerify() {
 
 	for _, testCase := range testCases {
 		s.Run(testCase.Description, func() {
-			token, err := s.jwtUtil.JWTSign(testCase.Config.Data)
+			token, err := s.jwtUtil.JWTSign(context.Background(), testCase.Config.Data)
 
 			s.Assert().Nil(err)
 			if err != nil {
@@ -198,7 +221,7 @@ func (s *JwtUtilTestSuite) TestJwtUtil_JWTVerify() {
 				return
 			}
 
-			payload, err := s.jwtUtil.JWTVerify(token)
+			payload, err := s.jwtUtil.JWTVerify(context.Background(), token)
 
 			s.Assert().Nil(err)
 			if err != nil {
@@ -216,7 +239,6 @@ func (s *JwtUtilTestSuite) TestJwtUtil_JWTVerify() {
 
 func buildJwtUtil(cfg *jwt_util.JwtUtilConfig) (jwt_util.JwtUtil, error) {
 	var jwtUtil jwt_util.JwtUtil
-	var err error
 
 	app := fx.New(
 		fx.Provide(func() *jwt_util.JwtUtilConfig {
@@ -224,16 +246,35 @@ func buildJwtUtil(cfg *jwt_util.JwtUtilConfig) (jwt_util.JwtUtil, error) {
 		}),
 		generator_util.GeneratorUtilModule,
 		encryption.EncryptionModule,
-		fx.Invoke(func(config *jwt_util.JwtUtilConfig, encryption *encryption.Encryption) {
-			jwtUtil, err = jwt_util.NewJwtUtil(encryption, cfg)
+		fx.Provide(
+			logger.NewConsoleLogger,
+			func() *encryption.AESEncryptionConfig {
+				return &encryption.AESEncryptionConfig{
+					AppSecret: "123456",
+				}
+			},
+			func(lc fx.Lifecycle) (tracer.Tracer, error) {
+				return tracer.NewTracer(lc, &tracer.TracerConfig{
+					Env:               "test",
+					ServiceIdentifier: "test",
+					Type:              "console",
+				})
+			},
+			func(p jwt_util.JwtUtilParam) (jwt_util.JwtUtilResult, error) {
+				return jwt_util.NewJwtUtil(p, &jwt_util.JwtUtilConfig{
+					ServiceIdentifier:      "user-service",
+					JwtAudienceIdentifiers: "user-service,notification-service,movie-service,theater-service,reservation-service",
+					JwtIssuerIdentifier:    "user-service",
+				})
+			},
+		),
+
+		fx.Invoke(func(ju jwt_util.JwtUtil) {
+			jwtUtil = ju
 		}),
 
 		fx.NopLogger,
 	)
-
-	if err != nil {
-		return jwtUtil, err
-	}
 
 	if err := app.Start(context.Background()); err != nil {
 		return jwtUtil, err

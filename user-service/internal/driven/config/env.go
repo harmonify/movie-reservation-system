@@ -3,10 +3,11 @@ package config
 type UserServiceConfig struct {
 	Env string `mapstructure:"ENV" validate:"required,oneof=dev test prod"`
 
-	AppName                   string `mapstructure:"APP_NAME" validate:"required"`
-	AppDefaultCountryDialCode string `mapstructure:"APP_DEFAULT_COUNTRY_DIAL_CODE"`
-	AppSecret                 string `mapstructure:"APP_SECRET" validate:"required"`
-	AppJwtAudiences           string `mapstructure:"APP_JWT_AUDIENCES" validate:"required"`
+	AppName   string `mapstructure:"APP_NAME" validate:"required"`
+	AppSecret string `mapstructure:"APP_SECRET" validate:"required"`
+
+	AuthJwtIssuerIdentifier    string `mapstructure:"AUTH_JWT_ISSUER_IDENTIFIER" validate:"required"`
+	AuthJwtAudienceIdentifiers string `mapstructure:"AUTH_JWT_AUDIENCE_IDENTIFIERS" validate:"required"`
 
 	ServiceIdentifier       string `mapstructure:"SERVICE_IDENTIFIER" validate:"required"`
 	ServiceHttpPort         string `mapstructure:"SERVICE_HTTP_PORT" validate:"required,numeric"`

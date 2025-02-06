@@ -10,7 +10,6 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/database"
 	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
-	"github.com/harmonify/movie-reservation-system/pkg/metrics"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
 	"github.com/harmonify/movie-reservation-system/pkg/util/encryption"
@@ -73,8 +72,9 @@ func NewApp(p ...fx.Option) *fx.App {
 			},
 			func(cfg *config.UserServiceConfig) *jwt_util.JwtUtilConfig {
 				return &jwt_util.JwtUtilConfig{
-					AppJwtAudiences:    cfg.AppJwtAudiences,
-					ServiceHttpBaseUrl: cfg.ServiceHttpBaseUrl,
+					ServiceIdentifier:      cfg.ServiceIdentifier,
+					JwtAudienceIdentifiers: cfg.AuthJwtAudienceIdentifiers,
+					JwtIssuerIdentifier:    cfg.AuthJwtIssuerIdentifier,
 				}
 			},
 			func(p database.DatabaseParam, cfg *config.UserServiceConfig) (database.DatabaseResult, error) {
@@ -100,7 +100,6 @@ func NewApp(p ...fx.Option) *fx.App {
 		),
 		error_pkg.ErrorModule,
 		util.UtilModule,
-		metrics.MetricsModule,
 
 		// CORE
 		service.ServiceModule,

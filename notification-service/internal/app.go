@@ -72,8 +72,9 @@ func NewApp(p ...fx.Option) *fx.App {
 			},
 			func(cfg *config.NotificationServiceConfig) *jwt_util.JwtUtilConfig {
 				return &jwt_util.JwtUtilConfig{
-					AppJwtAudiences:    cfg.AppJwtAudiences,
-					ServiceHttpBaseUrl: cfg.ServiceHttpBaseUrl,
+					ServiceIdentifier:      cfg.ServiceIdentifier,
+					JwtAudienceIdentifiers: cfg.AuthJwtAudienceIdentifiers,
+					JwtIssuerIdentifier:    cfg.AuthJwtIssuerIdentifier,
 				}
 			},
 		),
