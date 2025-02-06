@@ -3,13 +3,11 @@ package entity
 import (
 	"database/sql"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type (
 	UserKey struct {
-		UserUUID   uuid.UUID    `json:"user_uuid"`
+		UserUUID   string       `json:"user_uuid"`
 		PublicKey  string       `json:"public_key"`
 		PrivateKey string       `json:"-"` // encrypted
 		CreatedAt  time.Time    `json:"created_at"`
@@ -27,13 +25,13 @@ type (
 	}
 
 	SaveUserKey struct {
-		UserUUID   uuid.UUID
+		UserUUID   string
 		PublicKey  string
 		PrivateKey string `json:"-"` // encrypted
 	}
 
 	UpdateUserKey struct {
-		UserUUID   uuid.UUID
+		UserUUID   string
 		PublicKey  string
 		PrivateKey string `json:"-"` // encrypted
 	}

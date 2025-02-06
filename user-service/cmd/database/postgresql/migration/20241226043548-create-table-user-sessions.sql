@@ -4,13 +4,13 @@ CREATE TABLE public.user_sessions (
     trace_id UUID NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    deleted_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    deleted_at TIMESTAMP WITH TIME ZONE NULL,
     user_uuid uuid NOT NULL,
     refresh_token text NOT NULL,
     is_revoked bool NOT NULL DEFAULT false,
     expired_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    ip_address text NOT NULL,
-    user_agent text NOT NULL,
+    ip_address text NULL,
+    user_agent text NULL,
     CONSTRAINT user_sessions_pkey PRIMARY KEY (id),
     CONSTRAINT fk_users_tokens FOREIGN KEY (user_uuid) REFERENCES public.users("uuid")
 );

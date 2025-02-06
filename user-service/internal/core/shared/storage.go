@@ -15,6 +15,9 @@ type (
 	UserStorage interface {
 		WithTx(tx *database.Transaction) UserStorage
 		FindUser(ctx context.Context, findModel entity.FindUser) (*entity.User, error)
+		// FindUserWithResult is a generic function to find a user with a result model
+		// The result model parameter should be a pointer to a struct
+		FindUserWithResult(ctx context.Context, findModel entity.FindUser, resultModel interface{}) error
 		SaveUser(ctx context.Context, createModel entity.SaveUser) (*entity.User, error)
 		UpdateUser(ctx context.Context, findModel entity.FindUser, updateModel entity.UpdateUser) (*entity.User, error)
 		SoftDeleteUser(ctx context.Context, findModel entity.FindUser) error
@@ -26,6 +29,7 @@ type (
 		SaveSession(ctx context.Context, createModel entity.SaveUserSession) (*entity.UserSession, error)
 		RevokeSession(ctx context.Context, refreshToken string) (err error)
 		RevokeManySession(ctx context.Context, refreshTokens []string) (err error)
+		SoftDeleteSession(ctx context.Context, findModel entity.FindUserSession) error
 	}
 
 	UserKeyStorage interface {
@@ -36,20 +40,20 @@ type (
 		SoftDeleteUserKey(ctx context.Context, findModel entity.FindUserKey) error
 	}
 
-	OtpStorage interface {
-		SaveEmailVerificationToken(ctx context.Context, p SaveEmailVerificationTokenParam) error
-		GetEmailVerificationToken(ctx context.Context, email string) (string, error)
-		DeleteEmailVerificationToken(ctx context.Context, email string) (bool, error)
-		SavePhoneOtp(ctx context.Context, p SavePhoneOtpParam) error
-		GetPhoneOtp(ctx context.Context, phoneNumber string) (string, error)
-		DeletePhoneOtp(ctx context.Context, phoneNumber string) (bool, error)
-		IncrementPhoneOtpAttempt(ctx context.Context, phoneNumber string) error
-		GetPhoneOtpAttempt(ctx context.Context, phoneNumber string) (int, error)
-		DeletePhoneOtpAttempt(ctx context.Context, phoneNumber string) (bool, error)
-	}
-
 	OutboxStorage interface {
 		WithTx(tx *database.Transaction) OutboxStorage
 		SaveOutbox(ctx context.Context, createModel entity.SaveUserOutbox) (*entity.UserOutbox, error)
+	}
+
+	OtpCache interface {
+		SaveEmailVerificationCode(ctx context.Context, p SaveEmailVerificationCodeParam) error
+		GetEmailVerificationCode(ctx context.Context, uuid string) (string, error)
+		DeleteEmailVerificationCode(ctx context.Context, uuid string) (bool, error)
+		SavePhoneNumberVerificationOtp(ctx context.Context, p SavePhoneNumberVerificationOtpParam) error
+		GetPhoneNumberVerificationOtp(ctx context.Context, uuid string) (string, error)
+		DeletePhoneNumberVerificationOtp(ctx context.Context, uuid string) (bool, error)
+		IncrementPhoneNumberVerificationAttempt(ctx context.Context, uuid string) error
+		GetPhoneNumberVerificationAttempt(ctx context.Context, uuid string) (int, error)
+		DeletePhoneNumberVerificationAttempt(ctx context.Context, uuid string) (bool, error)
 	}
 )

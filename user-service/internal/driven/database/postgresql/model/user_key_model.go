@@ -4,13 +4,12 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	"gorm.io/gorm"
 )
 
 type UserKey struct {
-	UserUUID   uuid.UUID
+	UserUUID   string
 	PublicKey  string
 	PrivateKey string `json:"-"` // encrypted
 	CreatedAt  time.Time

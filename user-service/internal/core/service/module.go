@@ -27,8 +27,7 @@ var (
 				auth_service.UnverifiedPhoneNumberError,
 				auth_service.AccountNotFoundError,
 				auth_service.IncorrectPasswordError,
-				auth_service.InvalidRefreshTokenError,
-				auth_service.RefreshTokenAlreadyExpiredError,
+				auth_service.RefreshTokenExpiredError,
 			)
 		}),
 	)

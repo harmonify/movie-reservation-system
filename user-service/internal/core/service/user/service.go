@@ -3,21 +3,19 @@ package user_service
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 type UserService interface {
 	GetUser(ctx context.Context, p GetUserParam) (*GetUserResult, error)
 	UpdateUser(ctx context.Context, p UpdateUserParam) (*UpdateUserResult, error)
-	GetUpdateEmailVerification(ctx context.Context, p GetUpdateEmailVerificationParam) error
-	VerifyUpdateEmail(ctx context.Context, p VerifyUpdateEmailParam) error
-	GetUpdatePhoneNumberVerification(ctx context.Context, p GetUpdatePhoneNumberVerificationParam) error
-	VerifyUpdatePhoneNumber(ctx context.Context, p VerifyUpdatePhoneNumberParam) error
 }
 
 type UserServiceParam struct {
@@ -57,6 +55,15 @@ func (s *userServiceImpl) GetUser(ctx context.Context, p GetUserParam) (*GetUser
 	user, err := s.userStorage.FindUser(ctx, entity.FindUser{
 		UUID: sql.NullString{String: p.UUID, Valid: true},
 	})
+	if err != nil {
+		s.logger.WithCtx(ctx).Error("failed to find user", zap.Error(err))
+		return nil, err
+	}
+
+	var deletedAt *time.Time
+	if user.DeletedAt.Valid {
+		deletedAt = &user.DeletedAt.Time
+	}
 
 	return &GetUserResult{
 		UUID:                  p.UUID,
@@ -69,7 +76,7 @@ func (s *userServiceImpl) GetUser(ctx context.Context, p GetUserParam) (*GetUser
 		IsPhoneNumberVerified: user.IsPhoneNumberVerified,
 		CreatedAt:             user.CreatedAt,
 		UpdatedAt:             user.UpdatedAt,
-		DeletedAt:             user.DeletedAt,
+		DeletedAt:             deletedAt,
 	}, err
 
 }
@@ -86,16 +93,25 @@ func (s *userServiceImpl) UpdateUser(ctx context.Context, p UpdateUserParam) (*U
 		entity.UpdateUser{
 			Email:                 sql.NullString{String: p.Email, Valid: p.Email != ""},
 			PhoneNumber:           sql.NullString{String: p.PhoneNumber, Valid: p.PhoneNumber != ""},
-			Username:              sql.NullString{String: p.Username, Valid: true},
-			FirstName:             sql.NullString{String: p.FirstName, Valid: true},
-			LastName:              sql.NullString{String: p.LastName, Valid: true},
-			IsEmailVerified:       sql.NullBool{Bool: p.Email != "", Valid: p.Email != ""},
-			IsPhoneNumberVerified: sql.NullBool{Bool: p.PhoneNumber != "", Valid: p.PhoneNumber != ""},
+			Username:              sql.NullString{String: p.Username, Valid: p.Username != ""},
+			FirstName:             sql.NullString{String: p.FirstName, Valid: p.FirstName != ""},
+			LastName:              sql.NullString{String: p.LastName, Valid: p.LastName != ""},
+			IsEmailVerified:       sql.NullBool{Bool: false, Valid: p.Email != ""},
+			IsPhoneNumberVerified: sql.NullBool{Bool: false, Valid: p.PhoneNumber != ""},
 		},
 	)
+	if err != nil {
+		s.logger.WithCtx(ctx).Error("failed to update user", zap.Error(err))
+		return nil, err
+	}
+
+	var deletedAt *time.Time
+	if user.DeletedAt.Valid {
+		deletedAt = &user.DeletedAt.Time
+	}
 
 	return &UpdateUserResult{
-		UUID:                  user.UUID.String(),
+		UUID:                  user.UUID,
 		Username:              user.Username,
 		Email:                 user.Email,
 		PhoneNumber:           user.PhoneNumber,
@@ -105,22 +121,6 @@ func (s *userServiceImpl) UpdateUser(ctx context.Context, p UpdateUserParam) (*U
 		IsPhoneNumberVerified: user.IsPhoneNumberVerified,
 		CreatedAt:             user.CreatedAt,
 		UpdatedAt:             user.UpdatedAt,
-		DeletedAt:             user.DeletedAt,
-	}, err
-}
-
-func (s *userServiceImpl) GetUpdateEmailVerification(ctx context.Context, p GetUpdateEmailVerificationParam) error {
-	panic("unimplemented")
-}
-
-func (s *userServiceImpl) VerifyUpdateEmail(ctx context.Context, p VerifyUpdateEmailParam) error {
-	panic("unimplemented")
-}
-
-func (s *userServiceImpl) GetUpdatePhoneNumberVerification(ctx context.Context, p GetUpdatePhoneNumberVerificationParam) error {
-	panic("unimplemented")
-}
-
-func (s *userServiceImpl) VerifyUpdatePhoneNumber(ctx context.Context, p VerifyUpdatePhoneNumberParam) error {
-	panic("unimplemented")
+		DeletedAt:             deletedAt,
+	}, nil
 }

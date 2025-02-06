@@ -89,7 +89,6 @@ func (r *userRepositoryImpl) FindUser(ctx context.Context, findModel entity.Find
 
 	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
 	if err != nil {
-		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
 	}
 
@@ -97,11 +96,28 @@ func (r *userRepositoryImpl) FindUser(ctx context.Context, findModel entity.Find
 	result := r.database.DB.WithContext(ctx).Where(findMap).First(&userModel)
 	err = r.pgErrTl.Translate(result.Error)
 	if err != nil {
-		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
 	}
 
 	return userModel.ToEntity(), err
+}
+
+func (r *userRepositoryImpl) FindUserWithResult(ctx context.Context, findModel entity.FindUser, resultModel interface{}) error {
+	ctx, span := r.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
+	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
+	if err != nil {
+		return err
+	}
+
+	result := r.database.DB.WithContext(ctx).Table(model.UserTableName).Where(findMap).First(resultModel)
+	err = r.pgErrTl.Translate(result.Error)
+	if err != nil {
+		return err
+	}
+
+	return err
 }
 
 func (r *userRepositoryImpl) UpdateUser(ctx context.Context, findModel entity.FindUser, updateModel entity.UpdateUser) (*entity.User, error) {
@@ -110,13 +126,11 @@ func (r *userRepositoryImpl) UpdateUser(ctx context.Context, findModel entity.Fi
 
 	updateMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, updateModel)
 	if err != nil {
-		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
 	}
 
 	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
 	if err != nil {
-		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
 	}
 

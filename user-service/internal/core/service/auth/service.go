@@ -24,7 +24,6 @@ import (
 type (
 	AuthService interface {
 		Register(ctx context.Context, p RegisterParam) error
-		VerifyEmail(ctx context.Context, p VerifyEmailParam) error
 		Login(ctx context.Context, p LoginParam) (*LoginResult, error)
 		GetToken(ctx context.Context, p GetTokenParam) (*GetTokenResult, error)
 		Logout(ctx context.Context, p LogoutParam) error
@@ -149,7 +148,7 @@ func (s *authServiceImpl) Register(ctx context.Context, p RegisterParam) error {
 
 		// Grant user role
 		_, err = s.rbacStorage.WithTx(tx).GrantRole(ctx, shared.GrantRoleParam{
-			UUID: user.UUID.String(),
+			UUID: user.UUID,
 			Role: shared.RoleUser,
 		})
 		if err != nil {
@@ -158,7 +157,7 @@ func (s *authServiceImpl) Register(ctx context.Context, p RegisterParam) error {
 		}
 
 		payload, err := proto.Marshal(&user_proto.UserRegistered{
-			Uuid:        user.UUID.String(),
+			Uuid:        user.UUID,
 			Email:       user.Email,
 			Username:    user.Username,
 			PhoneNumber: user.PhoneNumber,
@@ -174,7 +173,7 @@ func (s *authServiceImpl) Register(ctx context.Context, p RegisterParam) error {
 		_, err = s.outboxStorage.WithTx(tx).SaveOutbox(ctx, entity.SaveUserOutbox{
 			ID:                 span.SpanContext().TraceID().String(),
 			AggregateType:      entity.AggregateTypeRegistered,
-			AggregateID:        user.UUID.String(),
+			AggregateID:        user.UUID,
 			Payload:            payload,
 			Tracingspancontext: spanCtxBytes,
 		})
@@ -193,33 +192,6 @@ func (s *authServiceImpl) Register(ctx context.Context, p RegisterParam) error {
 	return err
 }
 
-func (s *authServiceImpl) VerifyEmail(ctx context.Context, p VerifyEmailParam) error {
-	ctx, span := s.tracer.StartSpanWithCaller(ctx)
-	defer span.End()
-
-	err := s.otpService.VerifyEmail(ctx, otp_service.VerifyEmailParam{
-		Email: p.Email,
-		Token: p.Token,
-	})
-
-	if err != nil {
-		s.logger.Error("Failed to verify user email", zap.Error(err))
-		return err
-	}
-
-	s.userStorage.UpdateUser(
-		ctx,
-		entity.FindUser{
-			Email: sql.NullString{String: p.Email, Valid: true},
-		},
-		entity.UpdateUser{
-			IsEmailVerified: sql.NullBool{Bool: true, Valid: true},
-		},
-	)
-
-	return nil
-}
-
 func (s *authServiceImpl) Login(ctx context.Context, p LoginParam) (*LoginResult, error) {
 	ctx, span := s.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
@@ -236,15 +208,15 @@ func (s *authServiceImpl) Login(ctx context.Context, p LoginParam) (*LoginResult
 		if errors.As(err, &terr) {
 			return nil, AccountNotFoundError
 		}
-		s.logger.WithCtx(ctx).Error(err.Error())
+		s.logger.WithCtx(ctx).Error("Failed to get user", zap.Error(err))
 		return nil, err
 	}
 	// Get user key record
 	userKey, err := s.userKeyStorage.FindUserKey(ctx, entity.FindUserKey{
-		UserUUID: sql.NullString{String: user.UUID.String(), Valid: true},
+		UserUUID: sql.NullString{String: user.UUID, Valid: true},
 	})
 	if err != nil {
-		s.logger.WithCtx(ctx).Error(err.Error())
+		s.logger.WithCtx(ctx).Error("Failed to get user key", zap.Error(err))
 		return nil, err
 	}
 
@@ -260,7 +232,7 @@ func (s *authServiceImpl) Login(ctx context.Context, p LoginParam) (*LoginResult
 
 	// Generate and encrypt user session
 	accessToken, err := s.tokenService.GenerateAccessToken(ctx, token_service.GenerateAccessTokenParam{
-		UUID:        user.UUID.String(),
+		UUID:        user.UUID,
 		Username:    user.Username,
 		Email:       user.Email,
 		PhoneNumber: user.PhoneNumber,
@@ -279,7 +251,7 @@ func (s *authServiceImpl) Login(ctx context.Context, p LoginParam) (*LoginResult
 
 	// Save user session record
 	_, err = s.userSessionStorage.SaveSession(ctx, entity.SaveUserSession{
-		UserUUID:     user.UUID.String(),
+		UserUUID:     user.UUID,
 		RefreshToken: refreshToken.HashedRefreshToken,
 		IpAddress:    sql.NullString{String: p.IpAddress, Valid: true},
 		UserAgent:    sql.NullString{String: p.UserAgent, Valid: true},
@@ -320,7 +292,7 @@ func (s *authServiceImpl) GetToken(ctx context.Context, p GetTokenParam) (*GetTo
 
 	// Get user key record
 	userKey, err := s.userKeyStorage.FindUserKey(ctx, entity.FindUserKey{
-		UserUUID: sql.NullString{String: user.UUID.String(), Valid: true},
+		UserUUID: sql.NullString{String: user.UUID, Valid: true},
 	})
 	if err != nil {
 		s.logger.WithCtx(ctx).Error("Failed to get user key", zap.Error(err))
@@ -329,7 +301,7 @@ func (s *authServiceImpl) GetToken(ctx context.Context, p GetTokenParam) (*GetTo
 
 	// Generate access token
 	accessToken, err := s.tokenService.GenerateAccessToken(ctx, token_service.GenerateAccessTokenParam{
-		UUID:        user.UUID.String(),
+		UUID:        user.UUID,
 		Username:    user.Username,
 		Email:       user.Email,
 		PhoneNumber: user.PhoneNumber,
@@ -362,7 +334,7 @@ func (s *authServiceImpl) Logout(ctx context.Context, p LogoutParam) error {
 		var terr *database.RecordNotFoundError
 		if errors.As(err, &terr) {
 			// Assume that the session is already expired
-			return RefreshTokenAlreadyExpiredError
+			return RefreshTokenExpiredError
 		}
 		s.logger.WithCtx(ctx).Error(err.Error())
 		return err

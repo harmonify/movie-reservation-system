@@ -1,18 +1,27 @@
 package seeder
 
 import (
-	"errors"
+	"context"
+	"database/sql"
 
 	"github.com/harmonify/movie-reservation-system/pkg/database"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
+	entityfactory "github.com/harmonify/movie-reservation-system/user-service/internal/core/entity/factory"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
-	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/model"
 	"go.uber.org/fx"
-	"gorm.io/gorm"
 )
 
+type UserWithRelations struct {
+	User            *entity.User
+	UserRaw         *entityfactory.UserRaw
+	UserKey         *entity.UserKey
+	UserSessions    []*entity.UserSession
+	UserSessionRaws []*entityfactory.UserSessionRaw
+}
+
 type UserSeeder interface {
-	SaveUser(user model.User) (*model.User, error)
-	DeleteUser(username string) error
+	CreateUser(ctx context.Context) (*UserWithRelations, error)
+	DeleteUser(ctx context.Context, findModel entity.FindUser) error
 }
 
 type UserSeederParam struct {
@@ -20,86 +29,118 @@ type UserSeederParam struct {
 
 	PostgresqlErrorTranslator database.PostgresqlErrorTranslator
 	Database                  *database.Database
+	UserFactory               entityfactory.UserFactory
+	UserKeyFactory            entityfactory.UserKeyFactory
+	UserSessionFactory        entityfactory.UserSessionFactory
 	UserStorage               shared.UserStorage
-	UserKeySeeder             UserKeySeeder
-	UserSessionSeeder         UserSessionSeeder
+	UserKeyStorage            shared.UserKeyStorage
+	UserSessionStorage        shared.UserSessionStorage
+}
+
+type userSeederImpl struct {
+	translator         database.PostgresqlErrorTranslator
+	database           *database.Database
+	userFactory        entityfactory.UserFactory
+	userKeyFactory     entityfactory.UserKeyFactory
+	userSessionFactory entityfactory.UserSessionFactory
+	userStorage        shared.UserStorage
+	userKeyStorage     shared.UserKeyStorage
+	userSessionStorage shared.UserSessionStorage
 }
 
 func NewUserSeeder(p UserSeederParam) UserSeeder {
 	return &userSeederImpl{
-		translator:        p.PostgresqlErrorTranslator,
-		database:          p.Database,
-		userStorage:       p.UserStorage,
-		userKeySeeder:     p.UserKeySeeder,
-		userSessionSeeder: p.UserSessionSeeder,
+		translator:         p.PostgresqlErrorTranslator,
+		database:           p.Database,
+		userFactory:        p.UserFactory,
+		userKeyFactory:     p.UserKeyFactory,
+		userSessionFactory: p.UserSessionFactory,
+		userStorage:        p.UserStorage,
+		userKeyStorage:     p.UserKeyStorage,
+		userSessionStorage: p.UserSessionStorage,
 	}
 }
 
-type userSeederImpl struct {
-	translator        database.PostgresqlErrorTranslator
-	database          *database.Database
-	userStorage       shared.UserStorage
-	userKeySeeder     UserKeySeeder
-	userSessionSeeder UserSessionSeeder
-}
-
-// SaveUser saves a user to the database
-// TODO: Including the user's keys and sessions, if provided
-// This function is idempotent, meaning that it will not return an error if the user already exists
-func (s *userSeederImpl) SaveUser(user model.User) (*model.User, error) {
-	var terr *database.DuplicatedKeyError
-
-	newUser := model.User{}
-
-	err := s.database.DB.Unscoped().Where(model.User{Username: user.Username}).Assign(user).FirstOrCreate(&newUser).Error
-	err = s.translator.Translate(err)
-	if err != nil && !errors.As(err, &terr) {
-		return &newUser, err
+// CreateUser creates a user in the database
+func (s *userSeederImpl) CreateUser(ctx context.Context) (*UserWithRelations, error) {
+	user, userRaw, err := s.userFactory.GenerateUser()
+	if err != nil {
+		return nil, err
+	}
+	newUser, err := s.userStorage.SaveUser(ctx, entity.SaveUser{
+		Username:    user.Username,
+		TraceID:     user.TraceID,
+		Password:    user.Password,
+		Email:       user.Email,
+		PhoneNumber: user.PhoneNumber,
+		FirstName:   user.FirstName,
+		LastName:    user.LastName,
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	err = s.database.DB.Model(&newUser).Update("deleted_at", gorm.Expr("NULL")).Error
-	err = s.translator.Translate(err)
-	if err != nil && !errors.As(err, &terr) {
-		return &newUser, err
+	userKey := s.userKeyFactory.GenerateUserKey(user)
+	newUserKey, err := s.userKeyStorage.SaveUserKey(ctx, entity.SaveUserKey{
+		UserUUID:   newUser.UUID,
+		PublicKey:  userKey.PublicKey,
+		PrivateKey: userKey.PrivateKey,
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	if _, err := s.userKeySeeder.CreateUserKey(user); err != nil {
-		return &newUser, err
+	userSession, userSessionRaw := s.userSessionFactory.GenerateUserSession(user)
+	nu, err := s.userSessionStorage.SaveSession(ctx, entity.SaveUserSession{
+		UserUUID:     newUser.UUID,
+		TraceID:      userSession.TraceID,
+		RefreshToken: userSession.RefreshToken,
+		ExpiredAt:    userSession.ExpiredAt,
+		IpAddress:    userSession.IpAddress,
+		UserAgent:    userSession.UserAgent,
+	})
+	if err != nil {
+		return nil, err
 	}
+	newUserSessions := []*entity.UserSession{nu}
+	newUserSessionRaws := []*entityfactory.UserSessionRaw{userSessionRaw}
 
-	return &newUser, nil
+	return &UserWithRelations{
+		User:            newUser,
+		UserRaw:         userRaw,
+		UserKey:         newUserKey,
+		UserSessions:    newUserSessions,
+		UserSessionRaws: newUserSessionRaws,
+	}, nil
 }
 
 // DeleteUser deletes a user from the database
 // Including the user's keys and sessions
 // This function is idempotent, meaning that it will not return an error if the user does not exist
-func (s *userSeederImpl) DeleteUser(username string) error {
-	user := model.User{}
-
-	err := s.database.DB.Unscoped().Where(&model.User{Username: username}).First(&user).Error
-	err = s.translator.Translate(err)
-	if err != nil {
-		var terr *database.RecordNotFoundError
-		if errors.As(err, &terr) {
-			return nil
-		}
-		return err
-	}
-
-	err = s.userKeySeeder.DeleteUserKey(user)
+func (s *userSeederImpl) DeleteUser(ctx context.Context, findModel entity.FindUser) error {
+	user, err := s.userStorage.FindUser(ctx, findModel)
 	if err != nil {
 		return err
 	}
 
-	err = s.userSessionSeeder.DeleteAllUserSessionsByUUID(user.UUID.String())
+	db := s.database.DB.Unscoped() // Make it hard delete
+
+	err = s.userSessionStorage.WithTx(&database.Transaction{DB: db}).SoftDeleteSession(ctx, entity.FindUserSession{
+		UserUUID: sql.NullString{String: user.UUID, Valid: true},
+	})
 	if err != nil {
 		return err
 	}
 
-	err = s.database.DB.Unscoped().Delete(&user).Error
-	err = s.translator.Translate(err)
+	err = s.userKeyStorage.WithTx(&database.Transaction{DB: db}).SoftDeleteUserKey(ctx, entity.FindUserKey{
+		UserUUID: sql.NullString{String: user.UUID, Valid: true},
+	})
 	if err != nil {
 		return err
 	}
-	return nil
+
+	err = s.userStorage.WithTx(&database.Transaction{DB: db}).SoftDeleteUser(ctx, entity.FindUser{
+		UUID: sql.NullString{String: user.UUID, Valid: true},
+	})
+	return err
 }

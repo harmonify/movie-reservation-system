@@ -6,22 +6,27 @@ type (
 		TTL   uint32 // in seconds
 	}
 
-	SendEmailVerificationLinkParam struct {
-		Name  string
-		Email string
+	SendSignupEmailParam struct {
+		FirstName string
+		LastName  string
+		Email     string
 	}
 
 	VerifyEmailParam struct {
-		Email string
-		Token string
+		UUID string
+		Code string
 	}
 
-	SendPhoneOtpParam struct {
-		PhoneNumber string
+	SendPhoneNumberVerificationOtpParam struct {
+		UUID string
 	}
 
-	VerifyPhoneOtpParam struct {
-		PhoneNumber string
-		Otp         string
+	VerifyPhoneNumberParam struct {
+		UUID string
+		Otp  string
+	}
+
+	SendVerificationEmailParam struct {
+		UUID string
 	}
 )

@@ -136,3 +136,26 @@ func (r *userSessionRepositoryImpl) RevokeManySession(ctx context.Context, refre
 
 	return nil
 }
+
+func (r *userSessionRepositoryImpl) SoftDeleteSession(ctx context.Context, findModel entity.FindUserSession) error {
+	ctx, span := r.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
+	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
+	if err != nil {
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
+		return err
+	}
+
+	result := r.database.DB.
+		WithContext(ctx).
+		Where(findMap).
+		Delete(&model.UserSession{})
+	err = r.pgErrTl.Translate(result.Error)
+	if err != nil {
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
+		return err
+	}
+
+	return nil
+}

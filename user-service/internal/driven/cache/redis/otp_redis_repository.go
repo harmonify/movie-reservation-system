@@ -32,7 +32,7 @@ type (
 	OtpRedisRepositoryResult struct {
 		fx.Out
 
-		OtpRedisRepository shared.OtpStorage
+		OtpRedisRepository shared.OtpCache
 	}
 
 	otpRedisRepositoryImpl struct {
@@ -67,9 +67,9 @@ func (r *otpRedisRepositoryImpl) constructCacheKey(ctx context.Context, otpType 
 	return fmt.Sprintf("%s:otp:%s:%s", r.keyPrefix, otpType, userIdHash), err
 }
 
-func (r *otpRedisRepositoryImpl) SaveEmailVerificationToken(
+func (r *otpRedisRepositoryImpl) SaveEmailVerificationCode(
 	ctx context.Context,
-	p shared.SaveEmailVerificationTokenParam,
+	p shared.SaveEmailVerificationCodeParam,
 ) error {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
@@ -80,7 +80,7 @@ func (r *otpRedisRepositoryImpl) SaveEmailVerificationToken(
 		return err
 	}
 
-	_, err = r.redis.Client.Set(ctx, cacheKey, p.Token, p.TTL).Result()
+	_, err = r.redis.Client.Set(ctx, cacheKey, p.Code, p.TTL).Result()
 	if err != nil {
 		r.logger.WithCtx(ctx).Error("Failed to set email verification token", zap.Error(err))
 		return err
@@ -89,7 +89,7 @@ func (r *otpRedisRepositoryImpl) SaveEmailVerificationToken(
 	return err
 }
 
-func (r *otpRedisRepositoryImpl) GetEmailVerificationToken(ctx context.Context, email string) (string, error) {
+func (r *otpRedisRepositoryImpl) GetEmailVerificationCode(ctx context.Context, email string) (string, error) {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -111,7 +111,7 @@ func (r *otpRedisRepositoryImpl) GetEmailVerificationToken(ctx context.Context, 
 	return token, nil
 }
 
-func (r *otpRedisRepositoryImpl) DeleteEmailVerificationToken(ctx context.Context, email string) (bool, error) {
+func (r *otpRedisRepositoryImpl) DeleteEmailVerificationCode(ctx context.Context, email string) (bool, error) {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -127,10 +127,10 @@ func (r *otpRedisRepositoryImpl) DeleteEmailVerificationToken(ctx context.Contex
 		return false, err
 	}
 
-	return removed == 1, nil
+	return removed >= 1, nil
 }
 
-func (r *otpRedisRepositoryImpl) SavePhoneOtp(ctx context.Context, p shared.SavePhoneOtpParam) error {
+func (r *otpRedisRepositoryImpl) SavePhoneNumberVerificationOtp(ctx context.Context, p shared.SavePhoneNumberVerificationOtpParam) error {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -149,7 +149,7 @@ func (r *otpRedisRepositoryImpl) SavePhoneOtp(ctx context.Context, p shared.Save
 	return err
 }
 
-func (r *otpRedisRepositoryImpl) GetPhoneOtp(ctx context.Context, phoneNumber string) (string, error) {
+func (r *otpRedisRepositoryImpl) GetPhoneNumberVerificationOtp(ctx context.Context, phoneNumber string) (string, error) {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -171,7 +171,7 @@ func (r *otpRedisRepositoryImpl) GetPhoneOtp(ctx context.Context, phoneNumber st
 	return otp, nil
 }
 
-func (r *otpRedisRepositoryImpl) DeletePhoneOtp(ctx context.Context, phoneNumber string) (bool, error) {
+func (r *otpRedisRepositoryImpl) DeletePhoneNumberVerificationOtp(ctx context.Context, phoneNumber string) (bool, error) {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -187,10 +187,10 @@ func (r *otpRedisRepositoryImpl) DeletePhoneOtp(ctx context.Context, phoneNumber
 		return false, err
 	}
 
-	return removed == 1, nil
+	return removed >= 1, nil
 }
 
-func (r *otpRedisRepositoryImpl) IncrementPhoneOtpAttempt(ctx context.Context, phoneNumber string) error {
+func (r *otpRedisRepositoryImpl) IncrementPhoneNumberVerificationAttempt(ctx context.Context, phoneNumber string) error {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -209,7 +209,7 @@ func (r *otpRedisRepositoryImpl) IncrementPhoneOtpAttempt(ctx context.Context, p
 	return nil
 }
 
-func (r *otpRedisRepositoryImpl) GetPhoneOtpAttempt(ctx context.Context, phoneNumber string) (int, error) {
+func (r *otpRedisRepositoryImpl) GetPhoneNumberVerificationAttempt(ctx context.Context, phoneNumber string) (int, error) {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -237,7 +237,7 @@ func (r *otpRedisRepositoryImpl) GetPhoneOtpAttempt(ctx context.Context, phoneNu
 	return attemptInt, nil
 }
 
-func (r *otpRedisRepositoryImpl) DeletePhoneOtpAttempt(ctx context.Context, phoneNumber string) (bool, error) {
+func (r *otpRedisRepositoryImpl) DeletePhoneNumberVerificationAttempt(ctx context.Context, phoneNumber string) (bool, error) {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -253,5 +253,5 @@ func (r *otpRedisRepositoryImpl) DeletePhoneOtpAttempt(ctx context.Context, phon
 		return false, err
 	}
 
-	return removed == 1, nil
+	return removed >= 1, nil
 }

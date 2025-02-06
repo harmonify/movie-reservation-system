@@ -7,15 +7,6 @@ func (p EmailTemplateId) String() string {
 }
 
 const (
-	EmailVerificationTemplateId EmailTemplateId = "email-verification"
-)
-
-type MessageBrokerTopic string
-
-func (p MessageBrokerTopic) String() string {
-	return string(p)
-}
-
-const (
-	PublicUserRegisteredV1 MessageBrokerTopic = "public.user.registered.v1"
+	SignupEmailTemplateId       EmailTemplateId = "signup-email"
+	VerificationEmailTemplateId EmailTemplateId = "verification-email"
 )

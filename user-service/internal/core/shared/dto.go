@@ -3,13 +3,13 @@ package shared
 import "time"
 
 type (
-	SaveEmailVerificationTokenParam struct {
+	SaveEmailVerificationCodeParam struct {
 		Email string
-		Token string
+		Code  string
 		TTL   time.Duration
 	}
 
-	SavePhoneOtpParam struct {
+	SavePhoneNumberVerificationOtpParam struct {
 		PhoneNumber string
 		Otp         string
 		TTL         time.Duration

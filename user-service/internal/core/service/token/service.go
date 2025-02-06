@@ -103,7 +103,7 @@ func (s *tokenServiceImpl) GenerateAccessToken(ctx context.Context, p GenerateAc
 	if err != nil {
 		s.logger.WithCtx(ctx).Error("Failed to decrypt user private key", zap.Error(err))
 	}
-	accessToken, err := s.util.JWTUtil.JWTSign(jwt_util.JWTSignParam{
+	accessToken, err := s.util.JWTUtil.JWTSign(ctx, jwt_util.JWTSignParam{
 		ExpInSeconds: s.AccessTokenDuration,
 		PrivateKey:   []byte(decryptedPrivateKey),
 		BodyPayload: jwt_util.JWTBodyPayload{

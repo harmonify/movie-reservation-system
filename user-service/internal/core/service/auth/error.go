@@ -78,17 +78,10 @@ var (
 		Message:  "The password you've entered is incorrect. Please try again.",
 	}
 
-	InvalidRefreshTokenError = &error_pkg.ErrorWithDetails{
-		Code:     "INVALID_REFRESH_TOKEN",
+	RefreshTokenExpiredError = &error_pkg.ErrorWithDetails{
+		Code:     "REFRESH_TOKEN_EXPIRED",
 		HttpCode: http.StatusUnauthorized,
 		GrpcCode: codes.Unauthenticated,
-		Message:  "Your session is expired. Please login again.",
-	}
-
-	RefreshTokenAlreadyExpiredError = &error_pkg.ErrorWithDetails{
-		Code:     "REFRESH_TOKEN_ALREADY_EXPIRED",
-		HttpCode: http.StatusUnauthorized,
-		GrpcCode: codes.Unauthenticated,
-		Message:  "Your session is already expired.",
+		Message:  "Your session has expired. Please login again.",
 	}
 )

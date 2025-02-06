@@ -1,7 +1,6 @@
 package user_service
 
 import (
-	"database/sql"
 	"time"
 )
 
@@ -11,17 +10,17 @@ type (
 	}
 
 	GetUserResult struct {
-		UUID                  string
-		Username              string
-		Email                 string
-		PhoneNumber           string
-		FirstName             string
-		LastName              string
-		IsEmailVerified       bool
-		IsPhoneNumberVerified bool
-		CreatedAt             time.Time
-		UpdatedAt             time.Time
-		DeletedAt             sql.NullTime
+		UUID                  string     `json:"uuid"`
+		Username              string     `json:"username"`
+		Email                 string     `json:"email"`
+		PhoneNumber           string     `json:"phone_number"`
+		FirstName             string     `json:"first_name"`
+		LastName              string     `json:"last_name"`
+		IsEmailVerified       bool       `json:"is_email_verified"`
+		IsPhoneNumberVerified bool       `json:"is_phone_number_verified"`
+		CreatedAt             time.Time  `json:"created_at"`
+		UpdatedAt             time.Time  `json:"updated_at"`
+		DeletedAt             *time.Time `json:"deleted_at"`
 	}
 
 	UpdateUserParam struct {
@@ -34,35 +33,27 @@ type (
 	}
 
 	UpdateUserResult struct {
-		UUID                  string
-		Username              string
-		Email                 string
-		PhoneNumber           string
-		FirstName             string
-		LastName              string
-		IsEmailVerified       bool
-		IsPhoneNumberVerified bool
-		CreatedAt             time.Time
-		UpdatedAt             time.Time
-		DeletedAt             sql.NullTime
+		UUID                  string     `json:"uuid"`
+		Username              string     `json:"username"`
+		Email                 string     `json:"email"`
+		PhoneNumber           string     `json:"phone_number"`
+		FirstName             string     `json:"first_name"`
+		LastName              string     `json:"last_name"`
+		IsEmailVerified       bool       `json:"is_email_verified"`
+		IsPhoneNumberVerified bool       `json:"is_phone_number_verified"`
+		CreatedAt             time.Time  `json:"created_at"`
+		UpdatedAt             time.Time  `json:"updated_at"`
+		DeletedAt             *time.Time `json:"deleted_at"`
 	}
 
-	GetUpdateEmailVerificationParam struct {
-		Email string
-	}
-
-	VerifyUpdateEmailParam struct {
-		Email    string
+	UpdateEmailParam struct {
+		UUID     string
 		Token    string
 		NewEmail string
 	}
 
-	GetUpdatePhoneNumberVerificationParam struct {
-		PhoneNumber string
-	}
-
-	VerifyUpdatePhoneNumberParam struct {
-		PhoneNumber    string
+	UpdatePhoneNumberParam struct {
+		UUID           string
 		Token          string
 		NewPhoneNumber string
 	}
