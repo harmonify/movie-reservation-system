@@ -12,14 +12,44 @@ import (
 	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-// NewRecoveryHttpMiddleware returns a gin.HandlerFunc (middleware) that recovers from any panics and
-// logs requests with OTel + Loki + Zap. stack means whether to output the stack info.
+// RecoveryHttpMiddleware is a middleware that recovers from any panics and logs requests with OTel + Loki + Zap.
+// stack means whether to output the stack info.
 // This middleware MUST be registered only after the otelgin middleware is registered.
 // Otelgin: go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin
-func NewRecoveryHttpMiddleware(response http_pkg.HttpResponse, errorMapper error_pkg.ErrorMapper, logger logger.Logger, stack bool) gin.HandlerFunc {
+type RecoveryHttpMiddleware interface {
+	WithStack(stack bool) gin.HandlerFunc
+}
+
+type RecoveryHttpMiddlewareParam struct {
+	fx.In
+	Logger   logger.Logger
+	Response http_pkg.HttpResponse
+}
+
+type RecoveryHttpMiddlewareResult struct {
+	fx.Out
+	RecoveryHttpMiddleware RecoveryHttpMiddleware
+}
+
+type recoveryHttpMiddlewareImpl struct {
+	logger   logger.Logger
+	response http_pkg.HttpResponse
+}
+
+func NewRecoveryHttpMiddleware(p RecoveryHttpMiddlewareParam) RecoveryHttpMiddlewareResult {
+	return RecoveryHttpMiddlewareResult{
+		RecoveryHttpMiddleware: &recoveryHttpMiddlewareImpl{
+			logger:   p.Logger,
+			response: p.Response,
+		},
+	}
+}
+
+func (r *recoveryHttpMiddlewareImpl) WithStack(stack bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
@@ -39,7 +69,7 @@ func NewRecoveryHttpMiddleware(response http_pkg.HttpResponse, errorMapper error
 
 				httpRequest, _ := httputil.DumpRequest(c.Request, false)
 				if brokenPipe {
-					logger.WithCtx(ctx).Error(c.Request.URL.Path,
+					r.logger.WithCtx(ctx).Error(c.Request.URL.Path,
 						zap.Any("error", err),
 						zap.String("request", string(httpRequest)),
 					)
@@ -50,20 +80,20 @@ func NewRecoveryHttpMiddleware(response http_pkg.HttpResponse, errorMapper error
 				}
 
 				if stack {
-					logger.WithCtx(ctx).Error("[Recovery from panic]",
+					r.logger.WithCtx(ctx).Error("[Recovery from panic]",
 						zap.Time("time", time.Now()),
 						zap.Any("error", err),
 						zap.String("request", string(httpRequest)),
 						zap.String("stack", string(debug.Stack())),
 					)
 				} else {
-					logger.WithCtx(ctx).Error("[Recovery from panic]",
+					r.logger.WithCtx(ctx).Error("[Recovery from panic]",
 						zap.Time("time", time.Now()),
 						zap.Any("error", err),
 						zap.String("request", string(httpRequest)),
 					)
 				}
-				response.Send(c, nil, error_pkg.InternalServerError)
+				r.response.Send(c, nil, error_pkg.InternalServerError)
 			}
 		}()
 		c.Next()

@@ -14,13 +14,13 @@ import (
 )
 
 const (
-	defaultCapacity   = int64(2)
-	defaultRefillRate = 3 * time.Second
+	DefaultCapacity   = int64(2)
+	DefaultRefillRate = 3 * time.Second
 )
 
 type RateLimiterRegistry interface {
 	Len() int
-	GetHttpRequestRateLimiter(p HttpRequestRateLimiterParam) (RateLimiter, error)
+	GetHttpRequestRateLimiter(p *HttpRequestRateLimiterParam, c *RateLimiterConfig) (RateLimiter, error)
 }
 
 type RateLimiter interface {
@@ -43,11 +43,9 @@ type rateLimiterRegistryImpl struct {
 	registry      *limiters.Registry
 	clock         limiters.Clock
 	keyPrefix     string
-	capacity      int64
-	refillRate    time.Duration
 }
 
-func NewRateLimiterRegistry(p RateLimiterRegistryParam, c *RateLimiterConfig) (RateLimiterRegistry, error) {
+func NewRateLimiterRegistry(p RateLimiterRegistryParam, c *RateLimiterRegistryConfig) (RateLimiterRegistry, error) {
 	if err := validator.New(validator.WithRequiredStructEnabled()).Struct(c); err != nil {
 		return nil, err
 	}
@@ -58,7 +56,7 @@ func NewRateLimiterRegistry(p RateLimiterRegistryParam, c *RateLimiterConfig) (R
 	go func() {
 		// Garbage collect old limiters to prevent memory leaks
 		for {
-			<-time.After(c.RefillRate)
+			<-time.After(DefaultRefillRate)
 			registry.DeleteExpired(clock.Now())
 		}
 	}()
@@ -70,8 +68,6 @@ func NewRateLimiterRegistry(p RateLimiterRegistryParam, c *RateLimiterConfig) (R
 		registry:      registry,
 		clock:         clock,
 		keyPrefix:     c.ServiceIdentifier,
-		capacity:      c.Capacity,
-		refillRate:    c.RefillRate,
 	}
 
 	return rl, nil
@@ -82,15 +78,15 @@ func (rl *rateLimiterRegistryImpl) Len() int {
 }
 
 // GetHttpRequestRateLimiter returns a rate limiter for HTTP requests based on IP address, HTTP method, and HTTP path
-func (rl *rateLimiterRegistryImpl) GetHttpRequestRateLimiter(p HttpRequestRateLimiterParam) (RateLimiter, error) {
+func (rl *rateLimiterRegistryImpl) GetHttpRequestRateLimiter(p *HttpRequestRateLimiterParam, c *RateLimiterConfig) (RateLimiter, error) {
 	key := rl.constructLimiterKey(p)
 
 	bucket := rl.registry.GetOrCreate(
 		key,
 		func() interface{} {
-			return rl.createLimiter(p)
+			return rl.createLimiter(p, c)
 		},
-		rl.refillRate,
+		c.RefillRate,
 		rl.clock.Now(),
 	)
 	tokenBucket, ok := bucket.(*limiters.TokenBucket)
@@ -101,20 +97,20 @@ func (rl *rateLimiterRegistryImpl) GetHttpRequestRateLimiter(p HttpRequestRateLi
 	return tokenBucket, nil
 }
 
-func (rl *rateLimiterRegistryImpl) constructLimiterKey(p HttpRequestRateLimiterParam) string {
-	return fmt.Sprintf("%s:rl:%s:%s:%s", rl.keyPrefix, p.IP, p.Method, p.Path)
+func (rl *rateLimiterRegistryImpl) constructLimiterKey(p *HttpRequestRateLimiterParam) string {
+	return fmt.Sprintf("%s:rl:%s:%s:%s", rl.keyPrefix, p.ID, p.Method, p.Path)
 }
 
-func (rl *rateLimiterRegistryImpl) constructLockerKey(p HttpRequestRateLimiterParam) string {
-	return fmt.Sprintf("%s:rll:%s:%s:%s", rl.keyPrefix, p.IP, p.Method, p.Path)
+func (rl *rateLimiterRegistryImpl) constructLockerKey(p *HttpRequestRateLimiterParam) string {
+	return fmt.Sprintf("%s:rll:%s:%s:%s", rl.keyPrefix, p.ID, p.Method, p.Path)
 }
 
-func (rl *rateLimiterRegistryImpl) createLimiter(p HttpRequestRateLimiterParam) *limiters.TokenBucket {
+func (rl *rateLimiterRegistryImpl) createLimiter(p *HttpRequestRateLimiterParam, c *RateLimiterConfig) *limiters.TokenBucket {
 	key := rl.constructLimiterKey(p)
 	tokenBucketStateBackend := limiters.NewTokenBucketRedis(
 		rl.redis.Client,
 		key,
-		rl.refillRate,
+		c.RefillRate,
 		false,
 	)
 
@@ -123,8 +119,8 @@ func (rl *rateLimiterRegistryImpl) createLimiter(p HttpRequestRateLimiterParam) 
 	locker := limiters.NewLockRedis(pool, lockerKey)
 
 	limiter := limiters.NewTokenBucket(
-		rl.capacity,
-		rl.refillRate,
+		c.Capacity,
+		c.RefillRate,
 		locker,
 		tokenBucketStateBackend,
 		limiters.NewSystemClock(),
