@@ -61,7 +61,7 @@ lint-fix: ## Run lint and fix
 	golangci-lint run --fix
 
 .PHONY: mockery
-mock: ## Run lint and fix
+mock: ## Mock all interfaces
 	mockery
 
 .PHONY: migration\:postgresql\:create
