@@ -15,7 +15,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/config"
 	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
-	"github.com/harmonify/movie-reservation-system/pkg/metrics"
+	http_driver_shared "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/shared"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/fx"
@@ -27,11 +27,11 @@ type HttpServer struct {
 	started bool
 	mu      sync.RWMutex
 
-	Server      *http.Server
-	Gin         *gin.Engine
-	cfg         *HttpServerConfig
-	logger      logger.Logger
-	middlewares *httpServerMiddlewares
+	Server         *http.Server
+	Gin            *gin.Engine
+	cfg            *HttpServerConfig
+	logger         logger.Logger
+	httpMiddleware *http_driver_shared.HttpMiddleware
 }
 
 type HttpServerConfig struct {
@@ -48,20 +48,14 @@ type HttpServerConfig struct {
 type HttpServerParam struct {
 	fx.In
 
-	Lifecycle         fx.Lifecycle
-	Logger            logger.Logger
-	MetricsMiddleware metrics.PrometheusHttpMiddleware
-	Routes            []http_pkg.RestHandler `group:"http_routes"`
+	Logger         logger.Logger
+	HttpMiddleware *http_driver_shared.HttpMiddleware
 }
 
 type HttpServerResult struct {
 	fx.Out
 
 	HttpServer *HttpServer
-}
-
-type httpServerMiddlewares struct {
-	metrics metrics.PrometheusHttpMiddleware
 }
 
 type httpMethodPath struct {
@@ -96,22 +90,10 @@ func NewHttpServer(p HttpServerParam, cfg *HttpServerConfig) (HttpServerResult, 
 			ReadTimeout:  time.Second * readTimeout,
 			WriteTimeout: time.Second * writeTimeout,
 		},
-		cfg:    cfg,
-		logger: p.Logger,
-		middlewares: &httpServerMiddlewares{
-			metrics: p.MetricsMiddleware,
-		},
+		cfg:            cfg,
+		logger:         p.Logger,
+		httpMiddleware: p.HttpMiddleware,
 	}
-
-	p.Lifecycle.Append(fx.Hook{
-		OnStart: func(ctx context.Context) error {
-			h.configure(p.Routes...)
-			return h.Start(ctx)
-		},
-		OnStop: func(ctx context.Context) error {
-			return h.Shutdown(ctx)
-		},
-	})
 
 	return HttpServerResult{
 		HttpServer: h,
@@ -148,7 +130,7 @@ func (h *HttpServer) Shutdown(ctx context.Context) error {
 	return err
 }
 
-func (h *HttpServer) configure(handlers ...http_pkg.RestHandler) {
+func (h *HttpServer) configure(handlers ...http_pkg.RestHandler) error {
 	h.configureMiddlewares()
 
 	if h.cfg.Env == config.EnvironmentProduction {
@@ -157,13 +139,13 @@ func (h *HttpServer) configure(handlers ...http_pkg.RestHandler) {
 		h.Gin.TrustedPlatform = gin.PlatformCloudflare
 	}
 
-	h.registerRoutes(handlers...)
+	return h.registerRoutes(handlers...)
 }
 
 func (h *HttpServer) configureMiddlewares() {
 	h.Gin.Use(h.configureCorsMiddleware)
 	h.Gin.Use(otelgin.Middleware(h.cfg.ServiceIdentifier))
-	h.Gin.Use(ginzap.RecoveryWithZap(h.logger.GetZapLogger(), true))
+	h.Gin.Use(h.httpMiddleware.Recovery.WithStack(true))
 	h.Gin.Use(ginzap.GinzapWithConfig(h.logger.GetZapLogger(), &ginzap.Config{
 		TimeFormat: time.RFC3339Nano,
 		UTC:        true,
@@ -215,7 +197,7 @@ func (h *HttpServer) configureMiddlewares() {
 			return false
 		},
 	}))
-	h.Gin.Use(h.middlewares.metrics.LogHttpMetrics)
+	h.Gin.Use(h.httpMiddleware.Metrics.LogHttpMetrics)
 }
 
 func (h *HttpServer) configureCorsMiddleware(c *gin.Context) {
@@ -234,7 +216,7 @@ func (h *HttpServer) configureCorsMiddleware(c *gin.Context) {
 	c.Next()
 }
 
-func (h *HttpServer) registerRoutes(handlers ...http_pkg.RestHandler) {
+func (h *HttpServer) registerRoutes(handlers ...http_pkg.RestHandler) error {
 	baseGroup := h.Gin.Group(h.cfg.ServiceHttpBasePath)
 	groupMap := map[string]*gin.RouterGroup{}
 	for _, handler := range handlers {
@@ -242,8 +224,12 @@ func (h *HttpServer) registerRoutes(handlers ...http_pkg.RestHandler) {
 		if _, found := groupMap[version]; !found {
 			groupMap[version] = baseGroup.Group(version)
 		}
-		handler.Register(groupMap[version])
+		err := handler.Register(groupMap[version])
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (h *HttpServer) getStarted() bool {

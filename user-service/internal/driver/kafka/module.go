@@ -12,17 +12,12 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/kafka"
 	watermill_pkg "github.com/harmonify/movie-reservation-system/pkg/kafka/watermill"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
-	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/config"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 var (
-	registeredTopics = []string{
-		shared.PublicUserRegisteredV1.String(),
-	}
-
 	KafkaConsumerModule = fx.Module(
 		"kafka-driver",
 		fx.Provide(

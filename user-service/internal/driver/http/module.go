@@ -1,20 +1,29 @@
 package http_driver
 
 import (
+	"context"
+
 	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/config"
 	auth_rest "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/auth"
 	health_rest "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/health_check"
-	"github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/middleware"
+	http_driver_shared "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/shared"
 	user_rest "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/user"
 	"go.uber.org/fx"
 )
+
+type BootstrapHttpServerParam struct {
+	fx.In
+	fx.Lifecycle
+	Routes     []http_pkg.RestHandler `group:"http_routes"`
+	HttpServer *HttpServer
+}
 
 var (
 	HttpModule = fx.Module(
 		"http-driver",
 		http_pkg.HttpModule,
-		middleware.HttpMiddlewareModule,
+		http_driver_shared.HttpMiddlewareModule,
 		fx.Provide(
 			health_rest.NewHealthCheckRestHandler,
 			auth_rest.NewAuthRestHandler,
@@ -36,4 +45,16 @@ var (
 	)
 )
 
-func BootstrapHttpServer(h *HttpServer) {}
+func BootstrapHttpServer(p BootstrapHttpServerParam) {
+	p.Lifecycle.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			if err := p.HttpServer.configure(p.Routes...); err != nil {
+				return err
+			}
+			return p.HttpServer.Start(ctx)
+		},
+		OnStop: func(ctx context.Context) error {
+			return p.HttpServer.Shutdown(ctx)
+		},
+	})
+}

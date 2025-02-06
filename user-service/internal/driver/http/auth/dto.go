@@ -12,7 +12,7 @@ type (
 
 	PostVerifyEmailReq struct {
 		Email string `form:"email" json:"email" validate:"required,email"`
-		Token string `form:"token" json:"token" validate:"required"`
+		Code  string `form:"code" json:"code" validate:"required"`
 	}
 
 	PostLoginReq struct {

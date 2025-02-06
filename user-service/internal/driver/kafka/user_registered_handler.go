@@ -2,7 +2,6 @@ package kafka_driver
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
@@ -11,7 +10,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	otp_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/otp"
-	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/config"
 	user_proto "github.com/harmonify/movie-reservation-system/user-service/internal/driven/proto/user"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -21,6 +20,7 @@ import (
 type UserRegisteredRouteParam struct {
 	fx.In
 
+	Config     *config.UserServiceConfig
 	Logger     logger.Logger
 	Tracer     tracer.Tracer
 	OtpService otp_service.OtpService
@@ -28,6 +28,7 @@ type UserRegisteredRouteParam struct {
 
 type userRegisteredRouteImpl struct {
 	listeners  []watermill_pkg.MessageListener
+	config     *config.UserServiceConfig
 	logger     logger.Logger
 	tracer     tracer.Tracer
 	otpService otp_service.OtpService
@@ -36,6 +37,7 @@ type userRegisteredRouteImpl struct {
 func NewUserRegisteredRoute(p UserRegisteredRouteParam) watermill_pkg.Route {
 	return &userRegisteredRouteImpl{
 		listeners:  []watermill_pkg.MessageListener{},
+		config:     p.Config,
 		logger:     p.Logger,
 		tracer:     p.Tracer,
 		otpService: p.OtpService,
@@ -49,7 +51,7 @@ func (r *userRegisteredRouteImpl) Identifier() string {
 func (r *userRegisteredRouteImpl) Register(router *message.Router, subscriber message.Subscriber) error {
 	router.AddNoPublisherHandler(
 		r.Identifier(),
-		shared.PublicUserRegisteredV1.String(),
+		r.config.KafkaTopicUserRegisteredV1,
 		subscriber,
 		r.handle,
 	)
@@ -75,10 +77,10 @@ func (r *userRegisteredRouteImpl) handle(message *message.Message) error {
 
 	r.logger.WithCtx(ctx).Debug("UserRegistered event payload", zap.Any("user_registered", val))
 
-	// Send email verification link
-	err := r.otpService.SendEmailVerificationLink(ctx, otp_service.SendEmailVerificationLinkParam{
-		Name:  fmt.Sprintf("%s %s", val.GetFirstName(), val.GetLastName()),
-		Email: val.GetEmail(),
+	err := r.otpService.SendSignupEmail(ctx, otp_service.SendSignupEmailParam{
+		FirstName: val.GetFirstName(),
+		LastName:  val.GetLastName(),
+		Email:     val.GetEmail(),
 	})
 	var ed *error_pkg.ErrorWithDetails
 	if err != nil {
