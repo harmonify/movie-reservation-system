@@ -12,8 +12,8 @@ import (
 )
 
 type StructValidator interface {
-	Validate(schema interface{}) (original error, errorFields []ValidationError)
-	ConstructValidationErrorFields(err error) (processed bool, errorFields []ValidationError)
+	Validate(schema interface{}) (original error, errorFields []error)
+	ConstructValidationErrorFields(err error) []error
 }
 
 type structValidatorImpl struct {
@@ -25,7 +25,7 @@ type structValidatorImpl struct {
 
 func NewStructValidator(validatorUtil Validator) (StructValidator, error) {
 	structValidator := &structValidatorImpl{
-		validator:     validator.New(),
+		validator:     validator.New(validator.WithRequiredStructEnabled()),
 		validatorUtil: validatorUtil,
 	}
 
@@ -81,9 +81,9 @@ func (v *structValidatorImpl) registerCustomValidations() error {
 	return nil
 }
 
-func (v *structValidatorImpl) Validate(schema interface{}) (original error, errorFields []ValidationError) {
+func (v *structValidatorImpl) Validate(schema interface{}) (error, []error) {
 	if err := v.validator.Struct(schema); err != nil {
-		_, errFields := v.ConstructValidationErrorFields(err)
+		errFields := v.ConstructValidationErrorFields(err)
 		return err, errFields
 	}
 	return nil, nil
@@ -92,27 +92,27 @@ func (v *structValidatorImpl) Validate(schema interface{}) (original error, erro
 // ConstructValidationErrorFields constructs validation error fields
 // Accepts error (will only process if the type is validator.ValidationErrors)
 // Returns boolean (true if error is validator.ValidationErrors) and array of constructed error fields
-func (v *structValidatorImpl) ConstructValidationErrorFields(err error) (processed bool, errorFields []ValidationError) {
+func (v *structValidatorImpl) ConstructValidationErrorFields(err error) (errorFields []error) {
 	var val validator.ValidationErrors
-
-	processed = errors.As(err, &val)
-	if processed {
-		errorFields = make([]ValidationError, len(val))
+	if errors.As(err, &val) {
+		errorFields = make([]error, len(val))
 		for i, fe := range val {
 			// Use tag name whenever possible
-			fieldPath := fe.Field()
+			fieldPath := v.extractNestedField(fe.Namespace())
 
-			// Fallback to struct namespace if tag name is not available
+			// Fall back to struct namespace if tag name is not available
 			if fieldPath == "" && fe.StructNamespace() != "" {
 				fieldPath = v.extractNestedField(fe.StructNamespace())
 			}
 
 			// Construct validation error fields
-			errorFields[i] = ValidationError{
+			errorFields[i] = &ValidationError{
 				Field:   fieldPath,
 				Message: fe.Translate(v.trans),
 			}
 		}
+	} else {
+		errorFields = make([]error, 0)
 	}
 
 	return
@@ -133,6 +133,9 @@ func (v *structValidatorImpl) extractNestedField(fieldPath string) string {
 }
 
 func (v *structValidatorImpl) convertToSnakeCase(value string) string {
+	if value == "" {
+		return value
+	}
 	str := stringy.New(value)
 	return str.SnakeCase("?", "").ToLower()
 }

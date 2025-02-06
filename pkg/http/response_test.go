@@ -50,8 +50,14 @@ func (s *ResponseTestSuite) SetupSuite() {
 	s.app = fx.New(
 		error_pkg.ErrorModule,
 		fx.Provide(
+			func(lc fx.Lifecycle) (tracer.Tracer, error) {
+				return tracer.NewTracer(lc, &tracer.TracerConfig{
+					Env:               "test",
+					ServiceIdentifier: "test",
+					Type:              "console",
+				})
+			},
 			logger.NewConsoleLogger,
-			tracer.NewConsoleTracer,
 			struct_util.NewStructUtil,
 			http_pkg.NewHttpResponse,
 		),
@@ -61,6 +67,10 @@ func (s *ResponseTestSuite) SetupSuite() {
 
 		fx.NopLogger,
 	)
+
+	if err := s.app.Start(context.Background()); err != nil {
+		s.T().Fatal(err)
+	}
 }
 
 func (s *ResponseTestSuite) TestHttpResponse_Build() {
@@ -100,7 +110,7 @@ func (s *ResponseTestSuite) TestHttpResponse_Build() {
 				testCase.BeforeCall(testCase.Config)
 			}
 
-			httpCode, httpResponse, httpResponseError := s.httpResponse.Build(
+			httpCode, httpResponse := s.httpResponse.Build(
 				context.Background(),
 				testCase.Config.SuccessHttpCode,
 				testCase.Config.Data,
@@ -114,13 +124,6 @@ func (s *ResponseTestSuite) TestHttpResponse_Build() {
 			s.Assert().Equal(testCase.Expectation.Success, httpResponse.Success)
 			s.Assert().Equal(testCase.Expectation.HttpCode, httpCode)
 			s.Assert().Equal(testCase.Expectation.Result, httpResponse.Result)
-			if testCase.Expectation.Error != nil {
-				s.Require().IsType(httpResponseError, &http_pkg.HttpError{})
-				s.Assert().Equal(
-					httpResponseError.Code,
-					testCase.Expectation.Error.Code,
-				)
-			}
 		})
 	}
 }
@@ -134,7 +137,7 @@ func (s *ResponseTestSuite) TestHttpResponse_Build_ResponseCode() {
 				testCase.BeforeCall(testCase.Config)
 			}
 
-			httpCode, response, responseError := s.httpResponse.Build(context.Background(), testCase.Config.SuccessHttpCode, testCase.Config.Data, nil)
+			httpCode, response := s.httpResponse.Build(context.Background(), testCase.Config.SuccessHttpCode, testCase.Config.Data, nil)
 
 			if testCase.AfterCall != nil {
 				testCase.AfterCall()
@@ -143,7 +146,6 @@ func (s *ResponseTestSuite) TestHttpResponse_Build_ResponseCode() {
 			s.Assert().True(testCase.Expectation.Success, response.Success)
 			s.Assert().Equal(testCase.Expectation.HttpCode, httpCode)
 			s.Assert().Equal(testCase.Expectation.Result, response.Result)
-			s.Assert().Equal(testCase.Expectation.Error, responseError)
 		})
 	}
 }

@@ -35,6 +35,13 @@ var (
 		Message:  "Your request is unauthorized. Please ensure you have the correct credentials and try again.",
 	}
 
+	InvalidAuthorizationHeaderError = &ErrorWithDetails{
+		Code:     ErrorCode("INVALID_AUTHORIZATION_HEADER_ERROR"),
+		HttpCode: http.StatusUnauthorized,
+		GrpcCode: codes.Unauthenticated,
+		Message:  "Your request is malformed. Please ensure you have the correct credentials and try again.",
+	}
+
 	InvalidJwtError = &ErrorWithDetails{
 		Code:     ErrorCode("INVALID_JWT_ERROR"),
 		HttpCode: http.StatusUnauthorized,

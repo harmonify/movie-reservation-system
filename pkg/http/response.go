@@ -10,9 +10,6 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	struct_util "github.com/harmonify/movie-reservation-system/pkg/util/struct"
-	"github.com/harmonify/movie-reservation-system/pkg/util/validation"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
@@ -21,11 +18,10 @@ type HttpResponse interface {
 	SendWithResponseCode(c *gin.Context, successHttpCode int, data interface{}, err error)
 	// Build is a function to build the response schema
 	// Build takes in the ctx, success http code (only respected when err is nil), data, and err
-	// Build returns the http code, response schema, and error
-	// The error is an instance of HttpError and is useful for debugging
+	// Build returns http response code and body
 	// You typically don't need to call this function directly
 	// Instead, use Send or SendWithResponseCode
-	Build(ctx context.Context, successHttpCode int, data interface{}, err *error_pkg.ErrorWithDetails) (responseHttpCode int, responseBody *Response, responseError *HttpError)
+	Build(ctx context.Context, successHttpCode int, data interface{}, err *error_pkg.ErrorWithDetails) (responseHttpCode int, responseBody *Response)
 }
 
 type httpResponseImpl struct {
@@ -49,9 +45,8 @@ func (r *httpResponseImpl) Send(c *gin.Context, data interface{}, err error) {
 	defer span.End()
 
 	detailedError, _ := r.errorMapper.FromError(err)
-	code, response, responseError := r.Build(ctx, http.StatusOK, data, detailedError)
-	r.logResponse(ctx, code, response, responseError)
-
+	code, response := r.Build(ctx, http.StatusOK, data, detailedError)
+	r.logResponse(ctx, code, response, detailedError)
 	c.JSON(code, response)
 }
 
@@ -60,13 +55,12 @@ func (r *httpResponseImpl) SendWithResponseCode(c *gin.Context, successHttpCode 
 	defer span.End()
 
 	detailedError, _ := r.errorMapper.FromError(err)
-	code, response, responseError := r.Build(ctx, successHttpCode, data, detailedError)
-	r.logResponse(ctx, code, response, responseError)
-
+	code, response := r.Build(ctx, successHttpCode, data, detailedError)
+	r.logResponse(ctx, code, response, detailedError)
 	c.JSON(code, response)
 }
 
-func (r *httpResponseImpl) Build(ctx context.Context, successHttpCode int, data interface{}, err *error_pkg.ErrorWithDetails) (int, *Response, *HttpError) {
+func (r *httpResponseImpl) Build(ctx context.Context, successHttpCode int, data interface{}, err *error_pkg.ErrorWithDetails) (int, *Response) {
 	_, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -89,37 +83,21 @@ func (r *httpResponseImpl) Build(ctx context.Context, successHttpCode int, data 
 		response.Error = ErrorResponse{
 			Code:    err.Code.String(),
 			Message: err.Message,
-			Errors:  r.structUtil.SetNonPrimitiveDefaultValue(ctx, []validation.ValidationError{}),
+			Errors:  r.structUtil.SetNonPrimitiveDefaultValue(ctx, err.Errors),
 		}
-
-		errWithStack := error_pkg.NewErrorWithStack(err, error_pkg.InvalidRequestBodyError)
-		httpErr := NewHttpError(errWithStack)
-
-		return err.HttpCode, response, httpErr
+		return err.HttpCode, response
 	}
 
-	return successHttpCode, response, nil
+	return successHttpCode, response
 }
 
-func (r *httpResponseImpl) logResponse(ctx context.Context, httpCode int, response *Response, httpError *HttpError) {
-	span := trace.SpanFromContext(ctx)
+func (r *httpResponseImpl) logResponse(ctx context.Context, httpCode int, response *Response, detailedError *error_pkg.ErrorWithDetails) {
+	fields := []zap.Field{}
 
-	fields := []zap.Field{
-		zap.String("traceId", span.SpanContext().TraceID().String()),
-		zap.Int("statusCode", httpCode),
-	}
-
-	if httpError != nil {
-		stacks, _ := json.Marshal(httpError.Stack)
+	if detailedError != nil {
 		fields = append(
 			fields,
-			zap.String("original", httpError.Original.Error()),
-			zap.String("error", httpError.Error()),
-			zap.String("source", httpError.Source),
-			zap.String("functionName", httpError.Fn),
-			zap.Int("line", httpError.Line),
-			zap.String("path", httpError.Path),
-			zap.String("stack", string(stacks)),
+			zap.Object("error", detailedError),
 		)
 	}
 
@@ -131,10 +109,6 @@ func (r *httpResponseImpl) logResponse(ctx context.Context, httpCode int, respon
 	}
 
 	if httpCode >= http.StatusInternalServerError {
-		span.SetStatus(codes.Error, stringResponse)
-		if httpError != nil {
-			span.RecordError(httpError)
-		}
 		r.logger.WithCtx(ctx).Error("Response error", fields...)
 	} else if r.logger.Level() == zap.DebugLevel {
 		r.logger.WithCtx(ctx).Debug("Response debug", fields...)

@@ -8,7 +8,7 @@ type (
 	RestHandler interface {
 		// Register will be invoked when starting HTTP server
 		// this function can be used to register REST API routes
-		Register(g *gin.RouterGroup)
+		Register(g *gin.RouterGroup) error
 		// Version return API version for this REST handler
 		Version() string
 	}

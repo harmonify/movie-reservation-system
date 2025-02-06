@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
-	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/fx"
@@ -92,18 +91,6 @@ func (s *ResponseTestSuite) TestErrorMapper_FromError() {
 			},
 			expectation: testExpectation{
 				Error: error_pkg.ServiceUnavailableError,
-				Valid: true,
-			},
-		},
-		{
-			name: "http error",
-			errFactory: func() error {
-				err := errors.New("wrapped error")
-				errWithStack := error_pkg.NewErrorWithStack(err, error_pkg.InvalidRequestBodyError)
-				return http_pkg.NewHttpError(errWithStack)
-			},
-			expectation: testExpectation{
-				Error: error_pkg.InvalidRequestBodyError,
 				Valid: true,
 			},
 		},

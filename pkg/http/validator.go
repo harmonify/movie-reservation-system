@@ -31,15 +31,21 @@ func NewHttpValidator(
 
 func (v *HttpValidatorImpl) ValidateRequestBody(c *gin.Context, schema interface{}) error {
 	if err := c.ShouldBind(schema); err != nil {
-		_, validationErrs := v.structValidator.ConstructValidationErrorFields(err)
-		errWithStack := error_pkg.NewErrorWithStack(err, error_pkg.InvalidRequestBodyError)
-		return NewHttpError(errWithStack, validationErrs...)
+		vErr := error_pkg.InvalidRequestBodyError
+		var data []error
+		data = v.structValidator.ConstructValidationErrorFields(err)
+		data = append(data, &validation.ValidationError{
+			Field:   "",
+			Message: err.Error(),
+		})
+		vErr.Errors = data
+		return vErr
 	}
 
-	if err, validationErrs := v.structValidator.Validate(schema); len(validationErrs) > 0 {
-		_, validationErrs := v.structValidator.ConstructValidationErrorFields(err)
-		errWithStack := error_pkg.NewErrorWithStack(err, error_pkg.InvalidRequestBodyError)
-		return NewHttpError(errWithStack, validationErrs...)
+	if err, validationErrs := v.structValidator.Validate(schema); err != nil && len(validationErrs) > 0 {
+		vErr := error_pkg.InvalidRequestBodyError
+		vErr.Errors = validationErrs
+		return vErr
 	}
 
 	return nil
@@ -47,15 +53,21 @@ func (v *HttpValidatorImpl) ValidateRequestBody(c *gin.Context, schema interface
 
 func (v *HttpValidatorImpl) ValidateRequestQuery(c *gin.Context, schema interface{}) error {
 	if err := c.ShouldBindQuery(schema); err != nil {
-		_, validationErrs := v.structValidator.ConstructValidationErrorFields(err)
-		errWithStack := error_pkg.NewErrorWithStack(err, error_pkg.InvalidRequestBodyError)
-		return NewHttpError(errWithStack, validationErrs...)
+		vErr := error_pkg.InvalidRequestBodyError
+		var data []error
+		data = v.structValidator.ConstructValidationErrorFields(err)
+		data = append(data, &validation.ValidationError{
+			Field:   "",
+			Message: err.Error(),
+		})
+		vErr.Errors = data
+		return vErr
 	}
 
-	if err, validationErrs := v.structValidator.Validate(schema); len(validationErrs) > 0 {
-		_, validationErrs := v.structValidator.ConstructValidationErrorFields(err)
-		errWithStack := error_pkg.NewErrorWithStack(err, error_pkg.InvalidRequestBodyError)
-		return NewHttpError(errWithStack, validationErrs...)
+	if err, validationErrs := v.structValidator.Validate(schema); err != nil && len(validationErrs) > 0 {
+		vErr := error_pkg.InvalidRequestBodyError
+		vErr.Errors = validationErrs
+		return vErr
 	}
 
 	return nil

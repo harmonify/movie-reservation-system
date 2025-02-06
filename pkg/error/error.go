@@ -22,6 +22,7 @@ type ErrorWithDetails struct {
 	GrpcCode codes.Code  `json:"grpc_code"` // associated gRPC status code
 	Message  string      `json:"message"`   // user-friendly message
 	Data     interface{} `json:"data"`      // additional data
+	Errors   []error     `json:"errors"`    // additional error messages, useful for clients
 }
 
 // Error returns the user-friendly error message.
