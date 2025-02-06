@@ -9,7 +9,8 @@ import (
 	"os"
 	"sync"
 
-	"github.com/harmonify/movie-reservation-system/notification-service/internal/core/shared"
+	"github.com/harmonify/movie-reservation-system/notification-service/internal/core/templates"
+	"github.com/harmonify/movie-reservation-system/notification-service/internal/driven/config"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"go.uber.org/fx"
@@ -19,16 +20,17 @@ import (
 type (
 	EmailTemplateService interface {
 		// Render renders HTML email template
-		Render(ctx context.Context, path shared.EmailTemplatePath, data interface{}) (string, error)
+		Render(ctx context.Context, path templates.EmailTemplatePath, data map[string]interface{}) (string, error)
 	}
 
 	EmailTemplateServiceParam struct {
 		fx.In
 		fx.Lifecycle
 
-		EmailTemplatePaths []shared.EmailTemplatePath `group:"email-template-paths"`
+		EmailTemplatePaths []templates.EmailTemplatePath `group:"email-template-paths"`
 		Logger             logger.Logger
 		Tracer             tracer.Tracer
+		Config             *config.NotificationServiceConfig
 	}
 
 	EmailTemplateServiceResult struct {
@@ -41,6 +43,7 @@ type (
 		cache  sync.Map
 		logger logger.Logger
 		tracer tracer.Tracer
+		config *config.NotificationServiceConfig
 	}
 )
 
@@ -49,6 +52,7 @@ func NewEmailTemplateService(p EmailTemplateServiceParam) EmailTemplateServiceRe
 		cache:  sync.Map{},
 		logger: p.Logger,
 		tracer: p.Tracer,
+		config: p.Config,
 	}
 
 	p.Lifecycle.Append(fx.StartHook(func(ctx context.Context) error {
@@ -60,7 +64,7 @@ func NewEmailTemplateService(p EmailTemplateServiceParam) EmailTemplateServiceRe
 	}
 }
 
-func (s *emailTemplateServiceImpl) Render(ctx context.Context, path shared.EmailTemplatePath, data interface{}) (string, error) {
+func (s *emailTemplateServiceImpl) Render(ctx context.Context, path templates.EmailTemplatePath, data map[string]interface{}) (string, error) {
 	ctx, span := s.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -77,8 +81,14 @@ func (s *emailTemplateServiceImpl) Render(ctx context.Context, path shared.Email
 	return body.String(), nil
 }
 
+func (s *emailTemplateServiceImpl) appendDefaultValues(data map[string]interface{}) {
+	if _, found := data["supportEmail"]; !found {
+		data["supportEmail"] = s.config.AppDefaultSupportEmail
+	}
+}
+
 // getTemplate fetches and parses the template from the cache or local file
-func (s *emailTemplateServiceImpl) getTemplate(ctx context.Context, path shared.EmailTemplatePath) (*template.Template, error) {
+func (s *emailTemplateServiceImpl) getTemplate(ctx context.Context, path templates.EmailTemplatePath) (*template.Template, error) {
 	ctx, span := s.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -97,7 +107,7 @@ func (s *emailTemplateServiceImpl) getTemplate(ctx context.Context, path shared.
 }
 
 // loadTemplate loads a template from a file and parses it
-func (s *emailTemplateServiceImpl) loadTemplate(ctx context.Context, path shared.EmailTemplatePath) (*template.Template, error) {
+func (s *emailTemplateServiceImpl) loadTemplate(ctx context.Context, path templates.EmailTemplatePath) (*template.Template, error) {
 	ctx, span := s.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -121,7 +131,7 @@ func (s *emailTemplateServiceImpl) loadTemplate(ctx context.Context, path shared
 }
 
 // preloadTemplates cache all templates to the memory
-func (s *emailTemplateServiceImpl) preloadTemplates(ctx context.Context, paths []shared.EmailTemplatePath) error {
+func (s *emailTemplateServiceImpl) preloadTemplates(ctx context.Context, paths []templates.EmailTemplatePath) error {
 	for _, path := range paths {
 		content, err := s.loadTemplate(ctx, path)
 		if err != nil {

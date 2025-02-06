@@ -11,6 +11,8 @@ import (
 	util_shared "github.com/harmonify/movie-reservation-system/pkg/util/shared"
 	"github.com/iancoleman/strcase"
 	"go.uber.org/fx"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"gorm.io/gorm"
 )
 
@@ -23,6 +25,9 @@ type StructUtil interface {
 	// ConvertSqlStructToMap converts a struct with SQL nullable types to a map with snake_case keys,
 	// excluding invalid nullable types.
 	ConvertSqlStructToMap(ctx context.Context, input interface{}) (map[string]interface{}, error)
+
+	// ConvertProtoToMap converts a proto message to a map with camelCase keys.
+	ConvertProtoToMap(ctx context.Context, msg proto.Message) (map[string]interface{}, error)
 }
 
 type StructUtilParam struct {
@@ -135,7 +140,11 @@ func (u *structUtilImpl) ConvertSqlStructToMap(ctx context.Context, input interf
 
 	result = make(map[string]interface{})
 
-	// Ensure the input is a struct or a pointer to struct
+	if input == nil {
+		return
+	}
+
+	// Ensure the input is a struct
 	val := reflect.ValueOf(input)
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()
@@ -202,6 +211,93 @@ func (u *structUtilImpl) ConvertSqlStructToMap(ctx context.Context, input interf
 			}
 		}
 	}
+
+	return
+}
+
+func (u *structUtilImpl) ConvertProtoToMap(ctx context.Context, msg proto.Message) (result map[string]interface{}, err error) {
+	ctx, span := u.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
+	defer func() {
+		if r := recover(); r != nil {
+			e, ok := r.(error)
+			if ok {
+				u.logger.WithCtx(ctx).Error(fmt.Sprintf("Recovered from panic: %v", e))
+				err = e
+			} else {
+				u.logger.WithCtx(ctx).Error(fmt.Sprintf("Recovered from panic: %v", r))
+				err = fmt.Errorf("recovered from panic: %v", r)
+			}
+		}
+	}()
+
+	result = make(map[string]interface{})
+
+	if msg == nil {
+		return
+	}
+
+	msgReflect := msg.ProtoReflect()
+
+	msgReflect.Range(func(fd protoreflect.FieldDescriptor, v protoreflect.Value) bool {
+		name := string(fd.Name())
+
+		// Handle nested message
+		if fd.Kind() == protoreflect.MessageKind {
+			if fd.IsList() { // Handle repeated messages
+				list := v.List()
+				arr := make([]interface{}, list.Len())
+				for i := 0; i < list.Len(); i++ {
+					res, err := u.ConvertProtoToMap(ctx, list.Get(i).Message().Interface())
+					if err != nil {
+						err = fmt.Errorf("failed to convert proto to map: %w", err)
+						return false
+					}
+					arr[i] = res
+				}
+				result[name] = arr
+			} else if fd.IsMap() { // Handle map fields
+				mapValues := v.Map()
+				mapResult := make(map[string]interface{})
+				mapValues.Range(func(k protoreflect.MapKey, v protoreflect.Value) bool {
+					res, err := u.ConvertProtoToMap(ctx, v.Message().Interface())
+					if err != nil {
+						err = fmt.Errorf("failed to convert proto to map: %w", err)
+						return false
+					}
+					mapResult[k.String()] = res
+					return true
+				})
+				result[name] = mapResult
+			} else { // Handle single nested message
+				res, err := u.ConvertProtoToMap(ctx, v.Message().Interface())
+				if err != nil {
+					err = fmt.Errorf("failed to convert proto to map: %w", err)
+					return false
+				}
+				result[name] = res
+			}
+		} else if fd.IsList() { // Handle repeated primitive fields
+			list := v.List()
+			arr := make([]interface{}, list.Len())
+			for i := 0; i < list.Len(); i++ {
+				arr[i] = list.Get(i).Interface()
+			}
+			result[name] = arr
+		} else if fd.IsMap() { // Handle map of primitive types
+			mapValues := v.Map()
+			mapResult := make(map[string]interface{})
+			mapValues.Range(func(k protoreflect.MapKey, v protoreflect.Value) bool {
+				mapResult[k.String()] = v.Interface()
+				return true
+			})
+			result[name] = mapResult
+		} else { // Handle primitive fields
+			result[name] = v.Interface()
+		}
+		return true
+	})
 
 	return
 }

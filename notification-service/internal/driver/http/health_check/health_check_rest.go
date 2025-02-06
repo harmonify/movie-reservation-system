@@ -7,12 +7,6 @@ import (
 	"go.uber.org/fx"
 )
 
-type HealthCheckRestHandler interface {
-	Register(g *gin.RouterGroup)
-	Version() string
-	GetHealthCheck(c *gin.Context)
-}
-
 type HealthCheckRestHandlerParam struct {
 	fx.In
 
@@ -44,15 +38,16 @@ func NewHealthCheckRestHandler(p HealthCheckRestHandlerParam) HealthCheckRestHan
 	}
 }
 
-func (h *healthCheckRestHandlerImpl) Register(g *gin.RouterGroup) {
-	g.GET("/health", h.GetHealthCheck)
+func (h *healthCheckRestHandlerImpl) Register(g *gin.RouterGroup) error {
+	g.GET("/health", h.getHealthCheck)
+	return nil
 }
 
 func (h *healthCheckRestHandlerImpl) Version() string {
 	return "1"
 }
 
-func (h *healthCheckRestHandlerImpl) GetHealthCheck(c *gin.Context) {
+func (h *healthCheckRestHandlerImpl) getHealthCheck(c *gin.Context) {
 	var (
 		err  error
 		data = &HealthCheckResponse{

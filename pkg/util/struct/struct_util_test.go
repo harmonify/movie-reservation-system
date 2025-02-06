@@ -7,9 +7,12 @@ import (
 
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
+	test_proto "github.com/harmonify/movie-reservation-system/pkg/test/proto"
+	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	struct_util "github.com/harmonify/movie-reservation-system/pkg/util/struct"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/fx"
+	"google.golang.org/protobuf/proto"
 )
 
 func TestStructUtilSuite(t *testing.T) {
@@ -26,17 +29,32 @@ type StructUtilTestSuite struct {
 	structUtil struct_util.StructUtil
 }
 
-type testConfig struct {
+type setNonPrimitiveDefaultValueTestConfig struct {
 	Data interface{}
 }
 
-type testExpectation struct {
+type setNonPrimitiveDefaultValueTestExpectation struct {
 	Result interface{}
+}
+
+type convertProtoToMapTestConfig struct {
+	Data proto.Message
+}
+
+type convertProtoToMapTestExpectation struct {
+	Result map[string]interface{}
 }
 
 func (s *StructUtilTestSuite) SetupSuite() {
 	s.app = fx.New(
 		fx.Provide(
+			func(lc fx.Lifecycle) (tracer.Tracer, error) {
+				return tracer.NewTracer(lc, &tracer.TracerConfig{
+					Env:               "test",
+					ServiceIdentifier: "test",
+					Type:              "console",
+				})
+			},
 			logger.NewConsoleLogger,
 			struct_util.NewStructUtil,
 		),
@@ -50,6 +68,10 @@ func (s *StructUtilTestSuite) SetupSuite() {
 
 		fx.NopLogger,
 	)
+
+	if err := s.app.Start(context.Background()); err != nil {
+		s.T().Fatal(err)
+	}
 }
 
 func (s *StructUtilTestSuite) TestStructUtilSuite_SetNonPrimitiveDefaultValue() {
@@ -57,131 +79,131 @@ func (s *StructUtilTestSuite) TestStructUtilSuite_SetNonPrimitiveDefaultValue() 
 	nonEmptyPrimitive := "hello"
 	emptyPrimitive := ""
 
-	testCases := []test_interface.TestCase[testConfig, testExpectation]{
+	testCases := []test_interface.TestCase[setNonPrimitiveDefaultValueTestConfig, setNonPrimitiveDefaultValueTestExpectation]{
 		{
 			Description: "Should handle nil",
-			Config:      testConfig{Data: data},
-			Expectation: testExpectation{Result: map[string]interface{}{}},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: data},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: map[string]interface{}{}},
 		},
 		{
 			Description: "Should handle nil pointer",
-			Config:      testConfig{Data: &data},
-			Expectation: testExpectation{Result: map[string]interface{}{}},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: &data},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: map[string]interface{}{}},
 		},
 		{
 			Description: "Should handle non-empty struct",
-			Config:      testConfig{Data: struct{ Hello string }{Hello: "world"}},
-			Expectation: testExpectation{Result: struct{ Hello string }{Hello: "world"}},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: struct{ Hello string }{Hello: "world"}},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: struct{ Hello string }{Hello: "world"}},
 		},
 		{
 			Description: "Should handle non-empty struct pointer",
-			Config:      testConfig{Data: &struct{ Hello string }{Hello: "world"}},
-			Expectation: testExpectation{Result: &struct{ Hello string }{Hello: "world"}},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: &struct{ Hello string }{Hello: "world"}},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: &struct{ Hello string }{Hello: "world"}},
 		},
 		{
 			Description: "Should handle empty struct",
-			Config:      testConfig{Data: struct{ Name string }{}},
-			Expectation: testExpectation{Result: map[string]interface{}{}},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: struct{ Name string }{}},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: map[string]interface{}{}},
 		},
 		{
 			Description: "Should handle empty struct pointer",
-			Config:      testConfig{Data: &struct{ Name string }{}},
-			Expectation: testExpectation{Result: map[string]interface{}{}},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: &struct{ Name string }{}},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: map[string]interface{}{}},
 		},
 		{
 			Description: "Should handle non-empty slice",
-			Config:      testConfig{Data: []string{"hello"}},
-			Expectation: testExpectation{Result: []string{"hello"}},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: []string{"hello"}},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: []string{"hello"}},
 		},
 		{
 			Description: "Should handle non-empty slice pointer",
-			Config:      testConfig{Data: &[]string{"hello"}},
-			Expectation: testExpectation{Result: &[]string{"hello"}},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: &[]string{"hello"}},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: &[]string{"hello"}},
 		},
 		{
 			Description: "Should handle non-empty slice of pointers",
-			Config:      testConfig{Data: []*string{&nonEmptyPrimitive}},
-			Expectation: testExpectation{Result: []*string{&nonEmptyPrimitive}},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: []*string{&nonEmptyPrimitive}},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: []*string{&nonEmptyPrimitive}},
 		},
 		{
 			Description: "Should handle empty slice",
-			Config:      testConfig{Data: []string{}},
-			Expectation: testExpectation{Result: []string{}},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: []string{}},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: []string{}},
 		},
 		{
 			Description: "Should handle empty slice pointer",
-			Config:      testConfig{Data: &[]string{}},
-			Expectation: testExpectation{Result: &[]string{}},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: &[]string{}},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: &[]string{}},
 		},
 		{
 			Description: "Should handle non-empty array",
-			Config:      testConfig{Data: [1]string{"hello"}},
-			Expectation: testExpectation{Result: [1]string{"hello"}},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: [1]string{"hello"}},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: [1]string{"hello"}},
 		},
 		{
 			Description: "Should handle empty array",
-			Config:      testConfig{Data: [1]string{}},
-			Expectation: testExpectation{Result: []interface{}{}},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: [1]string{}},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: []interface{}{}},
 		},
 		{
 			Description: "Should handle non-empty map",
-			Config:      testConfig{Data: map[string]string{"hello": "world"}},
-			Expectation: testExpectation{Result: map[string]string{"hello": "world"}},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: map[string]string{"hello": "world"}},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: map[string]string{"hello": "world"}},
 		},
 		{
 			Description: "Should handle non-empty map pointer",
-			Config:      testConfig{Data: &map[string]string{"hello": "world"}},
-			Expectation: testExpectation{Result: &map[string]string{"hello": "world"}},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: &map[string]string{"hello": "world"}},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: &map[string]string{"hello": "world"}},
 		},
 		{
 			Description: "Should handle empty map",
-			Config:      testConfig{Data: map[string]string{}},
-			Expectation: testExpectation{Result: map[string]string{}},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: map[string]string{}},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: map[string]string{}},
 		},
 		{
 			Description: "Should handle empty map pointer",
-			Config:      testConfig{Data: &map[string]string{}},
-			Expectation: testExpectation{Result: &map[string]string{}},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: &map[string]string{}},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: &map[string]string{}},
 		},
 		{
 			Description: "Should handle empty interface",
-			Config:      testConfig{Data: interface{}(nil)},
-			Expectation: testExpectation{Result: map[string]interface{}{}},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: interface{}(nil)},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: map[string]interface{}{}},
 		},
 		{
 			Description: "Should handle non-empty interface",
-			Config:      testConfig{Data: interface{}(struct{ Hello string }{Hello: "world"})},
-			Expectation: testExpectation{Result: struct{ Hello string }{Hello: "world"}},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: interface{}(struct{ Hello string }{Hello: "world"})},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: struct{ Hello string }{Hello: "world"}},
 		},
 		{
 			Description: "Should handle non-empty interface pointer",
-			Config:      testConfig{Data: interface{}(&struct{ Hello string }{Hello: "world"})},
-			Expectation: testExpectation{Result: &struct{ Hello string }{Hello: "world"}},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: interface{}(&struct{ Hello string }{Hello: "world"})},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: &struct{ Hello string }{Hello: "world"}},
 		},
 		{
 			Description: "Should handle empty interface pointer",
-			Config:      testConfig{Data: interface{}(&struct{ Hello string }{})},
-			Expectation: testExpectation{Result: map[string]interface{}{}},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: interface{}(&struct{ Hello string }{})},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: map[string]interface{}{}},
 		},
 		{
 			Description: "Should handle non-empty primitives",
-			Config:      testConfig{Data: "hello"},
-			Expectation: testExpectation{Result: "hello"},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: "hello"},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: "hello"},
 		},
 		{
 			Description: "Should handle non-empty primitives pointer",
-			Config:      testConfig{Data: &nonEmptyPrimitive},
-			Expectation: testExpectation{Result: &nonEmptyPrimitive},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: &nonEmptyPrimitive},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: &nonEmptyPrimitive},
 		},
 		{
 			Description: "Should handle empty primitives",
-			Config:      testConfig{Data: ""},
-			Expectation: testExpectation{Result: nil},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: ""},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: nil},
 		},
 		{
 			Description: "Should handle empty primitives pointer",
-			Config:      testConfig{Data: &emptyPrimitive},
-			Expectation: testExpectation{Result: nil},
+			Config:      setNonPrimitiveDefaultValueTestConfig{Data: &emptyPrimitive},
+			Expectation: setNonPrimitiveDefaultValueTestExpectation{Result: nil},
 		},
 	}
 
@@ -199,6 +221,75 @@ func (s *StructUtilTestSuite) TestStructUtilSuite_SetNonPrimitiveDefaultValue() 
 				testCase.AfterCall()
 			}
 
+			s.Assert().Equal(testCase.Expectation.Result, result)
+		})
+	}
+}
+
+func (s *StructUtilTestSuite) TestStructUtilSuite_ConvertProtoToMap() {
+	var data proto.Message
+	var emptyProto = test_proto.Test{}
+	var nonEmptyProto = test_proto.Test{Message: "Hello world"}
+	var complexProto = test_proto.ComplexTestMessage{
+		Message:         "Hello message",
+		RepeatedMessage: []string{"Hello", "repeated", "message"},
+		NestedTestMessage: &test_proto.NestedTestMessage{
+			NestedMessage: "Hello nested message",
+		},
+		RepeatedNestedTestMessage: []*test_proto.NestedTestMessage{
+			{NestedMessage: "Hello repeated nested message 1"},
+			{NestedMessage: "Hello repeated nested message 2"},
+		},
+	}
+
+	testCases := []test_interface.TestCase[convertProtoToMapTestConfig, convertProtoToMapTestExpectation]{
+		{
+			Description: "Should handle nil",
+			Config:      convertProtoToMapTestConfig{Data: data},
+			Expectation: convertProtoToMapTestExpectation{Result: map[string]interface{}{}},
+		},
+		{
+			Description: "Should handle empty proto",
+			Config:      convertProtoToMapTestConfig{Data: &emptyProto},
+			Expectation: convertProtoToMapTestExpectation{Result: map[string]interface{}{}},
+		},
+		{
+			Description: "Should handle non-empty proto",
+			Config:      convertProtoToMapTestConfig{Data: &nonEmptyProto},
+			Expectation: convertProtoToMapTestExpectation{Result: map[string]interface{}{"message": "Hello world"}},
+		},
+		{
+			Description: "Should handle complex proto",
+			Config:      convertProtoToMapTestConfig{Data: &complexProto},
+			Expectation: convertProtoToMapTestExpectation{Result: map[string]interface{}{
+				"message":         "Hello message",
+				"repeatedMessage": []interface{}{"Hello", "repeated", "message"},
+				"nestedTestMessage": map[string]interface{}{
+					"nestedMessage": "Hello nested message",
+				},
+				"repeatedNestedTestMessage": []interface{}{
+					map[string]interface{}{"nestedMessage": "Hello repeated nested message 1"},
+					map[string]interface{}{"nestedMessage": "Hello repeated nested message 2"},
+				},
+			}},
+		},
+	}
+
+	for _, testCase := range testCases {
+		ctx := context.Background()
+
+		s.Run(testCase.Description, func() {
+			if testCase.BeforeCall != nil {
+				testCase.BeforeCall(testCase.Config)
+			}
+
+			result, err := s.structUtil.ConvertProtoToMap(ctx, testCase.Config.Data)
+
+			if testCase.AfterCall != nil {
+				testCase.AfterCall()
+			}
+
+			s.Assert().Nil(err)
 			s.Assert().Equal(testCase.Expectation.Result, result)
 		})
 	}

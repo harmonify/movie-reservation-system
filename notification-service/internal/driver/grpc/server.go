@@ -5,21 +5,17 @@ import (
 
 	"github.com/harmonify/movie-reservation-system/notification-service/internal/core/services"
 	"github.com/harmonify/movie-reservation-system/notification-service/internal/core/shared"
+	"github.com/harmonify/movie-reservation-system/notification-service/internal/core/templates"
 	notification_proto "github.com/harmonify/movie-reservation-system/notification-service/internal/driven/proto/notification"
 	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	grpc_pkg "github.com/harmonify/movie-reservation-system/pkg/grpc"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
+	"github.com/harmonify/movie-reservation-system/pkg/util"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
-)
-
-var (
-	TemplateDataMapper map[string]proto.Message = map[string]proto.Message{
-		"email-verification": &notification_proto.EmailVerificationTemplateData{},
-	}
 )
 
 func RegisterNotificationServiceServer(
@@ -37,6 +33,7 @@ type NotificationServiceServerParam struct {
 	SmsService           services.SmsService
 	EmailTemplateService services.EmailTemplateService
 	EmailService         services.EmailService
+	Util                 *util.Util
 }
 
 type notificationServiceServerImpl struct {
@@ -47,6 +44,7 @@ type notificationServiceServerImpl struct {
 	smsService                                                services.SmsService
 	emailTemplateService                                      services.EmailTemplateService
 	emailService                                              services.EmailService
+	util                                                      *util.Util
 }
 
 func NewNotificationServiceServer(
@@ -60,6 +58,7 @@ func NewNotificationServiceServer(
 		smsService:                             p.SmsService,
 		emailTemplateService:                   p.EmailTemplateService,
 		emailService:                           p.EmailService,
+		util:                                   p.Util,
 	}
 }
 
@@ -88,8 +87,8 @@ func (s *notificationServiceServerImpl) SendEmail(
 		return nil, s.errorMapper.ToGrpcError(shared.EmptyTemplateError)
 	}
 
-	valid := shared.ValidateEmailTemplateId(req.GetTemplateId())
-	if !valid {
+	tmplPath := templates.MapEmailTemplateIdToPath(req.GetTemplateId())
+	if tmplPath == "" {
 		s.logger.WithCtx(ctx).Error("Invalid email template id", zap.String("template_id", req.GetTemplateId()))
 		return nil, s.errorMapper.ToGrpcError(shared.InvalidTemplateIdError)
 	}
@@ -100,7 +99,13 @@ func (s *notificationServiceServerImpl) SendEmail(
 		return nil, s.errorMapper.ToGrpcError(shared.InvalidTemplateDataError)
 	}
 
-	content, err := s.emailTemplateService.Render(ctx, shared.EmailVerificationTemplatePath, tmplData)
+	tmplDataMap, err := s.util.StructUtil.ConvertProtoToMap(ctx, tmplData)
+	if err != nil {
+		s.logger.WithCtx(ctx).Error("Failed to convert email template data proto to a map", zap.Error(err))
+		return nil, s.errorMapper.ToGrpcError(error_pkg.InternalServerError)
+	}
+
+	content, err := s.emailTemplateService.Render(ctx, tmplPath, tmplDataMap)
 	if err != nil {
 		return nil, s.errorMapper.ToGrpcError(err)
 	}

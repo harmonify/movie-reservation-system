@@ -1,11 +1,20 @@
 package http_driver
 
 import (
+	"context"
+
 	"github.com/harmonify/movie-reservation-system/notification-service/internal/driven/config"
 	health_rest "github.com/harmonify/movie-reservation-system/notification-service/internal/driver/http/health_check"
 	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	"go.uber.org/fx"
 )
+
+type BootstrapHttpServerParam struct {
+	fx.In
+	fx.Lifecycle
+	Routes     []http_pkg.RestHandler `group:"http_routes"`
+	HttpServer *HttpServer
+}
 
 var (
 	HttpModule = fx.Module(
@@ -30,4 +39,16 @@ var (
 	)
 )
 
-func BootstrapHttpServer(h *HttpServer) {}
+func BootstrapHttpServer(p BootstrapHttpServerParam) {
+	p.Lifecycle.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			if err := p.HttpServer.configure(p.Routes...); err != nil {
+				return err
+			}
+			return p.HttpServer.Start(ctx)
+		},
+		OnStop: func(ctx context.Context) error {
+			return p.HttpServer.Shutdown(ctx)
+		},
+	})
+}
