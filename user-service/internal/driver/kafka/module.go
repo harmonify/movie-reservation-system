@@ -9,21 +9,21 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
 	"github.com/ThreeDotsLabs/watermill/message/router/plugin"
+	config_pkg "github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/kafka"
 	watermill_pkg "github.com/harmonify/movie-reservation-system/pkg/kafka/watermill"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/config"
 	"go.uber.org/fx"
-	"go.uber.org/zap"
 )
 
 var (
 	KafkaConsumerModule = fx.Module(
 		"kafka-driver",
 		fx.Provide(
-			func(logger logger.Logger) watermill.LoggerAdapter {
-				zap := logger.GetZapLogger().WithOptions(zap.IncreaseLevel(zap.InfoLevel))
-				return watermill_pkg.NewLogger(zap)
+			func(cfg *config.UserServiceConfig, logger logger.Logger) watermill.LoggerAdapter {
+				zapLogger := logger.GetZapLogger()
+				return watermill_pkg.NewLogger(zapLogger)
 			},
 			watermill_pkg.AsRoute(NewUserRegisteredRoute),
 			watermill_pkg.AsRouter(NewRouter),
@@ -32,7 +32,11 @@ var (
 	)
 )
 
-func BootstrapWatermill(r *Router, lc fx.Lifecycle) {
+func BootstrapWatermill(cfg *config.UserServiceConfig, r *Router, lc fx.Lifecycle) {
+	// Disable kafka client in test environment
+	if cfg.Env == config_pkg.EnvironmentTest {
+		return
+	}
 	lc.Append(fx.StartStopHook(r.Start, r.Close))
 }
 
@@ -41,9 +45,7 @@ type Router struct {
 	logger logger.Logger
 }
 
-func NewRouter(routes []watermill_pkg.Route, logger logger.Logger, cfg *config.UserServiceConfig) *Router {
-	zl := logger.GetZapLogger().WithOptions(zap.IncreaseLevel(zap.InfoLevel))
-	wl := watermill_pkg.NewLogger(zl)
+func NewRouter(routes []watermill_pkg.Route, wl watermill.LoggerAdapter, cfg *config.UserServiceConfig, l logger.Logger) *Router {
 	router, err := message.NewRouter(message.RouterConfig{}, wl)
 	if err != nil {
 		wl.Error("Failed to initiate router", err, watermill.LogFields{})
@@ -94,7 +96,7 @@ func NewRouter(routes []watermill_pkg.Route, logger logger.Logger, cfg *config.U
 
 	r := &Router{
 		router: router,
-		logger: logger,
+		logger: l,
 	}
 
 	return r

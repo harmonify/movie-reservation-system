@@ -90,7 +90,11 @@ func (s *userSeederImpl) CreateUser(ctx context.Context) (*UserWithRelations, er
 		return nil, err
 	}
 
-	userSession, userSessionRaw := s.userSessionFactory.GenerateUserSession(user)
+	userSession, userSessionRaw, err := s.userSessionFactory.GenerateUserSession(user)
+	if err != nil {
+		return nil, err
+	}
+
 	nu, err := s.userSessionStorage.SaveSession(ctx, entity.SaveUserSession{
 		UserUUID:     newUser.UUID,
 		TraceID:      userSession.TraceID,

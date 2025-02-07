@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
+	config_pkg "github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/database"
-	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
 	"github.com/harmonify/movie-reservation-system/pkg/util/validation"
@@ -31,14 +31,13 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/tidwall/gjson"
 	"go.uber.org/fx"
-	"go.uber.org/zap"
 )
 
 func TestUserRest(t *testing.T) {
 	if os.Getenv("CI") == "true" && os.Getenv("INTEGRATION_TEST") != "true" {
 		t.Skip("Skipping test")
 	}
-
+	os.Setenv("ENV", config_pkg.EnvironmentTest)
 	suite.Run(t, new(UserRestTestSuite))
 }
 
@@ -49,7 +48,7 @@ type UserRestTestSuite struct {
 	util                     *util.Util
 	httpServer               *http_driver.HttpServer
 	tokenService             token_service.TokenService
-	otpCache                 shared.OtpCache
+	otpCacheV2               shared.OtpCacheV2
 	userStorage              shared.UserStorage
 	userKeyStorage           shared.UserKeyStorage
 	userFactory              entityfactory.UserFactory
@@ -58,19 +57,11 @@ type UserRestTestSuite struct {
 }
 
 func (s *UserRestTestSuite) SetupSuite() {
-	npMock := mocks.NewNotificationProvider(s.T())
-	npMock.On("SendEmail", mock.Anything, mock.Anything).Return(nil)
-	npMock.On("SendSms", mock.Anything, mock.Anything).Return(nil)
-	s.notificationProviderMock = npMock
+	s.notificationProviderMock = mocks.NewNotificationProvider(s.T())
 
 	s.app = internal.NewApp(
-		fx.Decorate(func(l logger.Logger) logger.Logger {
-			return &logger.ConsoleLoggerImpl{
-				Logger: l.GetZapLogger().WithOptions(zap.IncreaseLevel(zap.ErrorLevel)),
-			}
-		}),
 		fx.Decorate(func(np shared.NotificationProvider) shared.NotificationProvider {
-			return npMock
+			return s.notificationProviderMock
 		}),
 		seeder.DrivenPostgresqlSeederModule,
 		entityfactory.UserEntityFactoryModule,
@@ -79,7 +70,7 @@ func (s *UserRestTestSuite) SetupSuite() {
 			util *util.Util,
 			httpServer *http_driver.HttpServer,
 			tokenService token_service.TokenService,
-			otpCache shared.OtpCache,
+			otpCacheV2 shared.OtpCacheV2,
 			userStorage shared.UserStorage,
 			userKeyStorage shared.UserKeyStorage,
 			userSeeder seeder.UserSeeder,
@@ -89,7 +80,7 @@ func (s *UserRestTestSuite) SetupSuite() {
 			s.util = util
 			s.httpServer = httpServer
 			s.tokenService = tokenService
-			s.otpCache = otpCache
+			s.otpCacheV2 = otpCacheV2
 			s.userStorage = userStorage
 			s.userKeyStorage = userKeyStorage
 			s.userFactory = userFactory
@@ -473,6 +464,7 @@ func (s *UserRestTestSuite) TestUserRest_SendVerificationEmail() {
 			s.T().Fatal("Failed to delete test user after call")
 		}
 	}()
+	s.T().Log(testUser)
 
 	accessToken := s.generateAccessToken(ctx, testUser.User.UUID)
 
@@ -492,8 +484,53 @@ func (s *UserRestTestSuite) TestUserRest_SendVerificationEmail() {
 				ResponseBodyStatus: test_interface.NullBool{Bool: true, Valid: true},
 				ResponseBodyResult: nil,
 			},
+			BeforeCall: func(req *http.Request) {
+				s.notificationProviderMock.EXPECT().SendEmail(mock.Anything, mock.Anything).Return(nil).Once()
+			},
 			AfterCall: func(w *httptest.ResponseRecorder) {
-				s.notificationProviderMock.AssertNumberOfCalls(s.T(), "SendEmail", 1)
+				// Ensure to delete the email verification code after call, the current function is async
+				_, err := s.otpCacheV2.DeleteOtp(ctx, testUser.User.UUID, shared.EmailVerificationOtpType)
+				s.Require().Nil(err, "Failed to delete email verification code after call")
+			},
+		},
+		{
+			Description: "It should return a 401 Unauthorized response",
+			Config: test_interface.Request[any]{
+				RequestHeader: []test_interface.RequestHeaderConfig{
+					{
+						Key:   "Authorization",
+						Value: "Bearer invalidtoken",
+					},
+				},
+			},
+			Expectation: test_interface.ResponseExpectation[any]{
+				ResponseStatusCode:      test_interface.NullInt{Int: http.StatusUnauthorized, Valid: true},
+				ResponseBodyStatus:      test_interface.NullBool{Bool: false, Valid: true},
+				ResponseBodyResult:      nil,
+				ResponseBodyErrorCode:   test_interface.NullString{String: "INVALID_JWT_ERROR", Valid: true},
+				ResponseBodyErrorObject: nil,
+			},
+		},
+		{
+			Description: "It should return a 502 Bad Gateway response",
+			Config: test_interface.Request[any]{
+				RequestHeader: []test_interface.RequestHeaderConfig{
+					{
+						Key:   "Authorization",
+						Value: fmt.Sprintf("Bearer %s", accessToken),
+					},
+				},
+			},
+			Expectation: test_interface.ResponseExpectation[any]{
+				ResponseStatusCode:       test_interface.NullInt{Int: http.StatusBadGateway, Valid: true},
+				ResponseBodyStatus:       test_interface.NullBool{Bool: false, Valid: true},
+				ResponseBodyResult:       nil,
+				ResponseBodyErrorCode:    test_interface.NullString{String: "SEND_VERIFICATION_LINK_FAILED", Valid: true},
+				ResponseBodyErrorMessage: test_interface.NullString{String: "Failed to send a verification link to your email. If issue persists, please contact our technical support and try again later", Valid: true},
+				ResponseBodyErrorObject:  nil,
+			},
+			BeforeCall: func(req *http.Request) {
+				s.notificationProviderMock.EXPECT().SendEmail(mock.Anything, mock.Anything).Return(fmt.Errorf("failed to send email verification link")).Once()
 			},
 		},
 	}
@@ -804,8 +841,53 @@ func (s *UserRestTestSuite) TestUserRest_SendPhoneNumberOtp() {
 				ResponseBodyStatus: test_interface.NullBool{Bool: true, Valid: true},
 				ResponseBodyResult: nil,
 			},
+			BeforeCall: func(req *http.Request) {
+				s.notificationProviderMock.EXPECT().SendSms(mock.Anything, mock.Anything).Return(nil).Once()
+			},
 			AfterCall: func(w *httptest.ResponseRecorder) {
-				s.notificationProviderMock.AssertNumberOfCalls(s.T(), "SendSms", 1)
+				// Ensure to delete the otp verification attempt and code after call, the current function is async
+				_, err := s.otpCacheV2.DeleteOtp(ctx, testUser.User.UUID, shared.PhoneNumberVerificationOtpType)
+				s.Require().Nil(err, "Failed to delete phone otp verification attempt after call")
+			},
+		},
+		{
+			Description: "It should return a 401 Unauthorized response",
+			Config: test_interface.Request[any]{
+				RequestHeader: []test_interface.RequestHeaderConfig{
+					{
+						Key:   "Authorization",
+						Value: "Bearer invalidtoken",
+					},
+				},
+			},
+			Expectation: test_interface.ResponseExpectation[any]{
+				ResponseStatusCode:      test_interface.NullInt{Int: http.StatusUnauthorized, Valid: true},
+				ResponseBodyStatus:      test_interface.NullBool{Bool: false, Valid: true},
+				ResponseBodyResult:      nil,
+				ResponseBodyErrorCode:   test_interface.NullString{String: "INVALID_JWT_ERROR", Valid: true},
+				ResponseBodyErrorObject: nil,
+			},
+		},
+		{
+			Description: "It should return a 502 Bad Gateway response",
+			Config: test_interface.Request[any]{
+				RequestHeader: []test_interface.RequestHeaderConfig{
+					{
+						Key:   "Authorization",
+						Value: fmt.Sprintf("Bearer %s", accessToken),
+					},
+				},
+			},
+			BeforeCall: func(req *http.Request) {
+				s.notificationProviderMock.EXPECT().SendSms(mock.Anything, mock.Anything).Return(fmt.Errorf("failed to send otp")).Once()
+			},
+			Expectation: test_interface.ResponseExpectation[any]{
+				ResponseStatusCode:       test_interface.NullInt{Int: http.StatusBadGateway, Valid: true},
+				ResponseBodyStatus:       test_interface.NullBool{Bool: false, Valid: true},
+				ResponseBodyResult:       nil,
+				ResponseBodyErrorCode:    test_interface.NullString{String: "SEND_OTP_FAILED", Valid: true},
+				ResponseBodyErrorMessage: test_interface.NullString{String: "Failed to send an OTP to your phone number. If issue persists, please contact our technical support and try again later", Valid: true},
+				ResponseBodyErrorObject:  nil,
 			},
 		},
 	}
@@ -1116,6 +1198,11 @@ func (s *UserRestTestSuite) generateAccessToken(ctx context.Context, uuid string
 		return ""
 	}
 
+	if accessToken.AccessToken == "" {
+		s.T().Fatal("Failed to generate access token, empty access token")
+		return ""
+	}
+
 	return accessToken.AccessToken
 }
 
@@ -1132,11 +1219,7 @@ func (s *UserRestTestSuite) generateEmailVerificationCode(ctx context.Context, u
 		return ""
 	}
 
-	err = s.otpCache.SaveEmailVerificationCode(ctx, shared.SaveEmailVerificationCodeParam{
-		Email: user.Email,
-		Code:  code,
-		TTL:   time.Minute * 5,
-	})
+	err = s.otpCacheV2.SaveOtp(ctx, user.UUID, shared.EmailVerificationOtpType, code)
 	if err != nil {
 		s.T().Fatal("Failed to save email verification code", err)
 		return ""
@@ -1146,7 +1229,7 @@ func (s *UserRestTestSuite) generateEmailVerificationCode(ctx context.Context, u
 }
 
 func (s *UserRestTestSuite) generatePhoneNumberVerificationOtp(ctx context.Context, uuid string) string {
-	otp, err := s.util.GeneratorUtil.GenerateRandomNumber(6)
+	code, err := s.util.GeneratorUtil.GenerateRandomNumber(6)
 	if err != nil {
 		s.T().Fatal("Failed to generate random number", err)
 		return ""
@@ -1158,15 +1241,11 @@ func (s *UserRestTestSuite) generatePhoneNumberVerificationOtp(ctx context.Conte
 		return ""
 	}
 
-	err = s.otpCache.SavePhoneNumberVerificationOtp(ctx, shared.SavePhoneNumberVerificationOtpParam{
-		PhoneNumber: user.PhoneNumber,
-		Otp:         otp,
-		TTL:         time.Minute * 5,
-	})
+	err = s.otpCacheV2.SaveOtp(ctx, user.UUID, shared.PhoneNumberVerificationOtpType, code)
 	if err != nil {
-		s.T().Fatal("Failed to save phone number verification otp", err)
+		s.T().Fatal("Failed to save phone number verification OTP", err)
 		return ""
 	}
 
-	return otp
+	return code
 }

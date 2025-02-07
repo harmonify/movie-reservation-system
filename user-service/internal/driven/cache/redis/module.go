@@ -7,6 +7,7 @@ var (
 		"driven-redis",
 		fx.Provide(
 			NewOtpRedisRepository,
+			NewOtpV2RedisRepository,
 		),
 	)
 )

@@ -4,7 +4,7 @@ type UserServiceConfig struct {
 	Env string `mapstructure:"ENV" validate:"required,oneof=dev test prod"`
 
 	AppName   string `mapstructure:"APP_NAME" validate:"required"`
-	AppSecret string `mapstructure:"APP_SECRET" validate:"required"`
+	AppSecret string `mapstructure:"APP_SECRET" validate:"required,base64"`
 
 	AuthJwtIssuerIdentifier    string `mapstructure:"AUTH_JWT_ISSUER_IDENTIFIER" validate:"required"`
 	AuthJwtAudienceIdentifiers string `mapstructure:"AUTH_JWT_AUDIENCE_IDENTIFIERS" validate:"required"`

@@ -75,6 +75,7 @@ func (r *otpRedisRepositoryImpl) SaveEmailVerificationCode(
 	defer span.End()
 
 	cacheKey, err := r.constructCacheKey(ctx, "email", p.Email)
+	r.logger.WithCtx(ctx).Debug("Cache key to save", zap.String("cacheKey", cacheKey))
 	if err != nil {
 		r.logger.WithCtx(ctx).Error("Failed to construct email verification token cache key", zap.Error(err))
 		return err
@@ -94,6 +95,7 @@ func (r *otpRedisRepositoryImpl) GetEmailVerificationCode(ctx context.Context, e
 	defer span.End()
 
 	cacheKey, err := r.constructCacheKey(ctx, "email", email)
+	r.logger.WithCtx(ctx).Debug("Cache key to get", zap.String("cacheKey", cacheKey))
 	if err != nil {
 		r.logger.WithCtx(ctx).Error("Failed to construct email verification token cache key", zap.Error(err))
 		return "", err
@@ -116,6 +118,7 @@ func (r *otpRedisRepositoryImpl) DeleteEmailVerificationCode(ctx context.Context
 	defer span.End()
 
 	cacheKey, err := r.constructCacheKey(ctx, "email", email)
+	r.logger.WithCtx(ctx).Debug("Cache key to delete", zap.String("cacheKey", cacheKey))
 	if err != nil {
 		r.logger.WithCtx(ctx).Error("Failed to construct email verification token cache key", zap.Error(err))
 		return false, err

@@ -56,4 +56,18 @@ type (
 		GetPhoneNumberVerificationAttempt(ctx context.Context, uuid string) (int, error)
 		DeletePhoneNumberVerificationAttempt(ctx context.Context, uuid string) (bool, error)
 	}
+
+	// TODO: v2 - generic interface for otp cache (support multiple otp types through parameter)
+	OtpCacheV2 interface {
+		// SaveOtp saves the otp code for the given uuid and otp type
+		SaveOtp(ctx context.Context, uuid string, otpType OtpType, code string) error
+		// GetOtp gets the otp for the given uuid and otp type
+		// If the otp is not found, it will return otp_service.OtpNotFoundError
+		GetOtp(ctx context.Context, uuid string, otpType OtpType) (*Otp, error)
+		// DeleteOtp deletes the otp for the given uuid and otp type
+		DeleteOtp(ctx context.Context, uuid string, otpType OtpType) (bool, error)
+		// IncrementOtpAttempt increments the attempt count for the given uuid and otp type
+		// If the otp is not found, it will return otp_service.OtpNotFoundError
+		IncrementOtpAttempt(ctx context.Context, uuid string, otpType OtpType) (*Otp, error)
+	}
 )

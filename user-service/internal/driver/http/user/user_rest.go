@@ -67,15 +67,11 @@ func NewUserRestHandler(p UserRestHandlerParam) UserRestHandlerResult {
 
 func (h *userRestHandlerImpl) Register(g *gin.RouterGroup) error {
 	var getOrUpdateUserCap int64 = 5
-	if h.config.Env == config_pkg.EnvironmentDevelopment {
-		getOrUpdateUserCap = 100
-	}
 	var getOrVerifyEmailCodeCap int64 = 1
-	if h.config.Env == config_pkg.EnvironmentDevelopment {
-		getOrVerifyEmailCodeCap = 100
-	}
 	var getOrVerifyOtpCap int64 = 1
-	if h.config.Env == config_pkg.EnvironmentDevelopment {
+	if h.config.Env == config_pkg.EnvironmentDevelopment || h.config.Env == config_pkg.EnvironmentTest {
+		getOrUpdateUserCap = 100
+		getOrVerifyEmailCodeCap = 100
 		getOrVerifyOtpCap = 100
 	}
 

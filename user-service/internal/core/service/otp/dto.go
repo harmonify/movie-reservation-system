@@ -7,9 +7,10 @@ type (
 	}
 
 	SendSignupEmailParam struct {
+		UUID      string
+		Email     string
 		FirstName string
 		LastName  string
-		Email     string
 	}
 
 	VerifyEmailParam struct {

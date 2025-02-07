@@ -70,6 +70,11 @@ func NewApp(p ...fx.Option) *fx.App {
 					AppSecret: cfg.AppSecret,
 				}
 			},
+			func(cfg *config.UserServiceConfig) *encryption.SHA256HasherConfig {
+				return &encryption.SHA256HasherConfig{
+					AppSecret: cfg.AppSecret,
+				}
+			},
 			func(cfg *config.UserServiceConfig) *jwt_util.JwtUtilConfig {
 				return &jwt_util.JwtUtilConfig{
 					ServiceIdentifier:      cfg.ServiceIdentifier,

@@ -39,15 +39,16 @@ var (
 		),
 		fx.Invoke(func(errorMapper error_pkg.ErrorMapper) {
 			errorMapper.RegisterErrors(
-				otp_service.SendVerificationLinkFailedError,
-				otp_service.VerificationTokenNotFoundError,
-				otp_service.VerificationLinkAlreadyExistError,
-				otp_service.VerificationTokenInvalidError,
-				otp_service.SendOtpFailedError,
 				otp_service.OtpNotFoundError,
+				otp_service.SendVerificationLinkFailedError,
+				otp_service.VerificationLinkAlreadySentError,
+				otp_service.IncorrectVerificationCodeError,
+				otp_service.TooManyVerificationAttemptError,
+				otp_service.VerificationTokenNotFoundError,
+				otp_service.SendPhoneOtpFailedError,
 				otp_service.OtpAlreadySentError,
-				otp_service.OtpInvalidError,
-				otp_service.OtpTooManyAttemptError,
+				otp_service.IncorrectOtpError,
+				otp_service.TooManyOtpAttemptError,
 			)
 		}),
 	)

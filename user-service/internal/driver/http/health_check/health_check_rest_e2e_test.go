@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	config_pkg "github.com/harmonify/movie-reservation-system/pkg/config"
 	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
 	"github.com/harmonify/movie-reservation-system/pkg/util/validation"
 	"github.com/harmonify/movie-reservation-system/user-service/internal"
@@ -26,7 +27,7 @@ func TestHealthCheckRest(t *testing.T) {
 	if os.Getenv("CI") == "true" && os.Getenv("INTEGRATION_TEST") != "true" {
 		t.Skip("Skipping test")
 	}
-
+	os.Setenv("ENV", config_pkg.EnvironmentTest)
 	suite.Run(t, new(HealthCheckRestTestSuite))
 }
 

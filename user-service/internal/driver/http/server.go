@@ -48,6 +48,7 @@ type HttpServerConfig struct {
 type HttpServerParam struct {
 	fx.In
 
+	Routes         []http_pkg.RestHandler `group:"http_routes"`
 	Logger         logger.Logger
 	HttpMiddleware *http_driver_shared.HttpMiddleware
 }
@@ -95,6 +96,10 @@ func NewHttpServer(p HttpServerParam, cfg *HttpServerConfig) (HttpServerResult, 
 		httpMiddleware: p.HttpMiddleware,
 	}
 
+	if err := h.configure(p.Routes...); err != nil {
+		return HttpServerResult{}, err
+	}
+
 	return HttpServerResult{
 		HttpServer: h,
 	}, nil
@@ -133,7 +138,7 @@ func (h *HttpServer) Shutdown(ctx context.Context) error {
 func (h *HttpServer) configure(handlers ...http_pkg.RestHandler) error {
 	h.configureMiddlewares()
 
-	if h.cfg.Env == config.EnvironmentProduction {
+	if h.cfg.Env == config_pkg.EnvironmentProduction {
 		gin.SetMode(gin.ReleaseMode)
 		gin.DefaultWriter = io.Discard
 		h.Gin.TrustedPlatform = gin.PlatformCloudflare
@@ -144,7 +149,12 @@ func (h *HttpServer) configure(handlers ...http_pkg.RestHandler) error {
 
 func (h *HttpServer) configureMiddlewares() {
 	h.Gin.Use(h.configureCorsMiddleware)
-	h.Gin.Use(otelgin.Middleware(h.cfg.ServiceIdentifier))
+	h.Gin.Use(otelgin.Middleware(
+		h.cfg.ServiceIdentifier,
+		otelgin.WithSpanNameFormatter(otelgin.SpanNameFormatter(func(r *http.Request) string {
+			return r.Method + " " + r.URL.Path
+		})),
+	))
 	h.Gin.Use(h.httpMiddleware.Recovery.WithStack(true))
 	h.Gin.Use(ginzap.GinzapWithConfig(h.logger.GetZapLogger(), &ginzap.Config{
 		TimeFormat: time.RFC3339Nano,

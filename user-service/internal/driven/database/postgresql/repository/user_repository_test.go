@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	config_pkg "github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/database"
 	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
 	"github.com/harmonify/movie-reservation-system/user-service/internal"
@@ -24,7 +25,7 @@ func TestUserRepository(t *testing.T) {
 	if os.Getenv("CI") == "true" && os.Getenv("INTEGRATION_TEST") != "true" {
 		t.Skip("Skipping test")
 	}
-
+	os.Setenv("ENV", config_pkg.EnvironmentTest)
 	suite.Run(t, new(UserRepositoryTestSuite))
 }
 

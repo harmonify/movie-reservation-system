@@ -19,6 +19,8 @@ setup: ## Setup the project
 	go install github.com/rubenv/sql-migrate/...@latest
 	echo "Installing Go Env"
 	go install github.com/joho/godotenv/cmd/godotenv@latest
+	echo "Installing Pretty Logging"
+	go install github.com/maoueh/zap-pretty/cmd/zap-pretty@latest
 
 	echo "Setup Workspace"
 	go mod download
@@ -35,19 +37,19 @@ start: ## Run server in normal mode
 
 .PHONY: start-dev
 start-dev: ## Run server in development mode (will restart if any changes)
-	air -c .air.toml
+	air -c .air.toml | zap-pretty
 
 .PHONY: test
 test: ## Run test
-	go test -v ./...
+	go test -v ./... | zap-pretty
 
 test\:e2e:
-	INTEGRATION_TEST=true go test -v ./...
+	INTEGRATION_TEST=true go test -v ./... | zap-pretty
 
 .PHONY: test-coverage
 test-coverage: ## Run unit and integration testing
 	mkdir -p coverage
-	go test -v -coverprofile ./coverage/cover.out ./...
+	go test -v -coverprofile ./coverage/cover.out ./... | zap-pretty
 	go tool cover -html=./coverage/cover.out -o ./coverage/cover.html
 
 .PHONY: lint

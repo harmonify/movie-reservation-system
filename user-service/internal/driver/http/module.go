@@ -1,8 +1,7 @@
 package http_driver
 
 import (
-	"context"
-
+	config_pkg "github.com/harmonify/movie-reservation-system/pkg/config"
 	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/config"
 	auth_rest "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/auth"
@@ -15,7 +14,7 @@ import (
 type BootstrapHttpServerParam struct {
 	fx.In
 	fx.Lifecycle
-	Routes     []http_pkg.RestHandler `group:"http_routes"`
+	Config     *config.UserServiceConfig
 	HttpServer *HttpServer
 }
 
@@ -46,15 +45,9 @@ var (
 )
 
 func BootstrapHttpServer(p BootstrapHttpServerParam) {
-	p.Lifecycle.Append(fx.Hook{
-		OnStart: func(ctx context.Context) error {
-			if err := p.HttpServer.configure(p.Routes...); err != nil {
-				return err
-			}
-			return p.HttpServer.Start(ctx)
-		},
-		OnStop: func(ctx context.Context) error {
-			return p.HttpServer.Shutdown(ctx)
-		},
-	})
+	// Disable http server in test environment
+	if p.Config.Env == config_pkg.EnvironmentTest {
+		return
+	}
+	p.Lifecycle.Append(fx.StartStopHook(p.HttpServer.Start, p.HttpServer.Shutdown))
 }

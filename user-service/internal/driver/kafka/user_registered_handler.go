@@ -78,9 +78,10 @@ func (r *userRegisteredRouteImpl) handle(message *message.Message) error {
 	r.logger.WithCtx(ctx).Debug("UserRegistered event payload", zap.Any("user_registered", val))
 
 	err := r.otpService.SendSignupEmail(ctx, otp_service.SendSignupEmailParam{
+		UUID:      val.GetUuid(),
+		Email:     val.GetEmail(),
 		FirstName: val.GetFirstName(),
 		LastName:  val.GetLastName(),
-		Email:     val.GetEmail(),
 	})
 	var ed *error_pkg.ErrorWithDetails
 	if err != nil {

@@ -68,17 +68,11 @@ func NewAuthRestHandler(p AuthRestHandlerParam) AuthRestHandlerResult {
 
 func (h *authRestHandlerImpl) Register(g *gin.RouterGroup) error {
 	var registerIPCap int64 = 10
-	if h.config.Env == config_pkg.EnvironmentDevelopment {
-		registerIPCap = 100
-	}
-
 	var loginCap int64 = 10
-	if h.config.Env == config_pkg.EnvironmentDevelopment {
-		loginCap = 100
-	}
-
 	var getTokenCap int64 = 10
 	if h.config.Env == config_pkg.EnvironmentDevelopment {
+		registerIPCap = 100
+		loginCap = 100
 		getTokenCap = 100
 	}
 
