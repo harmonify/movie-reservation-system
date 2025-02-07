@@ -4,14 +4,25 @@ package harmonify.movie_reservation_system.notification;
 
 import "google/protobuf/any.proto";
 
-message Email {
+message SendEmailRequest {
     repeated string recipients = 1;
     string subject = 2;
     string templateId = 3;
     google.protobuf.Any templateData = 4;
 }
 
-message EmailVerificationTemplateData {
-    string name = 1;
-    string verificationLink = 2;
+message SendEmailResponse {
+    string emailId = 1;
+}
+
+message SignupEmailVerificationTemplateData {
+    string firstName = 1;
+    string lastName = 2;
+    string url = 3;
+}
+
+message UpdateEmailVerificationTemplateData {
+    string firstName = 1;
+    string lastName = 2;
+    string url = 3;
 }

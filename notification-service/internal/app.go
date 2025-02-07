@@ -7,15 +7,18 @@ import (
 	"runtime"
 
 	"github.com/harmonify/movie-reservation-system/notification-service/internal/core/services"
+	"github.com/harmonify/movie-reservation-system/notification-service/internal/driven/config"
 	"github.com/harmonify/movie-reservation-system/notification-service/internal/driven/email/mailgun"
 	"github.com/harmonify/movie-reservation-system/notification-service/internal/driven/sms/twilio"
+	grpc_driver "github.com/harmonify/movie-reservation-system/notification-service/internal/driver/grpc"
 	http_driver "github.com/harmonify/movie-reservation-system/notification-service/internal/driver/http"
-	kafkaconsumer "github.com/harmonify/movie-reservation-system/notification-service/internal/driver/kafka_consumer"
-	"github.com/harmonify/movie-reservation-system/pkg/config"
+	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/metrics"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
+	"github.com/harmonify/movie-reservation-system/pkg/util/encryption"
+	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
 	"go.uber.org/fx"
 )
 
@@ -38,21 +41,51 @@ func StartApp() error {
 // This is a function to initialize all services and invoke their functions.
 func NewApp(p ...fx.Option) *fx.App {
 	options := []fx.Option{
+		// LIB
 		fx.Provide(
-			func() *config.ConfigFile {
+			func() (*config.NotificationServiceConfig, error) {
 				_, filename, _, _ := runtime.Caller(0)
-				return &config.ConfigFile{
-					Path: path.Join(filename, "..", "..", ".env"),
+				configFile := path.Join(filename, "..", "..", ".env")
+				return config.NewNotificationServiceConfig(configFile)
+			},
+			func(cfg *config.NotificationServiceConfig) (logger.Logger, error) {
+				return logger.NewLogger(&logger.LoggerConfig{
+					Env:               cfg.Env,
+					ServiceIdentifier: cfg.ServiceIdentifier,
+					LogType:           cfg.LogType,
+					LogLevel:          cfg.LogLevel,
+					LokiUrl:           cfg.LokiUrl,
+				})
+			},
+			func(lc fx.Lifecycle, cfg *config.NotificationServiceConfig) (tracer.Tracer, error) {
+				return tracer.NewTracer(lc, &tracer.TracerConfig{
+					Env:               cfg.Env,
+					ServiceIdentifier: cfg.ServiceIdentifier,
+					Type:              cfg.TracerType,
+					OtelEndpoint:      cfg.OtelEndpoint,
+				})
+			},
+			func(cfg *config.NotificationServiceConfig) *encryption.AESEncryptionConfig {
+				return &encryption.AESEncryptionConfig{
+					AppSecret: cfg.AppSecret,
+				}
+			},
+			func(cfg *config.NotificationServiceConfig) *encryption.SHA256HasherConfig {
+				return &encryption.SHA256HasherConfig{
+					AppSecret: cfg.AppSecret,
+				}
+			},
+			func(cfg *config.NotificationServiceConfig) *jwt_util.JwtUtilConfig {
+				return &jwt_util.JwtUtilConfig{
+					ServiceIdentifier:      cfg.ServiceIdentifier,
+					JwtAudienceIdentifiers: cfg.AuthJwtAudienceIdentifiers,
+					JwtIssuerIdentifier:    cfg.AuthJwtIssuerIdentifier,
 				}
 			},
 		),
-		config.ConfigModule,
-
-		// Libraries
-		logger.LoggerModule,
-		tracer.TracerModule,
-		metrics.MetricsModule,
+		error_pkg.ErrorModule,
 		util.UtilModule,
+		metrics.MetricsModule,
 
 		// CORE
 		services.ServiceModule,
@@ -63,7 +96,7 @@ func NewApp(p ...fx.Option) *fx.App {
 
 		// API (DRIVER)
 		http_driver.HttpModule,
-		kafkaconsumer.KafkaConsumerModule,
+		grpc_driver.GrpcModule,
 	}
 
 	// Override dependencies

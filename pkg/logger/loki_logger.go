@@ -3,17 +3,55 @@ package logger
 import (
 	"context"
 	"fmt"
+	"log"
+	"net/url"
 	"runtime"
 
+	"github.com/go-playground/validator/v10"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
-func NewLokiLogger(zapConfig zap.Config, lokiConfig LokiConfig) (Logger, error) {
-	loki := NewZapLoki(context.Background(), lokiConfig)
-	zapLogger, err := loki.WithCreateLogger(zapConfig)
+var lokiSinkRegistered bool
+
+func NewLokiZapLogger(cfg *LokiZapConfig) (Logger, error) {
+	if err := validator.New(validator.WithRequiredStructEnabled()).Struct(cfg); err != nil {
+		return nil, err
+	}
+
+	zapConfig := zap.NewProductionConfig()
+	zapConfig.EncoderConfig.CallerKey = zapcore.OmitKey
+	logLevel, err := zap.ParseAtomicLevel(cfg.LogLevel)
+	if err == nil {
+		zapConfig.Level = logLevel
+	} else {
+		fmt.Println("Failed to set log level")
+	}
+
+	if !lokiSinkRegistered {
+		err := zap.RegisterSink(lokiSinkKey, func(_ *url.URL) (zap.Sink, error) {
+			lp := newLokiPusher(cfg)
+			sink := newLokiSink(lp)
+			return sink, nil
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+		lokiSinkRegistered = true
+	}
+
+	fullSinkKey := fmt.Sprintf("%s://", lokiSinkKey)
+	if zapConfig.OutputPaths == nil {
+		zapConfig.OutputPaths = []string{fullSinkKey}
+	} else {
+		zapConfig.OutputPaths = append(zapConfig.OutputPaths, fullSinkKey)
+	}
+
+	zapLogger, err := zapConfig.Build()
+
 	return &LokiLoggerImpl{zapLogger, nil}, err
 }
 
@@ -24,7 +62,7 @@ func (l *LokiLoggerImpl) GetZapLogger() *zap.Logger {
 func (l *LokiLoggerImpl) With(fields ...zap.Field) Logger {
 	return &LokiLoggerImpl{
 		Logger: l.Logger.With(fields...),
-		span: l.span,
+		span:   l.span,
 	}
 }
 
@@ -49,15 +87,29 @@ func (l *LokiLoggerImpl) WithCtx(ctx context.Context) Logger {
 func (l *LokiLoggerImpl) Error(msg string, fields ...zap.Field) {
 	// Obtain caller information
 	_, file, line, _ := runtime.Caller(1)
-
 	callerInfo := fmt.Sprintf("%s:%d", file, line)
 
-	eventOpt := trace.EventOption(trace.WithAttributes(attribute.String("caller", callerInfo)))
+	var err error
+	for _, f := range fields {
+		if f.Type == zapcore.ErrorType {
+			errField, ok := f.Interface.(error)
+			if ok {
+				err = errField
+			}
+		}
+	}
+	if err == nil {
+		err = fmt.Errorf("%s", msg)
+	}
+
 	if l.span != nil {
-		l.span.RecordError(fmt.Errorf("%s", msg), eventOpt)
+		l.span.RecordError(
+			err,
+			trace.WithAttributes(attribute.String("caller", callerInfo)),
+		)
 		l.span.SetStatus(codes.Error, msg)
 	}
 
-	fields = append(fields, zap.String("caller", fmt.Sprintf("%s:%d", file, line)))
+	fields = append(fields, zap.String("caller", callerInfo))
 	l.Logger.Error(msg, fields...)
 }

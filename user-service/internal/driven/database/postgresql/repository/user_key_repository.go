@@ -8,7 +8,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
-	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/model"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -29,7 +29,7 @@ func NewUserKeyRepository(
 	tracer tracer.Tracer,
 	logger logger.Logger,
 	util *util.Util,
-) shared_service.UserKeyStorage {
+) shared.UserKeyStorage {
 	return &userKeyRepositoryImpl{
 		database: database,
 		pgErrTl:  pgErrTl,
@@ -39,7 +39,7 @@ func NewUserKeyRepository(
 	}
 }
 
-func (r *userKeyRepositoryImpl) WithTx(tx *database.Transaction) shared_service.UserKeyStorage {
+func (r *userKeyRepositoryImpl) WithTx(tx *database.Transaction) shared.UserKeyStorage {
 	if tx == nil {
 		return r
 	}
@@ -74,7 +74,7 @@ func (r *userKeyRepositoryImpl) FindUserKey(ctx context.Context, findModel entit
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(findModel)
+	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
@@ -95,13 +95,13 @@ func (r *userKeyRepositoryImpl) UpdateUserKey(ctx context.Context, findModel ent
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(findModel)
+	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
 	}
 
-	updateMap, err := r.util.StructUtil.ConvertSqlStructToMap(updateModel)
+	updateMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, updateModel)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
@@ -132,7 +132,7 @@ func (r *userKeyRepositoryImpl) UpdateUserKey(ctx context.Context, findModel ent
 }
 
 func (r *userKeyRepositoryImpl) SoftDeleteUserKey(ctx context.Context, findModel entity.FindUserKey) error {
-	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(findModel)
+	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return err

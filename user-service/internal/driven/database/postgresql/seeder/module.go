@@ -9,8 +9,6 @@ var (
 		"driven-postgresql-seeder",
 		fx.Provide(
 			NewUserSeeder,
-			NewUserKeySeeder,
-			NewUserSessionSeeder,
 		),
 	)
 )

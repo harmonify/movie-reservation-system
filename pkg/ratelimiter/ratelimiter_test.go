@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/harmonify/movie-reservation-system/pkg/cache"
-	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/ratelimiter"
 	"github.com/stretchr/testify/suite"
@@ -29,7 +28,7 @@ func TestRateLimiterRegistryTestSuite(t *testing.T) {
 }
 
 func (s *RateLimiterRegistryTestSuite) SetupSuite() {
-	app, rateLimiterRegistry, err := createNewRegistry()
+	app, rateLimiterRegistry, err := createNewRegistry(s.T())
 	if err != nil {
 		s.T().Fatal(">> App failed to start. Error:", err)
 	}
@@ -42,11 +41,17 @@ func (s *RateLimiterRegistryTestSuite) TearDownSuite() {
 }
 
 func (s *RateLimiterRegistryTestSuite) TestRateLimiterRegistry_GetHttpRequestRateLimiter_Simple() {
-	rl, err := s.rateLimiterRegistry.GetHttpRequestRateLimiter(ratelimiter.HttpRequestRateLimiterParam{
-		IP:     "192.168.200.2",
-		Method: http.MethodGet,
-		Path:   "/test",
-	})
+	rl, err := s.rateLimiterRegistry.GetHttpRequestRateLimiter(
+		&ratelimiter.HttpRequestRateLimiterParam{
+			ID:     "192.168.200.2",
+			Method: http.MethodGet,
+			Path:   "/test",
+		},
+		&ratelimiter.RateLimiterConfig{
+			Capacity:   ratelimiter.DefaultCapacity,
+			RefillRate: ratelimiter.DefaultRefillRate,
+		},
+	)
 	s.Require().NoError(err)
 
 	for i := 0; i < 5; i++ {
@@ -61,11 +66,17 @@ func (s *RateLimiterRegistryTestSuite) TestRateLimiterRegistry_GetHttpRequestRat
 	}
 
 	// Test another client
-	rl, err = s.rateLimiterRegistry.GetHttpRequestRateLimiter(ratelimiter.HttpRequestRateLimiterParam{
-		IP:     "192.168.200.3",
-		Method: http.MethodGet,
-		Path:   "/test",
-	})
+	rl, err = s.rateLimiterRegistry.GetHttpRequestRateLimiter(
+		&ratelimiter.HttpRequestRateLimiterParam{
+			ID:     "192.168.200.3",
+			Method: http.MethodGet,
+			Path:   "/test",
+		},
+		&ratelimiter.RateLimiterConfig{
+			Capacity:   ratelimiter.DefaultCapacity,
+			RefillRate: ratelimiter.DefaultRefillRate,
+		},
+	)
 	s.Require().NoError(err)
 
 	for i := 0; i < 5; i++ {
@@ -81,11 +92,17 @@ func (s *RateLimiterRegistryTestSuite) TestRateLimiterRegistry_GetHttpRequestRat
 }
 
 func (s *RateLimiterRegistryTestSuite) TestRateLimiterRegistry_GetHttpRequestRateLimiter_Refill() {
-	rl, err := s.rateLimiterRegistry.GetHttpRequestRateLimiter(ratelimiter.HttpRequestRateLimiterParam{
-		IP:     "192.168.200.4",
-		Method: http.MethodPost,
-		Path:   "/test",
-	})
+	rl, err := s.rateLimiterRegistry.GetHttpRequestRateLimiter(
+		&ratelimiter.HttpRequestRateLimiterParam{
+			ID:     "192.168.200.4",
+			Method: http.MethodPost,
+			Path:   "/test",
+		},
+		&ratelimiter.RateLimiterConfig{
+			Capacity:   ratelimiter.DefaultCapacity,
+			RefillRate: ratelimiter.DefaultRefillRate,
+		},
+	)
 	s.Require().NoError(err)
 
 	// 0ms mark
@@ -154,17 +171,23 @@ func (s *RateLimiterRegistryTestSuite) TestRateLimiterRegistry_GetHttpRequestRat
 }
 
 func (s *RateLimiterRegistryTestSuite) TestRateLimiter_Len() {
-	app, rateLimiterRegistry, err := createNewRegistry()
+	app, rateLimiterRegistry, err := createNewRegistry(s.T())
 	defer app.Done()
 
 	s.Require().NoError(err)
 	s.Require().Equal(0, rateLimiterRegistry.Len())
 
-	rl, err := rateLimiterRegistry.GetHttpRequestRateLimiter(ratelimiter.HttpRequestRateLimiterParam{
-		IP:     "192.168.100.5",
-		Method: http.MethodPost,
-		Path:   "/test",
-	})
+	rl, err := rateLimiterRegistry.GetHttpRequestRateLimiter(
+		&ratelimiter.HttpRequestRateLimiterParam{
+			ID:     "192.168.100.5",
+			Method: http.MethodPost,
+			Path:   "/test",
+		},
+		&ratelimiter.RateLimiterConfig{
+			Capacity:   ratelimiter.DefaultCapacity,
+			RefillRate: ratelimiter.DefaultRefillRate,
+		},
+	)
 	s.Require().NoError(err)
 	s.Require().Equal(1, rateLimiterRegistry.Len())
 
@@ -175,11 +198,17 @@ func (s *RateLimiterRegistryTestSuite) TestRateLimiter_Len() {
 	s.Require().Equal(1, rateLimiterRegistry.Len())
 	time.Sleep(1 * time.Second)
 
-	rl2, err := rateLimiterRegistry.GetHttpRequestRateLimiter(ratelimiter.HttpRequestRateLimiterParam{
-		IP:     "192.168.100.6",
-		Method: http.MethodPost,
-		Path:   "/test",
-	})
+	rl2, err := rateLimiterRegistry.GetHttpRequestRateLimiter(
+		&ratelimiter.HttpRequestRateLimiterParam{
+			ID:     "192.168.100.6",
+			Method: http.MethodPost,
+			Path:   "/test",
+		},
+		&ratelimiter.RateLimiterConfig{
+			Capacity:   ratelimiter.DefaultCapacity,
+			RefillRate: ratelimiter.DefaultRefillRate,
+		},
+	)
 	s.Require().NoError(err)
 
 	rl2.Take(context.Background(), 2)
@@ -244,32 +273,36 @@ func (s *RateLimiterRegistryTestSuite) TestRateLimiter_Len() {
 // 	return context.Background()
 // }
 
-func createNewRegistry() (*fx.App, ratelimiter.RateLimiterRegistry, error) {
+func createNewRegistry(t *testing.T) (*fx.App, ratelimiter.RateLimiterRegistry, error) {
 	var registry ratelimiter.RateLimiterRegistry
 
 	app := fx.New(
 		fx.Provide(
-			func() *config.Config {
-				return &config.Config{
-					Env:               "test",
-					AppSecret:         "1233334556905407",
+			func() *ratelimiter.RateLimiterRegistryConfig {
+				return &ratelimiter.RateLimiterRegistryConfig{
 					ServiceIdentifier: "user-service",
-					ServiceBaseUrl:    "http://localhost:8080",
-					LogLevel:          "debug",
-					LogType:           "console",
-					RedisHost:         "localhost",
-					RedisPort:         "6379",
-					RedisPass:         "secret",
 				}
 			},
-			func() *ratelimiter.RateLimiterConfig {
-				return &ratelimiter.RateLimiterConfig{
-					Capacity:   2,
-					RefillRate: 3 * time.Second,
+			func() logger.Logger {
+				l, err := logger.NewLogger(&logger.LoggerConfig{
+					Env:               "test",
+					ServiceIdentifier: "test",
+					LogType:           "console",
+					LogLevel:          "debug",
+				})
+				if err != nil {
+					t.Fatalf("Failed to create logger: %v", err)
+				}
+				return l
+			},
+			func() *cache.RedisConfig {
+				return &cache.RedisConfig{
+					RedisHost: "localhost",
+					RedisPort: "6379",
+					RedisPass: "secret",
 				}
 			},
 		),
-		logger.LoggerModule,
 		cache.RedisModule,
 		ratelimiter.RateLimiterModule,
 		fx.Invoke(

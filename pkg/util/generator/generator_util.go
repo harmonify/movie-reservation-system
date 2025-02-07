@@ -12,7 +12,7 @@ type GeneratorUtil interface {
 	GenerateRandomBytes(n uint32) ([]byte, error)
 	GenerateRandomHex(n uint32) (string, error)
 	GenerateRandomBase64(n uint32) (string, error)
-	GenerateRandomNumber(n uint32) (string, error)
+	GenerateRandomNumber(length uint32) (string, error)
 }
 
 type generatorUtilImpl struct{}
@@ -43,11 +43,11 @@ func (s *generatorUtilImpl) GenerateRandomBase64(n uint32) (string, error) {
 	return base64String, err
 }
 
-func (s *generatorUtilImpl) GenerateRandomNumber(n uint32) (string, error) {
+func (s *generatorUtilImpl) GenerateRandomNumber(length uint32) (string, error) {
 	// Digits allowed in the random number
 	const DIGITS = "0123456789"
 
-	result := make([]byte, n)
+	result := make([]byte, length)
 	for i := range result {
 		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(DIGITS))))
 		if err != nil {

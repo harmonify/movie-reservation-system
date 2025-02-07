@@ -20,6 +20,9 @@ var (
 				kafka.NewKafkaMigrateDownCmd,
 				fx.ParamTags(`group:"migrations"`),
 			),
+			AsCommand(
+				kafka.NewKafkaMigrateNewCmd,
+			),
 			fx.Annotate(
 				NewRootCmd,
 				fx.ParamTags(`group:"commands"`),

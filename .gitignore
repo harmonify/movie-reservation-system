@@ -1,11 +1,15 @@
 # Run: `git config --global core.excludesfile .gitignore.local` if you need local gitignore
 .gitignore.local
 
+db.sqlite3
+
 bin/*
 !bin/*.sh
 
 **/.data/*
 !**/.data/.gitkeep
+
+/.dist
 
 .env
 .env.*

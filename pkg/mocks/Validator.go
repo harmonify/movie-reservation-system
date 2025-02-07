@@ -17,6 +17,52 @@ func (_m *Validator) EXPECT() *Validator_Expecter {
 	return &Validator_Expecter{mock: &_m.Mock}
 }
 
+// ValidateAlphaSpace provides a mock function with given fields: value
+func (_m *Validator) ValidateAlphaSpace(value string) bool {
+	ret := _m.Called(value)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ValidateAlphaSpace")
+	}
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(string) bool); ok {
+		r0 = rf(value)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
+// Validator_ValidateAlphaSpace_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ValidateAlphaSpace'
+type Validator_ValidateAlphaSpace_Call struct {
+	*mock.Call
+}
+
+// ValidateAlphaSpace is a helper method to define mock.On call
+//   - value string
+func (_e *Validator_Expecter) ValidateAlphaSpace(value interface{}) *Validator_ValidateAlphaSpace_Call {
+	return &Validator_ValidateAlphaSpace_Call{Call: _e.mock.On("ValidateAlphaSpace", value)}
+}
+
+func (_c *Validator_ValidateAlphaSpace_Call) Run(run func(value string)) *Validator_ValidateAlphaSpace_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *Validator_ValidateAlphaSpace_Call) Return(_a0 bool) *Validator_ValidateAlphaSpace_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Validator_ValidateAlphaSpace_Call) RunAndReturn(run func(string) bool) *Validator_ValidateAlphaSpace_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ValidateE164PhoneNumber provides a mock function with given fields: value
 func (_m *Validator) ValidateE164PhoneNumber(value string) bool {
 	ret := _m.Called(value)

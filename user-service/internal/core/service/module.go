@@ -1,9 +1,11 @@
 package service
 
 import (
+	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	auth_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/auth"
 	otp_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/otp"
 	token_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/token"
+	user_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/user"
 	"go.uber.org/fx"
 )
 
@@ -13,6 +15,21 @@ var (
 		fx.Provide(
 			auth_service.NewAuthService,
 		),
+		fx.Invoke(func(errorMapper error_pkg.ErrorMapper) {
+			errorMapper.RegisterErrors(
+				auth_service.DuplicateUsernameError,
+				auth_service.DuplicateEmailError,
+				auth_service.DuplicatePhoneNumberError,
+				auth_service.InvalidUsernameError,
+				auth_service.InvalidEmailError,
+				auth_service.InvalidPhoneNumberError,
+				auth_service.UnverifiedEmailError,
+				auth_service.UnverifiedPhoneNumberError,
+				auth_service.AccountNotFoundError,
+				auth_service.IncorrectPasswordError,
+				auth_service.RefreshTokenExpiredError,
+			)
+		}),
 	)
 
 	OtpServiceModule = fx.Module(
@@ -20,12 +37,40 @@ var (
 		fx.Provide(
 			otp_service.NewOtpService,
 		),
+		fx.Invoke(func(errorMapper error_pkg.ErrorMapper) {
+			errorMapper.RegisterErrors(
+				otp_service.OtpNotFoundError,
+				otp_service.SendVerificationLinkFailedError,
+				otp_service.VerificationLinkAlreadySentError,
+				otp_service.IncorrectVerificationCodeError,
+				otp_service.TooManyVerificationAttemptError,
+				otp_service.VerificationTokenNotFoundError,
+				otp_service.SendPhoneOtpFailedError,
+				otp_service.OtpAlreadySentError,
+				otp_service.IncorrectOtpError,
+				otp_service.TooManyOtpAttemptError,
+			)
+		}),
 	)
 
 	TokenServiceModule = fx.Module(
 		"token-service",
 		fx.Provide(
 			token_service.NewTokenService,
+		),
+		fx.Invoke(func(errorMapper error_pkg.ErrorMapper) {
+			errorMapper.RegisterErrors(
+				token_service.SessionInvalidError,
+				token_service.SessionRevokedError,
+				token_service.SessionExpiredError,
+			)
+		}),
+	)
+
+	UserServiceModule = fx.Module(
+		"user-service",
+		fx.Provide(
+			user_service.NewUserService,
 		),
 	)
 
@@ -34,5 +79,6 @@ var (
 		AuthServiceModule,
 		OtpServiceModule,
 		TokenServiceModule,
+		UserServiceModule,
 	)
 )

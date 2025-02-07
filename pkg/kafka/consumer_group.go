@@ -2,11 +2,12 @@ package kafka
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/IBM/sarama"
 	"github.com/dnwe/otelsarama"
-	"github.com/harmonify/movie-reservation-system/pkg/config"
+	"github.com/go-playground/validator/v10"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -19,9 +20,19 @@ type KafkaConsumerGroup struct {
 	logger logger.Logger
 }
 
+type KafkaConsumerGroupConfig struct {
+	*KafkaConfig
+	KafkaBrokers       string `validate:"required"`
+	KafkaConsumerGroup string `validate:"required"`
+}
+
 // NewKafkaConsumerGroup initializes the Kafka consumer.
-func NewKafkaConsumerGroup(lc fx.Lifecycle, cfg *config.Config, logger logger.Logger) (*KafkaConsumerGroup, error) {
-	kafkaConfig, err := buildKafkaConfig(cfg)
+func NewKafkaConsumerGroup(lc fx.Lifecycle, cfg *KafkaConsumerGroupConfig, logger logger.Logger) (*KafkaConsumerGroup, error) {
+	if err := validator.New(validator.WithRequiredStructEnabled()).Struct(cfg); err != nil {
+		return nil, err
+	}
+
+	kafkaConfig, err := BuildKafkaConfig(cfg.KafkaConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -31,6 +42,11 @@ func NewKafkaConsumerGroup(lc fx.Lifecycle, cfg *config.Config, logger logger.Lo
 		return nil, err
 	}
 
+	kc := &KafkaConsumerGroup{
+		Client: client,
+		logger: logger,
+	}
+
 	lc.Append(fx.Hook{
 		OnStop: func(ctx context.Context) error {
 			logger.Info("Closing Kafka consumer")
@@ -38,10 +54,7 @@ func NewKafkaConsumerGroup(lc fx.Lifecycle, cfg *config.Config, logger logger.Lo
 		},
 	})
 
-	return &KafkaConsumerGroup{
-		Client: client,
-		logger: logger,
-	}, nil
+	return kc, nil
 }
 
 // StartConsumer starts consuming messages from the given topic.
@@ -50,8 +63,14 @@ func (kc *KafkaConsumerGroup) StartConsumer(ctx context.Context, topics []string
 	go func() {
 		wrappedHandler := otelsarama.WrapConsumerGroupHandler(handler)
 		for {
+			// `Consume` should be called inside an infinite loop, when a
+			// server-side rebalance happens, the consumer session will need to be
+			// recreated to get the new claims
 			if err := kc.Client.Consume(ctx, topics, wrappedHandler); err != nil {
-				kc.logger.WithCtx(ctx).Warn("Consumer session is closed", zap.Error(err))
+				if errors.Is(err, sarama.ErrClosedConsumerGroup) {
+					return
+				}
+				kc.logger.WithCtx(ctx).Error("Consumer error", zap.Error(err))
 			}
 		}
 	}()

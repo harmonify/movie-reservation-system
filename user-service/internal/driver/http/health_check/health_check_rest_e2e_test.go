@@ -12,8 +12,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/harmonify/movie-reservation-system/pkg/http/response"
+	config_pkg "github.com/harmonify/movie-reservation-system/pkg/config"
 	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
+	"github.com/harmonify/movie-reservation-system/pkg/util/validation"
 	"github.com/harmonify/movie-reservation-system/user-service/internal"
 	http_driver "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http"
 	health_rest "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/health_check"
@@ -26,7 +27,7 @@ func TestHealthCheckRest(t *testing.T) {
 	if os.Getenv("CI") == "true" && os.Getenv("INTEGRATION_TEST") != "true" {
 		t.Skip("Skipping test")
 	}
-
+	os.Setenv("ENV", config_pkg.EnvironmentTest)
 	suite.Run(t, new(HealthCheckRestTestSuite))
 }
 
@@ -142,11 +143,11 @@ func (s *HealthCheckRestTestSuite) TestHealthCheckRest_GetHealthCheck() {
 			if testCase.Expectation.ResponseBodyErrorObject != nil {
 				s.Require().True(responseError.Get("errors").IsArray(), "Expected 'errors' to be an array")
 				for i, errData := range testCase.Expectation.ResponseBodyErrorObject {
-					if expectedErrorObject, ok := errData.(response.BaseValidationErrorSchema); ok {
+					if expectedErrorObject, ok := errData.(validation.ValidationError); ok {
 						s.Equal(expectedErrorObject.Field, responseError.Get("errors").Array()[i].Get("field").String())
 						s.Equal(expectedErrorObject.Message, responseError.Get("errors").Array()[i].Get("message").String())
 					} else {
-						s.T().Fatalf("Expected error object should be a response.BaseValidationErrorSchema, but got %s", reflect.TypeOf(errData))
+						s.T().Fatalf("Expected error object to be %s, but got %s", reflect.TypeFor[validation.ValidationError]().Name(), reflect.TypeOf(errData).Name())
 					}
 				}
 			}

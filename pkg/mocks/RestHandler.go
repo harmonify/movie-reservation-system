@@ -22,8 +22,21 @@ func (_m *RestHandler) EXPECT() *RestHandler_Expecter {
 }
 
 // Register provides a mock function with given fields: g
-func (_m *RestHandler) Register(g *gin.RouterGroup) {
-	_m.Called(g)
+func (_m *RestHandler) Register(g *gin.RouterGroup) error {
+	ret := _m.Called(g)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Register")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*gin.RouterGroup) error); ok {
+		r0 = rf(g)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // RestHandler_Register_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Register'
@@ -44,12 +57,12 @@ func (_c *RestHandler_Register_Call) Run(run func(g *gin.RouterGroup)) *RestHand
 	return _c
 }
 
-func (_c *RestHandler_Register_Call) Return() *RestHandler_Register_Call {
-	_c.Call.Return()
+func (_c *RestHandler_Register_Call) Return(_a0 error) *RestHandler_Register_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *RestHandler_Register_Call) RunAndReturn(run func(*gin.RouterGroup)) *RestHandler_Register_Call {
+func (_c *RestHandler_Register_Call) RunAndReturn(run func(*gin.RouterGroup) error) *RestHandler_Register_Call {
 	_c.Call.Return(run)
 	return _c
 }

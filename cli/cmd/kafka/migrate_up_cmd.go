@@ -23,15 +23,15 @@ type KafkaMigrateUpCmd struct {
 
 func NewKafkaMigrateUpCmd(migrations []shared.KafkaMigration, client *kafka.AdminClient, storage shared.MigrationStorage, logger *log.Logger) *KafkaMigrateUpCmd {
 	c := &KafkaMigrateUpCmd{
-		path:       "root kafka migrate",
+		path:       "root kafka migrate:up",
 		migrations: migrations,
 		client:     client,
 		storage:    storage,
 		logger:     logger,
 	}
 	c.cmd = &cobra.Command{
-		Use:   "migrate",
-		Short: "Kafka migration CLI",
+		Use:   "migrate:up",
+		Short: "Apply pending Kafka migrations",
 		Long:  "A CLI tool to manage Kafka migrations using Cobra, Viper, and SQLite.",
 		Run: func(cmd *cobra.Command, args []string) {
 			c.runMigrations()

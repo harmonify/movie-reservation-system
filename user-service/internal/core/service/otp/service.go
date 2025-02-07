@@ -2,41 +2,42 @@ package otp_service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
-	"time"
 
-	"github.com/harmonify/movie-reservation-system/pkg/config"
-	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
+	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
-	"github.com/harmonify/movie-reservation-system/pkg/mail"
-	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
-
-	"github.com/harmonify/movie-reservation-system/pkg/messaging"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/config"
+	notification_proto "github.com/harmonify/movie-reservation-system/user-service/internal/driven/proto/notification"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 type (
 	OtpService interface {
-		SendEmailVerificationLink(ctx context.Context, p SendEmailVerificationLinkParam) error
+		SendSignupEmail(ctx context.Context, p SendSignupEmailParam) error
+		SendVerificationEmail(ctx context.Context, p SendVerificationEmailParam) error
 		VerifyEmail(ctx context.Context, p VerifyEmailParam) error
-		SendPhoneOtp(ctx context.Context, p SendPhoneOtpParam) error
-		VerifyPhoneOtp(ctx context.Context, p VerifyPhoneOtpParam) error
+		SendPhoneNumberVerificationOtp(ctx context.Context, p SendPhoneNumberVerificationOtpParam) error
+		VerifyPhoneNumber(ctx context.Context, p VerifyPhoneNumberParam) error
 	}
 
 	OtpServiceParam struct {
 		fx.In
 
-		Config     *config.Config
-		Logger     logger.Logger
-		Tracer     tracer.Tracer
-		Mailer     mail.Mailer
-		Messager   messaging.Messager
-		OtpStorage shared_service.OtpStorage
-		Util       *util.Util
+		Config               *config.UserServiceConfig
+		Logger               logger.Logger
+		Tracer               tracer.Tracer
+		Util                 *util.Util
+		OtpCacheV2           shared.OtpCacheV2
+		UserStorage          shared.UserStorage
+		NotificationProvider shared.NotificationProvider
 	}
 
 	OtpServiceResult struct {
@@ -46,95 +47,158 @@ type (
 	}
 
 	otpServiceImpl struct {
-		config     *config.Config
-		logger     logger.Logger
-		tracer     tracer.Tracer
-		mailer     mail.Mailer
-		messager   messaging.Messager
-		otpStorage shared_service.OtpStorage
-		util       *util.Util
-
-		EmailVerificationLinkTTL uint // in seconds
-		PhoneOtpTTL              uint // in seconds
+		config               *config.UserServiceConfig
+		logger               logger.Logger
+		tracer               tracer.Tracer
+		util                 *util.Util
+		otpCacheV2           shared.OtpCacheV2
+		userStorage          shared.UserStorage
+		notificationProvider shared.NotificationProvider
 	}
 )
 
 func NewOtpService(p OtpServiceParam) OtpServiceResult {
 	return OtpServiceResult{
 		OtpService: &otpServiceImpl{
-			config:     p.Config,
-			logger:     p.Logger,
-			tracer:     p.Tracer,
-			mailer:     p.Mailer,
-			messager:   p.Messager,
-			otpStorage: p.OtpStorage,
-			util:       p.Util,
-
-			EmailVerificationLinkTTL: 24 * 60 * 60, // 24 hours
-			PhoneOtpTTL:              15 * 60,      // 15 minutes
+			config:               p.Config,
+			logger:               p.Logger,
+			tracer:               p.Tracer,
+			util:                 p.Util,
+			otpCacheV2:           p.OtpCacheV2,
+			userStorage:          p.UserStorage,
+			notificationProvider: p.NotificationProvider,
 		},
 	}
 }
 
 // Construct email verification link to frontend app.
 // Note: Frontend app should handle the parameters to
-// make request to POST /email/verify
-func (s *otpServiceImpl) constructEmailVerificationLink(email, token string) string {
-	return fmt.Sprintf("https://%s/email/verify?email=%s&token=%s", s.config.FrontEndUrl, email, token)
+// make request to POST /profile/email/verify
+func (s *otpServiceImpl) constructEmailVerificationLink(email, code string) string {
+	return fmt.Sprintf("%s/profile/email/verify?email=%s&code=%s", s.config.FrontEndUrl, email, code)
 }
 
-func (s *otpServiceImpl) SendEmailVerificationLink(ctx context.Context, p SendEmailVerificationLinkParam) error {
-	_, span := s.tracer.StartSpanWithCaller(ctx)
+func (s *otpServiceImpl) SendSignupEmail(ctx context.Context, p SendSignupEmailParam) error {
+	ctx, span := s.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	savedToken, err := s.otpStorage.GetEmailVerificationToken(ctx, p.Email)
-	if err != nil && !errors.Is(err, error_constant.ErrNotFound) {
-		s.logger.WithCtx(ctx).Error("Failed to get existing verification token", zap.Error(err))
-		return error_constant.ErrInternalServerError
-	}
-	if savedToken != "" {
-		return ErrOtpAlreadyExist
-	}
-
-	token, err := s.util.GeneratorUtil.GenerateRandomBase64(32)
+	otp, err := s.otpCacheV2.GetOtp(ctx, p.UUID, shared.EmailVerificationOtpType)
+	var ed *error_pkg.ErrorWithDetails
 	if err != nil {
-		s.logger.WithCtx(ctx).Error("Failed to generate verification token", zap.Error(err))
-		return error_constant.ErrInternalServerError
+		if errors.As(err, &ed) {
+			if ed.Code != OtpNotFoundError.Code {
+				s.logger.WithCtx(ctx).Error("failed to get existing verification code", zap.Object("error", ed))
+				return ed
+			}
+		} else {
+			s.logger.WithCtx(ctx).Error("failed to get existing verification code", zap.Error(err))
+			return error_pkg.InternalServerError
+		}
+	}
+	if otp != nil {
+		s.logger.WithCtx(ctx).Info("Email verification link already sent. Skipping sending email verification link")
+		return nil
 	}
 
-	_, err = s.mailer.Send(ctx, mail.Message{
-		To:      []string{p.Email},
-		Subject: "Account verification",
-		Body: fmt.Sprintf(`<!DOCTYPE html>
-<html>
-<body>
-  <p>Howdy,</p>
-  <p>Thank you for choosing %s! Please confirm your email address by clicking the link below. We'll communicate important updates with you from time to time via email, so it's essential that we have an up-to-date email address on file.</p>
-  <p><a href="%s" style="color: #1a73e8; text-decoration: none;">Verify your email address</a></p>
-  <p>If you did not sign up for a %s account, you can simply disregard this email.</p>
-  <p>Hope you have a nice day!</p>
-  <p>The %s Team</p>
-</body>
-</html>`,
-			s.config.AppName,
-			s.constructEmailVerificationLink(p.Email, token),
-			s.config.AppName,
-			s.config.AppName,
-		),
+	code, err := s.util.GeneratorUtil.GenerateRandomHex(32)
+	if err != nil {
+		s.logger.WithCtx(ctx).Error("Failed to generate verification code", zap.Error(err))
+		return error_pkg.InternalServerError
+	}
+
+	templateData, err := anypb.New(&notification_proto.SignupEmailVerificationTemplateData{
+		FirstName: p.FirstName,
+		LastName:  p.LastName,
+		Url:       s.constructEmailVerificationLink(p.Email, code),
+	})
+	if err != nil {
+		s.logger.WithCtx(ctx).Error("Failed to marshal email template data into protobuf", zap.Error(err))
+		return error_pkg.InternalServerError
+	}
+
+	err = s.notificationProvider.SendEmail(ctx, &notification_proto.SendEmailRequest{
+		Recipients:   []string{p.Email},
+		Subject:      "Welcome to " + s.config.AppName,
+		TemplateId:   shared.SignupEmailTemplateId.String(),
+		TemplateData: templateData,
 	})
 	if err != nil {
 		s.logger.WithCtx(ctx).Error("Failed to send email", zap.Error(err))
-		return ErrSendVerificationLinkFailed
+		return SendVerificationLinkFailedError
 	}
 
-	err = s.otpStorage.SaveEmailVerificationToken(ctx, shared_service.SaveEmailVerificationTokenParam{
-		Email: p.Email,
-		Token: token,
-		TTL:   time.Second * time.Duration(s.EmailVerificationLinkTTL),
+	err = s.otpCacheV2.SaveOtp(ctx, p.UUID, shared.EmailVerificationOtpType, code)
+	if err != nil {
+		s.logger.WithCtx(ctx).Error("Failed to save email verification code", zap.Error(err))
+		return error_pkg.InternalServerError
+	}
+
+	return nil
+}
+
+func (s *otpServiceImpl) constructUpdateEmailVerificationLink(email, code string) string {
+	return fmt.Sprintf("%s/profile/email/update/verify?email=%s&code=%s", s.config.FrontEndUrl, email, code)
+}
+
+func (s *otpServiceImpl) SendVerificationEmail(ctx context.Context, p SendVerificationEmailParam) error {
+	ctx, span := s.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
+	user, err := s.userStorage.FindUser(ctx, entity.FindUser{UUID: sql.NullString{String: p.UUID, Valid: true}})
+	if err != nil {
+		s.logger.WithCtx(ctx).Error("failed to find user", zap.Error(err))
+		return error_pkg.NotFoundError
+	}
+
+	otp, err := s.otpCacheV2.GetOtp(ctx, user.UUID, shared.EmailVerificationOtpType)
+	var ed *error_pkg.ErrorWithDetails
+	if err != nil {
+		if errors.As(err, &ed) {
+			if ed.Code != OtpNotFoundError.Code {
+				s.logger.WithCtx(ctx).Error("failed to get existing verification code", zap.Object("error", ed))
+				return ed
+			}
+		} else {
+			s.logger.WithCtx(ctx).Error("failed to get existing verification code", zap.Error(err))
+			return error_pkg.InternalServerError
+		}
+	}
+	if otp != nil {
+		s.logger.WithCtx(ctx).Info("verification email code already sent. Skipping sending verification email code")
+		return VerificationLinkAlreadySentError
+	}
+
+	code, err := s.util.GeneratorUtil.GenerateRandomHex(32)
+	if err != nil {
+		s.logger.WithCtx(ctx).Error("Failed to generate verification code", zap.Error(err))
+		return error_pkg.InternalServerError
+	}
+
+	templateData, err := anypb.New(&notification_proto.SignupEmailVerificationTemplateData{
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Url:       s.constructEmailVerificationLink(user.Email, code),
 	})
 	if err != nil {
-		s.logger.WithCtx(ctx).Error("Failed to save email verification token", zap.Error(err))
-		return error_constant.ErrInternalServerError
+		s.logger.WithCtx(ctx).Error("Failed to marshal email template data into protobuf", zap.Error(err))
+		return error_pkg.InternalServerError
+	}
+
+	err = s.notificationProvider.SendEmail(ctx, &notification_proto.SendEmailRequest{
+		Recipients:   []string{user.Email},
+		Subject:      "Email Verification",
+		TemplateId:   shared.VerificationEmailTemplateId.String(),
+		TemplateData: templateData,
+	})
+	if err != nil {
+		s.logger.WithCtx(ctx).Error("Failed to send email", zap.Error(err))
+		return SendVerificationLinkFailedError
+	}
+
+	err = s.otpCacheV2.SaveOtp(ctx, user.UUID, shared.EmailVerificationOtpType, code)
+	if err != nil {
+		s.logger.WithCtx(ctx).Error("Failed to save email verification code", zap.Error(err))
+		return error_pkg.InternalServerError
 	}
 
 	return nil
@@ -144,105 +208,182 @@ func (s *otpServiceImpl) VerifyEmail(ctx context.Context, p VerifyEmailParam) er
 	_, span := s.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	token, err := s.otpStorage.GetEmailVerificationToken(ctx, p.Email)
+	user, err := s.userStorage.FindUser(ctx, entity.FindUser{
+		UUID: sql.NullString{String: p.UUID, Valid: true},
+	})
 	if err != nil {
-		if errors.Is(err, error_constant.ErrNotFound) {
-			return ErrVerificationTokenNotFound
+		s.logger.WithCtx(ctx).Error("Failed to find user", zap.Error(err))
+		return err
+	}
+
+	otp, err := s.otpCacheV2.IncrementOtpAttempt(ctx, p.UUID, shared.EmailVerificationOtpType)
+	if err != nil {
+		var ed *error_pkg.ErrorWithDetails
+		if errors.As(err, &ed) {
+			s.logger.WithCtx(ctx).Info("failed to increment email verification attempt", zap.Object("error", ed))
+			if ed.Code == OtpNotFoundError.Code {
+				return VerificationTokenNotFoundError
+			} else {
+				return ed
+			}
 		} else {
-			s.logger.WithCtx(ctx).Error("Failed to get existing verification token", zap.Error(err))
-			return error_constant.ErrInternalServerError
+			s.logger.WithCtx(ctx).Error("failed to increment email verification attempt", zap.Error(err))
+			return error_pkg.InternalServerError
 		}
 	}
 
-	if token == "" {
-		return ErrVerificationTokenNotFound
+	if otp == nil {
+		return VerificationTokenNotFoundError
 	}
 
-	if token != p.Token {
-		return ErrVerificationTokenInvalid
+	if otp.Attempts >= shared.EmailVerificationOtpType.MaxAttempts+1 {
+		// +1 because we increment the attempt before checking the OTP code validity
+		return TooManyVerificationAttemptError
 	}
 
-	return nil
+	if otp.Code != p.Code {
+		return IncorrectVerificationCodeError
+	}
+
+	go func() {
+		_, err = s.otpCacheV2.DeleteOtp(ctx, p.UUID, shared.EmailVerificationOtpType)
+		if err != nil {
+			s.logger.WithCtx(ctx).Warn("Failed to delete user email verification code", zap.Error(err))
+		}
+	}()
+
+	_, err = s.userStorage.UpdateUser(
+		ctx,
+		entity.FindUser{
+			UUID:  sql.NullString{String: p.UUID, Valid: true},
+			Email: sql.NullString{String: user.Email, Valid: true},
+		},
+		entity.UpdateUser{
+			IsEmailVerified: sql.NullBool{Bool: true, Valid: true},
+		},
+	)
+	if err != nil {
+		s.logger.WithCtx(ctx).Error("Failed to update user email verification status", zap.Error(err))
+	}
+
+	return err
 }
 
-func (s *otpServiceImpl) SendPhoneOtp(ctx context.Context, p SendPhoneOtpParam) error {
+func (s *otpServiceImpl) SendPhoneNumberVerificationOtp(ctx context.Context, p SendPhoneNumberVerificationOtpParam) error {
 	_, span := s.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	savedOtp, err := s.otpStorage.GetPhoneOtp(ctx, p.PhoneNumber)
-	if err != nil && !errors.Is(err, error_constant.ErrNotFound) {
-		s.logger.WithCtx(ctx).Error("Failed to get existing OTP", zap.Error(err))
-		return error_constant.ErrInternalServerError
-	}
-	if savedOtp != "" {
-		return ErrOtpAlreadyExist
+	var user *entity.UserPhoneNumber
+	err := s.userStorage.FindUserWithResult(ctx, entity.FindUser{UUID: sql.NullString{String: p.UUID, Valid: true}}, &user)
+	if err != nil {
+		s.logger.WithCtx(ctx).Error("Failed to find user", zap.Error(err))
+		return error_pkg.NotFoundError
 	}
 
-	otp, err := s.util.GeneratorUtil.GenerateRandomNumber(6)
+	otp, err := s.otpCacheV2.GetOtp(ctx, p.UUID, shared.PhoneNumberVerificationOtpType)
+	var ed *error_pkg.ErrorWithDetails
+	if err != nil {
+		if errors.As(err, &ed) {
+			if ed.Code != OtpNotFoundError.Code {
+				s.logger.WithCtx(ctx).Error("failed to get existing otp code", zap.Object("error", ed))
+				return ed
+			}
+		} else {
+			s.logger.WithCtx(ctx).Error("failed to get existing otp code", zap.Error(err))
+			return error_pkg.InternalServerError
+		}
+	}
+	if otp != nil {
+		return OtpAlreadySentError
+	}
+
+	code, err := s.util.GeneratorUtil.GenerateRandomNumber(6)
 	if err != nil {
 		s.logger.WithCtx(ctx).Error("Failed to generate OTP", zap.Error(err))
-		return error_constant.ErrInternalServerError
+		return error_pkg.InternalServerError
 	}
 
-	_, err = s.messager.Send(ctx, messaging.Message{
-		To:   p.PhoneNumber,
-		Body: fmt.Sprintf("Your verification code for %s is %s", s.config.AppName, otp),
+	err = s.notificationProvider.SendSms(ctx, &notification_proto.SendSmsRequest{
+		Recipient: user.PhoneNumber,
+		Body:      fmt.Sprintf("Your verification code for %s is %s", s.config.AppName, code),
 	})
 	if err != nil {
 		s.logger.WithCtx(ctx).Error("Failed to send OTP", zap.Error(err))
-		return ErrSendOtpFailed
+		return SendPhoneOtpFailedError
 	}
 
-	err = s.otpStorage.SavePhoneOtp(ctx, shared_service.SavePhoneOtpParam{
-		PhoneNumber: p.PhoneNumber,
-		Otp:         otp,
-		TTL:         time.Second * time.Duration(s.PhoneOtpTTL),
-	})
+	err = s.otpCacheV2.SaveOtp(ctx, p.UUID, shared.PhoneNumberVerificationOtpType, code)
 	if err != nil {
 		s.logger.WithCtx(ctx).Error("Failed to save OTP", zap.Error(err))
-		return error_constant.ErrInternalServerError
+		return error_pkg.InternalServerError
 	}
 
 	return nil
 }
 
-func (s *otpServiceImpl) VerifyPhoneOtp(ctx context.Context, p VerifyPhoneOtpParam) error {
+func (s *otpServiceImpl) VerifyPhoneNumber(ctx context.Context, p VerifyPhoneNumberParam) error {
 	_, span := s.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	attempt, err := s.otpStorage.GetPhoneOtpAttempt(ctx, p.PhoneNumber)
+	var user *entity.UserPhoneNumber
+	err := s.userStorage.FindUserWithResult(
+		ctx,
+		entity.FindUser{
+			UUID: sql.NullString{String: p.UUID, Valid: true},
+		},
+		&user,
+	)
 	if err != nil {
-		if errors.Is(err, error_constant.ErrNotFound) {
-			return ErrOtpNotFound
+		return err
+	}
+
+	otp, err := s.otpCacheV2.IncrementOtpAttempt(ctx, p.UUID, shared.PhoneNumberVerificationOtpType)
+	if err != nil {
+		var ed *error_pkg.ErrorWithDetails
+		if errors.As(err, &ed) {
+			if ed.Code != OtpNotFoundError.Code {
+				s.logger.WithCtx(ctx).Error("failed to increment phone OTP attempt", zap.Object("error", ed))
+			}
+			return ed
 		} else {
-			s.logger.WithCtx(ctx).Error("Failed to get user existing phone OTP attempt", zap.Error(err))
-			return error_constant.ErrInternalServerError
+			s.logger.WithCtx(ctx).Error("failed to increment phone OTP attempt", zap.Error(err))
+			return error_pkg.InternalServerError
 		}
 	}
-	if attempt >= 3 {
-		s.logger.Info("User attempted to verify phone OTP too many times", zap.Int("attempt", attempt))
-		return ErrOtpTooManyAttempt
+
+	if otp == nil {
+		return OtpNotFoundError
 	}
 
-	otp, err := s.otpStorage.GetPhoneOtp(ctx, p.PhoneNumber)
-	if err != nil {
-		if errors.Is(err, error_constant.ErrNotFound) {
-			return ErrOtpNotFound
-		} else {
-			s.logger.WithCtx(ctx).Error("Failed to get existing phone OTP", zap.Error(err))
-			return error_constant.ErrInternalServerError
+	if otp.Attempts >= shared.PhoneNumberVerificationOtpType.MaxAttempts+1 {
+		// +1 because we increment the attempt before checking the OTP code validity
+		return TooManyOtpAttemptError
+	}
+
+	if otp.Code != p.Otp {
+		return IncorrectOtpError
+	}
+
+	go func() {
+		_, err := s.otpCacheV2.DeleteOtp(ctx, p.UUID, shared.PhoneNumberVerificationOtpType)
+		if err != nil {
+			s.logger.WithCtx(ctx).Warn("Failed to delete user phone OTP attempt", zap.Error(err))
 		}
-	}
+	}()
 
-	err = s.otpStorage.IncrementPhoneOtpAttempt(ctx, p.PhoneNumber)
+	_, err = s.userStorage.UpdateUser(
+		ctx,
+		entity.FindUser{
+			UUID:        sql.NullString{String: p.UUID, Valid: true},
+			PhoneNumber: sql.NullString{String: user.PhoneNumber, Valid: true},
+		},
+		entity.UpdateUser{
+			IsPhoneNumberVerified: sql.NullBool{Bool: true, Valid: true},
+		},
+	)
 	if err != nil {
-		s.logger.Error("Failed to increment user phone OTP attempt", zap.Error(err))
-		return error_constant.ErrInternalServerError
+		s.logger.WithCtx(ctx).Error("Failed to update user phone number verification status", zap.Error(err))
 	}
 
-	if p.Otp != otp {
-		return ErrOtpInvalid
-	}
-
-	return nil
+	return err
 }

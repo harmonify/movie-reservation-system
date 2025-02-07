@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	config_constant "github.com/harmonify/movie-reservation-system/pkg/config/constant"
+	config "github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/uptrace/opentelemetry-go-extra/otelgorm"
 	pgDriver "gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -14,17 +14,17 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-func newPostgresqlDatabase(p DatabaseParam) (DatabaseResult, error) {
+func NewPostgresqlDatabase(p DatabaseParam, cfg *DatabaseConfig) (*Database, error) {
 	master := fmt.Sprintf(
 		`host=%s user=%s password=%s dbname=%s port=%d sslmode=disable TimeZone=Asia/Jakarta`,
-		p.Config.DbHost,
-		p.Config.DbUser,
-		p.Config.DbPassword,
-		p.Config.DbName,
-		p.Config.DbPort,
+		cfg.DbHost,
+		cfg.DbUser,
+		cfg.DbPassword,
+		cfg.DbName,
+		cfg.DbPort,
 	)
 
-	db, err := gorm.Open(pgDriver.Open(master), &gorm.Config{
+	client, err := gorm.Open(pgDriver.Open(master), &gorm.Config{
 		Logger: gormLogger.New(
 			log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
 			gormLogger.Config{
@@ -39,42 +39,33 @@ func newPostgresqlDatabase(p DatabaseParam) (DatabaseResult, error) {
 			SingularTable: true,
 		},
 	})
-	if p.Config.Env == config_constant.EnvironmentProduction {
-		db.Logger = gormLogger.Default.LogMode(gormLogger.Silent)
-	}
-
-	result := DatabaseResult{
-		Database: &Database{
-			DB:     db,
-			Logger: p.Logger,
-		},
+	if cfg.Env == config.EnvironmentProduction {
+		client.Logger = gormLogger.Default.LogMode(gormLogger.Silent)
 	}
 
 	if err != nil {
 		p.Logger.Error(">> Database connection error: " + err.Error())
-		return result, err
+		return nil, err
 	}
 
-	if err := db.Use(otelgorm.NewPlugin()); err != nil {
+	if err := client.Use(otelgorm.NewPlugin()); err != nil {
 		p.Logger.Warn("otelgorm.NewPlugin() error: " + err.Error())
 	}
 
-	p.Logger.Info(">> Database connected to " + p.Config.DbHost)
+	p.Logger.Info(">> Database connected to " + cfg.DbHost)
 
-	if p.Config.DbMigration {
-		p.Logger.Info(">> Database migration started")
-		result.Database.Migrate()
-	}
-
-	sqlDb, err := db.DB()
+	sqlDb, err := client.DB()
 	if err != nil {
 		p.Logger.Error(">> Database connection error: " + err.Error())
-		return result, err
+		return nil, err
 	}
 
-	sqlDb.SetMaxIdleConns(p.Config.DbMaxIdleConn)
-	sqlDb.SetMaxOpenConns(p.Config.DbMaxOpenConn)
-	sqlDb.SetConnMaxLifetime(time.Duration(p.Config.DbMaxLifetimeInMinute) * time.Minute)
+	sqlDb.SetMaxIdleConns(cfg.DbMaxIdleConn)
+	sqlDb.SetMaxOpenConns(cfg.DbMaxOpenConn)
+	sqlDb.SetConnMaxLifetime(time.Duration(cfg.DbMaxLifetimeInMinute) * time.Minute)
 
-	return result, nil
+	return &Database{
+		DB:     client,
+		Logger: p.Logger,
+	}, nil
 }

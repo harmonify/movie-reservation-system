@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/harmonify/movie-reservation-system/pkg/http/response"
+	"github.com/harmonify/movie-reservation-system/pkg/http"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
 	"github.com/prometheus/client_golang/prometheus"
@@ -16,13 +16,13 @@ type PrometheusHttpMiddleware interface {
 
 type prometheusHttpMiddlewareImpl struct {
 	tracer   tracer.Tracer
-	response response.HttpResponse
+	response http_pkg.HttpResponse
 	util     *util.Util
 }
 
 func NewPrometheusHttpMiddleware(
 	tracer tracer.Tracer,
-	response response.HttpResponse,
+	response http_pkg.HttpResponse,
 	util *util.Util,
 ) PrometheusHttpMiddleware {
 	return &prometheusHttpMiddlewareImpl{
@@ -33,8 +33,7 @@ func NewPrometheusHttpMiddleware(
 }
 
 func (h *prometheusHttpMiddlewareImpl) LogHttpMetrics(c *gin.Context) {
-	ctx := c.Request.Context()
-	ctx, span := h.tracer.StartSpanWithCaller(ctx)
+	_, span := h.tracer.StartSpanWithCaller(c.Request.Context())
 	defer span.End()
 
 	timer := prometheus.NewTimer(httpDurationCollector.WithLabelValues(

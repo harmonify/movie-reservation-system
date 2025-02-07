@@ -4,7 +4,7 @@
 // 	protoc        v5.29.0
 // source: shared/test.proto
 
-package shared_proto
+package test_proto
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"

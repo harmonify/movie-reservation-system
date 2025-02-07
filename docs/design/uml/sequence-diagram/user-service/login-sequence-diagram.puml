@@ -1,5 +1,4 @@
-@startuml jwt
-!theme plain
+@startuml login
 skinparam style strictuml
 hide footbox
 

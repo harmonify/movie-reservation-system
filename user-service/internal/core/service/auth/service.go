@@ -5,25 +5,25 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/database"
-	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
+	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
-	"github.com/harmonify/movie-reservation-system/pkg/mail"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	otp_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/otp"
-	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
 	token_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/token"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/config"
+	user_proto "github.com/harmonify/movie-reservation-system/user-service/internal/driven/proto/user"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/proto"
 )
 
 type (
 	AuthService interface {
 		Register(ctx context.Context, p RegisterParam) error
-		VerifyEmail(ctx context.Context, p VerifyEmailParam) error
 		Login(ctx context.Context, p LoginParam) (*LoginResult, error)
 		GetToken(ctx context.Context, p GetTokenParam) (*GetTokenResult, error)
 		Logout(ctx context.Context, p LogoutParam) error
@@ -35,13 +35,13 @@ type (
 		Logger             logger.Logger
 		Tracer             tracer.Tracer
 		Database           *database.Database
-		UserStorage        shared_service.UserStorage
-		UserKeyStorage     shared_service.UserKeyStorage
-		UserSessionStorage shared_service.UserSessionStorage
-		RbacStorage        shared_service.RbacStorage
-		Mailer             mail.Mailer
+		UserStorage        shared.UserStorage
+		UserKeyStorage     shared.UserKeyStorage
+		UserSessionStorage shared.UserSessionStorage
+		RbacStorage        shared.RbacStorage
+		OutboxStorage      shared.OutboxStorage
 		Util               *util.Util
-		Config             *config.Config
+		Config             *config.UserServiceConfig
 		TokenService       token_service.TokenService
 		OtpService         otp_service.OtpService
 	}
@@ -56,13 +56,13 @@ type (
 		logger             logger.Logger
 		tracer             tracer.Tracer
 		database           *database.Database
-		userStorage        shared_service.UserStorage
-		userKeyStorage     shared_service.UserKeyStorage
-		userSessionStorage shared_service.UserSessionStorage
-		rbacStorage        shared_service.RbacStorage
-		mailer             mail.Mailer
+		userStorage        shared.UserStorage
+		userKeyStorage     shared.UserKeyStorage
+		userSessionStorage shared.UserSessionStorage
+		rbacStorage        shared.RbacStorage
+		outboxStorage      shared.OutboxStorage
 		util               *util.Util
-		config             *config.Config
+		config             *config.UserServiceConfig
 		tokenService       token_service.TokenService
 		otpService         otp_service.OtpService
 	}
@@ -77,8 +77,8 @@ func NewAuthService(p AuthServiceParam) AuthServiceResult {
 			userStorage:        p.UserStorage,
 			userSessionStorage: p.UserSessionStorage,
 			userKeyStorage:     p.UserKeyStorage,
+			outboxStorage:      p.OutboxStorage,
 			rbacStorage:        p.RbacStorage,
-			mailer:             p.Mailer,
 			util:               p.Util,
 			config:             p.Config,
 			tokenService:       p.TokenService,
@@ -93,7 +93,7 @@ func (s *authServiceImpl) Register(ctx context.Context, p RegisterParam) error {
 
 	if !span.SpanContext().TraceID().IsValid() {
 		s.logger.WithCtx(ctx).Error("Failed to get valid trace id", zap.String("email", p.Email), zap.String("phone_number", p.PhoneNumber))
-		return error_constant.ErrInternalServerError
+		return error_pkg.InternalServerError
 	}
 
 	// Hash user password
@@ -107,6 +107,12 @@ func (s *authServiceImpl) Register(ctx context.Context, p RegisterParam) error {
 	userKey, err := s.tokenService.GenerateUserKey(ctx)
 	if err != nil {
 		s.logger.WithCtx(ctx).Error("Failed to generate user key", zap.Error(err))
+		return err
+	}
+
+	spanCtxBytes, err := span.SpanContext().MarshalJSON()
+	if err != nil {
+		s.logger.WithCtx(ctx).Error("Failed to marshal span context into JSON", zap.Error(err))
 		return err
 	}
 
@@ -141,12 +147,38 @@ func (s *authServiceImpl) Register(ctx context.Context, p RegisterParam) error {
 		}
 
 		// Grant user role
-		_, err = s.rbacStorage.WithTx(tx).GrantRole(ctx, shared_service.GrantRoleParam{
-			UUID: user.UUID.String(),
-			Role: shared_service.RoleUser,
+		_, err = s.rbacStorage.WithTx(tx).GrantRole(ctx, shared.GrantRoleParam{
+			UUID: user.UUID,
+			Role: shared.RoleUser,
 		})
 		if err != nil {
 			s.logger.WithCtx(ctx).Error("Failed to grant user role", zap.Error(err))
+			return err
+		}
+
+		payload, err := proto.Marshal(&user_proto.UserRegistered{
+			Uuid:        user.UUID,
+			Email:       user.Email,
+			Username:    user.Username,
+			PhoneNumber: user.PhoneNumber,
+			FirstName:   user.FirstName,
+			LastName:    user.LastName,
+		})
+		s.logger.WithCtx(ctx).Debug("User outbox payload", zap.String("payload", string(payload)))
+		if err != nil {
+			s.logger.WithCtx(ctx).Error("Failed to marshal user outbox payload", zap.Error(err))
+			return err
+		}
+
+		_, err = s.outboxStorage.WithTx(tx).SaveOutbox(ctx, entity.SaveUserOutbox{
+			ID:                 span.SpanContext().TraceID().String(),
+			AggregateType:      entity.AggregateTypeRegistered,
+			AggregateID:        user.UUID,
+			Payload:            payload,
+			Tracingspancontext: spanCtxBytes,
+		})
+		if err != nil {
+			s.logger.WithCtx(ctx).Error("Failed to save outbox record", zap.Error(err))
 			return err
 		}
 
@@ -157,43 +189,7 @@ func (s *authServiceImpl) Register(ctx context.Context, p RegisterParam) error {
 		return err
 	}
 
-	// Send email verification link
-	err = s.otpService.SendEmailVerificationLink(ctx, otp_service.SendEmailVerificationLinkParam{
-		Email: p.Email,
-	})
-	if err != nil {
-		s.logger.WithCtx(ctx).Error("Failed to send email verification link", zap.Error(err))
-		return err
-	}
-
 	return err
-}
-
-func (s *authServiceImpl) VerifyEmail(ctx context.Context, p VerifyEmailParam) error {
-	ctx, span := s.tracer.StartSpanWithCaller(ctx)
-	defer span.End()
-
-	err := s.otpService.VerifyEmail(ctx, otp_service.VerifyEmailParam{
-		Email: p.Email,
-		Token: p.Token,
-	})
-
-	if err != nil {
-		s.logger.Error("Failed to verify user email", zap.Error(err))
-		return err
-	}
-
-	s.userStorage.UpdateUser(
-		ctx,
-		entity.FindUser{
-			Email: sql.NullString{String: p.Email, Valid: true},
-		},
-		entity.UpdateUser{
-			IsEmailVerified: sql.NullBool{Bool: true, Valid: true},
-		},
-	)
-
-	return nil
 }
 
 func (s *authServiceImpl) Login(ctx context.Context, p LoginParam) (*LoginResult, error) {
@@ -202,7 +198,7 @@ func (s *authServiceImpl) Login(ctx context.Context, p LoginParam) (*LoginResult
 
 	if !span.SpanContext().TraceID().IsValid() {
 		s.logger.WithCtx(ctx).Error("Failed to get valid trace id", zap.String("username", p.Username), zap.String("ip_address", p.IpAddress), zap.String("user_agent", p.UserAgent))
-		return nil, error_constant.ErrInternalServerError
+		return nil, error_pkg.InternalServerError
 	}
 
 	// Get user record
@@ -210,17 +206,17 @@ func (s *authServiceImpl) Login(ctx context.Context, p LoginParam) (*LoginResult
 	if err != nil {
 		var terr *database.RecordNotFoundError
 		if errors.As(err, &terr) {
-			return nil, ErrAccountNotFound
+			return nil, AccountNotFoundError
 		}
-		s.logger.WithCtx(ctx).Error(err.Error())
+		s.logger.WithCtx(ctx).Error("Failed to get user", zap.Error(err))
 		return nil, err
 	}
 	// Get user key record
 	userKey, err := s.userKeyStorage.FindUserKey(ctx, entity.FindUserKey{
-		UserUUID: sql.NullString{String: user.UUID.String(), Valid: true},
+		UserUUID: sql.NullString{String: user.UUID, Valid: true},
 	})
 	if err != nil {
-		s.logger.WithCtx(ctx).Error(err.Error())
+		s.logger.WithCtx(ctx).Error("Failed to get user key", zap.Error(err))
 		return nil, err
 	}
 
@@ -231,12 +227,12 @@ func (s *authServiceImpl) Login(ctx context.Context, p LoginParam) (*LoginResult
 		return nil, err
 	} else if !match {
 		s.logger.WithCtx(ctx).Info("Password didn't match")
-		return nil, ErrIncorrectPassword
+		return nil, IncorrectPasswordError
 	}
 
 	// Generate and encrypt user session
 	accessToken, err := s.tokenService.GenerateAccessToken(ctx, token_service.GenerateAccessTokenParam{
-		UUID:        user.UUID.String(),
+		UUID:        user.UUID,
 		Username:    user.Username,
 		Email:       user.Email,
 		PhoneNumber: user.PhoneNumber,
@@ -255,7 +251,7 @@ func (s *authServiceImpl) Login(ctx context.Context, p LoginParam) (*LoginResult
 
 	// Save user session record
 	_, err = s.userSessionStorage.SaveSession(ctx, entity.SaveUserSession{
-		UserUUID:     user.UUID.String(),
+		UserUUID:     user.UUID,
 		RefreshToken: refreshToken.HashedRefreshToken,
 		IpAddress:    sql.NullString{String: p.IpAddress, Valid: true},
 		UserAgent:    sql.NullString{String: p.UserAgent, Valid: true},
@@ -296,7 +292,7 @@ func (s *authServiceImpl) GetToken(ctx context.Context, p GetTokenParam) (*GetTo
 
 	// Get user key record
 	userKey, err := s.userKeyStorage.FindUserKey(ctx, entity.FindUserKey{
-		UserUUID: sql.NullString{String: user.UUID.String(), Valid: true},
+		UserUUID: sql.NullString{String: user.UUID, Valid: true},
 	})
 	if err != nil {
 		s.logger.WithCtx(ctx).Error("Failed to get user key", zap.Error(err))
@@ -305,7 +301,7 @@ func (s *authServiceImpl) GetToken(ctx context.Context, p GetTokenParam) (*GetTo
 
 	// Generate access token
 	accessToken, err := s.tokenService.GenerateAccessToken(ctx, token_service.GenerateAccessTokenParam{
-		UUID:        user.UUID.String(),
+		UUID:        user.UUID,
 		Username:    user.Username,
 		Email:       user.Email,
 		PhoneNumber: user.PhoneNumber,
@@ -338,7 +334,7 @@ func (s *authServiceImpl) Logout(ctx context.Context, p LogoutParam) error {
 		var terr *database.RecordNotFoundError
 		if errors.As(err, &terr) {
 			// Assume that the session is already expired
-			return ErrRefreshTokenAlreadyExpired
+			return RefreshTokenExpiredError
 		}
 		s.logger.WithCtx(ctx).Error(err.Error())
 		return err

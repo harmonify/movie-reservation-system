@@ -2,33 +2,26 @@ package health_check_rest
 
 import (
 	"github.com/gin-gonic/gin"
-	http_interface "github.com/harmonify/movie-reservation-system/pkg/http/interface"
-	"github.com/harmonify/movie-reservation-system/pkg/http/response"
+	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"go.uber.org/fx"
 )
 
-type HealthCheckRestHandler interface {
-	Register(g *gin.RouterGroup)
-	Version() string
-	GetHealthCheck(c *gin.Context)
-}
-
 type HealthCheckRestHandlerParam struct {
 	fx.In
 
-	Response response.HttpResponse
+	Response http_pkg.HttpResponse
 	Tracer   tracer.Tracer
 }
 
 type HealthCheckRestHandlerResult struct {
 	fx.Out
 
-	HealthCheckRestHandler http_interface.RestHandler `group:"http_routes"`
+	HealthCheckRestHandler http_pkg.RestHandler `group:"http_routes"`
 }
 
 type healthCheckRestHandlerImpl struct {
-	response response.HttpResponse
+	response http_pkg.HttpResponse
 	tracer   tracer.Tracer
 }
 
@@ -45,24 +38,24 @@ func NewHealthCheckRestHandler(p HealthCheckRestHandlerParam) HealthCheckRestHan
 	}
 }
 
-func (h *healthCheckRestHandlerImpl) Register(g *gin.RouterGroup) {
-	g.GET("/health", h.GetHealthCheck)
+func (h *healthCheckRestHandlerImpl) Register(g *gin.RouterGroup) error {
+	g.GET("/health", h.getHealthCheck)
+	return nil
 }
 
 func (h *healthCheckRestHandlerImpl) Version() string {
 	return "1"
 }
 
-func (h *healthCheckRestHandlerImpl) GetHealthCheck(c *gin.Context) {
+func (h *healthCheckRestHandlerImpl) getHealthCheck(c *gin.Context) {
 	var (
-		ctx  = c.Request.Context()
 		err  error
 		data = &HealthCheckResponse{
 			Ok: true,
 		}
 	)
 
-	_, span := h.tracer.StartSpanWithCaller(ctx)
+	_, span := h.tracer.StartSpanWithCaller(c.Request.Context())
 	defer span.End()
 
 	h.response.Send(c, data, err)

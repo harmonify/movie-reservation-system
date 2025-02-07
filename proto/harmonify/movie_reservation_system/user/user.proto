@@ -2,6 +2,11 @@ syntax = "proto3";
 
 package harmonify.movie_reservation_system.user;
 
-message UserCreated {
-    string userUUID = 1;
+message UserRegistered {
+    string uuid = 1;
+    string username = 2;
+    string email = 3;
+    string phoneNumber = 4;
+    string firstName = 5;
+    string lastName = 6;
 }

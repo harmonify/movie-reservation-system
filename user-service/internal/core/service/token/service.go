@@ -6,13 +6,13 @@ import (
 	"encoding/base64"
 	"time"
 
-	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
 	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
-	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/config"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -30,9 +30,9 @@ type (
 
 		Logger             logger.Logger
 		Tracer             tracer.Tracer
-		Config             *config.Config
+		Config             *config.UserServiceConfig
 		Util               *util.Util
-		UserSessionStorage shared_service.UserSessionStorage
+		UserSessionStorage shared.UserSessionStorage
 	}
 
 	TokenServiceResult struct {
@@ -44,9 +44,9 @@ type (
 	tokenServiceImpl struct {
 		logger             logger.Logger
 		tracer             tracer.Tracer
-		config             *config.Config
+		config             *config.UserServiceConfig
 		util               *util.Util
-		userSessionStorage shared_service.UserSessionStorage
+		userSessionStorage shared.UserSessionStorage
 
 		AccessTokenDuration  int // in seconds
 		RefreshTokenDuration int // in seconds
@@ -103,7 +103,7 @@ func (s *tokenServiceImpl) GenerateAccessToken(ctx context.Context, p GenerateAc
 	if err != nil {
 		s.logger.WithCtx(ctx).Error("Failed to decrypt user private key", zap.Error(err))
 	}
-	accessToken, err := s.util.JWTUtil.JWTSign(jwt_util.JWTSignParam{
+	accessToken, err := s.util.JWTUtil.JWTSign(ctx, jwt_util.JWTSignParam{
 		ExpInSeconds: s.AccessTokenDuration,
 		PrivateKey:   []byte(decryptedPrivateKey),
 		BodyPayload: jwt_util.JWTBodyPayload{
@@ -161,22 +161,22 @@ func (s *tokenServiceImpl) VerifyRefreshToken(ctx context.Context, p VerifyRefre
 	})
 	if err != nil {
 		s.logger.WithCtx(ctx).Error("Failed to get user session from the storage", zap.Error(err))
-		return nil, ErrSessionInvalid
+		return nil, SessionInvalidError
 	}
 
 	if session == nil {
 		s.logger.WithCtx(ctx).Info("Session not found")
-		return nil, ErrSessionInvalid
+		return nil, SessionInvalidError
 	}
 
 	if session.IsRevoked {
 		s.logger.WithCtx(ctx).Info("Session is revoked")
-		return nil, ErrSessionRevoked
+		return nil, SessionRevokedError
 	}
 
 	if time.Now().After(session.ExpiredAt) {
 		s.logger.WithCtx(ctx).Info("Session is expired")
-		return nil, ErrSessionExpired
+		return nil, SessionExpiredError
 	}
 
 	return &VerifyRefreshTokenResult{

@@ -50,6 +50,16 @@ entity Casbin {
     v5 : string
 }
 
+entity UserOutbox {
+    *id: UUID "trace id"
+    *aggregatetype: String "user"
+    *aggregateid: UUID "user uuid"
+    *payload: String "json payload"
+    *event_type: String "event type, e.g. registered"
+    *context: Text "tracing context"
+    *createdAt: LocalDateTime
+}
+
 Users ||--o| UserKeys : "has"
 Users ||--o{UserSessions : "has"
 Users ||--o{Casbin : "has"

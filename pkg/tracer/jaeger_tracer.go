@@ -17,28 +17,35 @@ import (
 )
 
 type jaegerTracerImpl struct {
-	tracer     trace.Tracer
-	propagator propagation.TextMapPropagator
+	provider      trace.TracerProvider
+	propagator    propagation.TextMapPropagator
+	defaultTracer trace.Tracer
 }
 
-func NewJaegerTracer(p TracerParam) TracerResult {
+func NewJaegerTracer(cfg *TracerConfig, lc fx.Lifecycle) (Tracer, error) {
 	exporter := otlptrace.NewUnstarted(
 		otlptracegrpc.NewClient(
 			otlptracegrpc.WithInsecure(),
-			otlptracegrpc.WithEndpoint(p.Config.OtelHost),
+			otlptracegrpc.WithEndpoint(cfg.OtelEndpoint),
 		),
 	)
 
 	resources, err := resource.New(
 		context.Background(),
 		resource.WithAttributes(
-			attribute.String("service.name", p.Config.ServiceIdentifier),
-			attribute.String("service.environment", p.Config.Env),
+			attribute.String("service.name", cfg.ServiceIdentifier),
+			attribute.String("service.environment", cfg.Env),
 		),
 	)
 	if err != nil {
-		fmt.Printf("Could not set tracer resources: %v\n", err)
+		return nil, fmt.Errorf("could not set OTel resources: %v\n", err)
 	}
+
+	propagator := propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{},
+		propagation.Baggage{},
+	)
+	otel.SetTextMapPropagator(propagator)
 
 	provider := sdktrace.NewTracerProvider(
 		sdktrace.WithSampler(sdktrace.AlwaysSample()),
@@ -47,23 +54,18 @@ func NewJaegerTracer(p TracerParam) TracerResult {
 	)
 	otel.SetTracerProvider(provider)
 
-	propagator := propagation.NewCompositeTextMapPropagator(
-		propagation.TraceContext{},
-		propagation.Baggage{},
-	)
-	otel.SetTextMapPropagator(propagator)
-
 	// Set an error handler for trace exports
 	otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
-		fmt.Println("OpenTelemetry trace export error", err.Error())
+		fmt.Printf("OTel trace export error: %v\n", err)
 	}))
 
 	t := &jaegerTracerImpl{
-		tracer:     provider.Tracer(p.Config.ServiceIdentifier),
-		propagator: propagator,
+		propagator:    propagator,
+		provider:      provider,
+		defaultTracer: provider.Tracer(cfg.ServiceIdentifier),
 	}
 
-	p.Lifecycle.Append(fx.Hook{
+	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			if err := exporter.Start(ctx); err != nil {
 				fmt.Printf("Failed to connect to OTel exporter: %v\n", err)
@@ -80,13 +82,11 @@ func NewJaegerTracer(p TracerParam) TracerResult {
 		},
 	})
 
-	return TracerResult{
-		Tracer: t,
-	}
+	return t, nil
 }
 
 func (t *jaegerTracerImpl) Start(ctx context.Context, spanName string) (context.Context, trace.Span) {
-	return t.tracer.Start(ctx, spanName)
+	return t.defaultTracer.Start(ctx, spanName)
 }
 
 func (s *jaegerTracerImpl) StartSpanWithCaller(ctx context.Context) (context.Context, trace.Span) {
@@ -101,9 +101,9 @@ func (s *jaegerTracerImpl) StartSpanWithCaller(ctx context.Context) (context.Con
 }
 
 func (s *jaegerTracerImpl) Inject(ctx context.Context, carrier propagation.TextMapCarrier) {
-	s.propagator.Inject(ctx, carrier)
+	otel.GetTextMapPropagator().Inject(ctx, carrier)
 }
 
 func (s *jaegerTracerImpl) Extract(ctx context.Context, carrier propagation.TextMapCarrier) context.Context {
-	return s.propagator.Extract(ctx, carrier)
+	return otel.GetTextMapPropagator().Extract(ctx, carrier)
 }

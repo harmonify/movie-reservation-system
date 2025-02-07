@@ -1,6 +1,6 @@
 services:
-    postgres:
-        image: debezium/postgres:17-alpine
+    user-service-postgres:
+        image: debezium/postgres:16-alpine
         restart: "on-failure:5"
         environment:
             POSTGRES_USER: root
@@ -14,14 +14,14 @@ services:
         networks:
             - user-service-net
 
-    connect:
+    user-service-connect:
         image: quay.io/debezium/connect:3.0
         environment:
             BOOTSTRAP_SERVERS: kafka:29092
             GROUP_ID: "1"
-            CONFIG_STORAGE_TOPIC: user_connect_configs
-            OFFSET_STORAGE_TOPIC: user_connect_offsets
-            STATUS_STORAGE_TOPIC: user_connect_statuses
+            CONFIG_STORAGE_TOPIC: private.user.connect_configs.v1
+            OFFSET_STORAGE_TOPIC: private.user.connect_offsets.v1
+            STATUS_STORAGE_TOPIC: private.user.connect_statuses.v1
             # https://kafka.apache.org/documentation/#connect_running
             CONNECT_REST_ADVERTISED_LISTENER: connect
             CONNECT_REST_HOST: 0.0.0.0
@@ -30,12 +30,14 @@ services:
             - "8083:8083"
         depends_on:
             - kafka
-            - postgres
+            - user-service-postgres
         networks:
             - user-service-net
             - core-net
+        # volumes:
+        #     - ./debezium-connector-postgres:/kafka/connect/debezium-connector-postgres
 
-    postgres-exporter:
+    user-service-postgres-exporter:
         image: prometheuscommunity/postgres-exporter:latest
         environment:
             DATA_SOURCE_URI: "postgres:5432/mvs-user-service?sslmode=disable"
@@ -44,12 +46,12 @@ services:
         ports:
             - "9187:9187"
         depends_on:
-            - postgres
+            - user-service-postgres
         networks:
             - user-service-net
             - monitoring-net
 
-    redis:
+    user-service-redis:
         image: redis:latest
         command: ["redis-server", "--requirepass", "secret"]
         ports:
@@ -57,14 +59,14 @@ services:
         networks:
             - user-service-net
 
-    redis-exporter:
+    user-service-redis-exporter:
         image: oliver006/redis_exporter:latest
         environment:
             REDIS_PASSWORD: "secret"
         ports:
             - "9121:9121"
         depends_on:
-            - redis
+            - user-service-redis
         networks:
             - user-service-net
             - monitoring-net

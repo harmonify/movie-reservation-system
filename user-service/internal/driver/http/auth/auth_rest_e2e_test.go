@@ -13,70 +13,68 @@ import (
 	"testing"
 	"time"
 
+	config_pkg "github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/database"
-	http_constant "github.com/harmonify/movie-reservation-system/pkg/http/constant"
-	"github.com/harmonify/movie-reservation-system/pkg/http/response"
+	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
+	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
+	"github.com/harmonify/movie-reservation-system/pkg/util/validation"
 	"github.com/harmonify/movie-reservation-system/user-service/internal"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
-	auth_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/auth"
-	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
-	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/factory"
-	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/model"
+	entityfactory "github.com/harmonify/movie-reservation-system/user-service/internal/core/entity/factory"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/seeder"
 	http_driver "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http"
 	auth_rest "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/auth"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/auth/test"
 	"github.com/stretchr/testify/suite"
 	"github.com/tidwall/gjson"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 func TestAuthRest(t *testing.T) {
 	if os.Getenv("CI") == "true" && os.Getenv("INTEGRATION_TEST") != "true" {
 		t.Skip("Skipping test")
 	}
-
+	os.Setenv("ENV", config_pkg.EnvironmentTest)
 	suite.Run(t, new(AuthRestTestSuite))
 }
 
 type AuthRestTestSuite struct {
 	suite.Suite
-	app                    *fx.App
-	database               *database.Database
-	httpServer             *http_driver.HttpServer
-	testUser               *model.User
-	testUserHashedPassword *model.User
-	userSessionFactory     factory.UserSessionFactory
-	userSeeder             seeder.UserSeeder
-	userSessionSeeder      seeder.UserSessionSeeder
-	userStorage            shared_service.UserStorage
-	otpStorage             shared_service.OtpStorage
+	app         *fx.App
+	httpServer  *http_driver.HttpServer
+	otpCache    shared.OtpCache
+	database    *database.Database
+	userStorage shared.UserStorage
+	userFactory entityfactory.UserFactory
+	userSeeder  seeder.UserSeeder
 }
 
 func (s *AuthRestTestSuite) SetupSuite() {
 	s.app = internal.NewApp(
+		fx.Decorate(func(l logger.Logger) logger.Logger {
+			return &logger.ConsoleLoggerImpl{
+				Logger: l.GetZapLogger().WithOptions(zap.IncreaseLevel(zap.InfoLevel)),
+			}
+		}),
 		seeder.DrivenPostgresqlSeederModule,
-		factory.DrivenPostgresqlFactoryModule,
+		entityfactory.UserEntityFactoryModule,
 		fx.Invoke(func(
-			database *database.Database,
 			httpServer *http_driver.HttpServer,
-			authService auth_service.AuthService,
-			userFactory factory.UserFactory,
-			userSessionFactory factory.UserSessionFactory,
+			otpCache shared.OtpCache,
+			database *database.Database,
+			userStorage shared.UserStorage,
+			userFactory entityfactory.UserFactory,
 			userSeeder seeder.UserSeeder,
-			userSessionSeeder seeder.UserSessionSeeder,
-			userStorage shared_service.UserStorage,
-			otpStorage shared_service.OtpStorage,
 		) {
-			s.database = database
 			s.httpServer = httpServer
-			s.testUser = userFactory.CreateTestUser(factory.CreateTestUserParam{HashPassword: false})
-			s.testUserHashedPassword = userFactory.CreateTestUser(factory.CreateTestUserParam{HashPassword: true})
-			s.userSeeder = userSeeder
-			s.userSessionFactory = userSessionFactory
-			s.userSessionSeeder = userSessionSeeder
+			s.otpCache = otpCache
+			s.database = database
 			s.userStorage = userStorage
-			s.otpStorage = otpStorage
+			s.userFactory = userFactory
+			s.userSeeder = userSeeder
 		}),
 		fx.NopLogger,
 	)
@@ -95,43 +93,49 @@ func (s *AuthRestTestSuite) TestAuthRest_PostRegister() {
 		METHOD = "POST"
 	)
 
-	testCases := []test_interface.HttpTestCase[auth_rest.PostRegisterReq, interface{}]{
-		{
-			Description: "It should return a 200 OK response",
-			Config: test_interface.Request[auth_rest.PostRegisterReq]{
-				RequestBody: auth_rest.PostRegisterReq{
-					Username:    s.testUser.Username,
-					Password:    s.testUser.Password,
-					Email:       s.testUser.Email,
-					PhoneNumber: s.testUser.PhoneNumber,
-					FirstName:   s.testUser.FirstName,
-					LastName:    s.testUser.LastName,
+	testCases := []func() test_interface.HttpTestCase[auth_rest.PostRegisterReq, interface{}]{
+		func() test_interface.HttpTestCase[auth_rest.PostRegisterReq, interface{}] {
+			testUser, _, err := s.userFactory.GenerateUser()
+			s.Require().NoError(err)
+			return test_interface.HttpTestCase[auth_rest.PostRegisterReq, interface{}]{
+				Description: "It should return a 200 OK response",
+				Config: test_interface.Request[auth_rest.PostRegisterReq]{
+					RequestBody: auth_rest.PostRegisterReq{
+						Username:    testUser.Username,
+						Password:    testUser.Password,
+						Email:       testUser.Email,
+						PhoneNumber: testUser.PhoneNumber,
+						FirstName:   testUser.FirstName,
+						LastName:    testUser.LastName,
+					},
 				},
-			},
-			Expectation: test_interface.ResponseExpectation[interface{}]{
-				ResponseStatusCode: test_interface.NullInt{Int: http.StatusOK, Valid: true},
-				ResponseBodyStatus: test_interface.NullBool{Bool: true, Valid: true},
-			},
-			BeforeCall: func(req *http.Request) {
-				if err := s.userSeeder.DeleteUser(s.testUser.Username); err != nil {
-					s.T().Log("Failed to delete test user before call")
-				}
-				if _, err := s.otpStorage.DeleteEmailVerificationToken(context.Background(), s.testUser.Email); err != nil {
-					s.T().Log("Failed to delete test user email verification token before call")
-				}
-			},
-			AfterCall: func(w *httptest.ResponseRecorder) {
-				if err := s.userSeeder.DeleteUser(s.testUser.Username); err != nil {
-					s.T().Log("Failed to delete test user after call")
-				}
-				if _, err := s.otpStorage.DeleteEmailVerificationToken(context.Background(), s.testUser.Email); err != nil {
-					s.T().Log("Failed to delete test user email verification token after call")
-				}
-			},
+				Expectation: test_interface.ResponseExpectation[interface{}]{
+					ResponseStatusCode: test_interface.NullInt{Int: http.StatusOK, Valid: true},
+					ResponseBodyStatus: test_interface.NullBool{Bool: true, Valid: true},
+				},
+			}
 		},
 	}
 
-	for _, testCase := range testCases {
+	for _, tc := range testCases {
+		ctx := context.Background()
+
+		testCase := tc()
+		defer func() {
+			user, err := s.userStorage.FindUser(ctx, entity.FindUser{Username: sql.NullString{String: testCase.Config.RequestBody.Username, Valid: true}})
+			if err != nil {
+				s.T().Log("Failed to find test user after call")
+				return
+			}
+			if err := s.userSeeder.DeleteUser(ctx, entity.FindUser{Username: sql.NullString{String: testCase.Config.RequestBody.Username, Valid: true}}); err != nil {
+				s.T().Log("Failed to delete test user after call")
+				return
+			}
+			if _, err := s.otpCache.DeleteEmailVerificationCode(ctx, user.UUID); err != nil {
+				s.T().Log("Failed to delete otp cache after call")
+			}
+		}()
+
 		s.Run(testCase.Description, func() {
 			jsonPayload, err := json.Marshal(testCase.Config.RequestBody)
 			s.Require().NoError(err)
@@ -197,149 +201,13 @@ func (s *AuthRestTestSuite) TestAuthRest_PostRegister() {
 			if testCase.Expectation.ResponseBodyErrorObject != nil {
 				s.Require().True(responseError.Get("errors").IsArray(), "Expected 'errors' to be an array")
 				for i, errData := range testCase.Expectation.ResponseBodyErrorObject {
-					if expectedErrorObject, ok := errData.(response.BaseValidationErrorSchema); ok {
+					if expectedErrorObject, ok := errData.(validation.ValidationError); ok {
 						s.Equal(expectedErrorObject.Field, responseError.Get("errors").Array()[i].Get("field").String())
 						s.Equal(expectedErrorObject.Message, responseError.Get("errors").Array()[i].Get("message").String())
 					} else {
-						s.T().Fatalf("Expected error object should be a response.BaseValidationErrorSchema, but got %s", reflect.TypeOf(errData))
+						s.T().Fatalf("Expected error object to be %s, but got %s", reflect.TypeFor[validation.ValidationError]().Name(), reflect.TypeOf(errData).Name())
 					}
 				}
-			}
-		})
-	}
-}
-
-func (s *AuthRestTestSuite) TestAuthRest_PostVerifyEmail() {
-	var (
-		PATH   = "/v1/register/verify"
-		METHOD = "POST"
-	)
-
-	testCases := []test_interface.TestCase[postVerifyEmailTestConfig, postVerifyEmailTestExpectation]{
-		{
-			Description: "It should return a 200 OK response",
-			Config: func() auth_rest.PostVerifyEmailReq {
-				token := "123456"
-				err := s.otpStorage.SaveEmailVerificationToken(context.Background(), shared_service.SaveEmailVerificationTokenParam{
-					Email: s.testUser.Email,
-					Token: token,
-					TTL:   time.Minute * 5,
-				})
-				s.Require().NoError(err)
-				return auth_rest.PostVerifyEmailReq{
-					Email: s.testUser.Email,
-					Token: token,
-				}
-			},
-			Expectation: postVerifyEmailTestExpectation{
-				ResponseStatusCode:       test_interface.NullInt{Int: http.StatusOK, Valid: true},
-				ResponseBodyStatus:       test_interface.NullBool{Bool: true, Valid: true},
-				ResponseBodyResult:       make(map[string]interface{}, 0),
-				ResponseBodyErrorCode:    test_interface.NullString{String: "", Valid: false},
-				ResponseBodyErrorMessage: test_interface.NullString{String: "", Valid: false},
-				IsEmailVerified: test_interface.NullBool{
-					Bool:  true,
-					Valid: true,
-				},
-			},
-		},
-		{
-			Description: "It should return a 403 Forbidden response",
-			Config: func() auth_rest.PostVerifyEmailReq {
-				token := "123456"
-				err := s.otpStorage.SaveEmailVerificationToken(context.Background(), shared_service.SaveEmailVerificationTokenParam{
-					Email: s.testUser.Email,
-					Token: token,
-					TTL:   time.Minute * 5,
-				})
-				s.Require().NoError(err)
-				return auth_rest.PostVerifyEmailReq{
-					Email: s.testUser.Email,
-					Token: "INCORRECT",
-				}
-			},
-			Expectation: postVerifyEmailTestExpectation{
-				ResponseStatusCode:       test_interface.NullInt{Int: http.StatusForbidden, Valid: true},
-				ResponseBodyStatus:       test_interface.NullBool{Bool: false, Valid: true},
-				ResponseBodyResult:       make(map[string]interface{}, 0),
-				ResponseBodyErrorCode:    test_interface.NullString{String: "VERIFICATION_TOKEN_INVALID", Valid: false},
-				ResponseBodyErrorMessage: test_interface.NullString{String: "Failed to verify your email. Please try to request a new verification link.", Valid: false},
-				ResponseBodyErrorObject:  make([]interface{}, 0),
-				IsEmailVerified: test_interface.NullBool{
-					Bool:  true,
-					Valid: true,
-				},
-			},
-		},
-	}
-
-	for _, testCase := range testCases {
-		s.Run(testCase.Description, func() {
-			if _, err := s.userSeeder.SaveUser(*s.testUserHashedPassword); err != nil {
-				s.T().Log("Failed to create test user before call")
-			}
-			defer func() {
-				if err := s.userSeeder.DeleteUser(s.testUser.Username); err != nil {
-					s.T().Log("Failed to delete test user before call")
-				}
-			}()
-
-			jsonPayload, err := json.Marshal(testCase.Config())
-			s.Require().NoError(err)
-
-			req, err := http.NewRequest(METHOD, PATH, bytes.NewBuffer(jsonPayload))
-			s.Require().NoError(err)
-
-			req.Header.Set("Content-Type", "application/json")
-
-			if testCase.BeforeCall != nil {
-				testCase.BeforeCall(testCase.Config)
-			}
-
-			w := httptest.NewRecorder()
-			s.httpServer.Gin.ServeHTTP(w, req)
-
-			if testCase.AfterCall != nil {
-				testCase.AfterCall()
-			}
-
-			bodyString := w.Body.String()
-
-			s.Require().True(
-				gjson.Valid(bodyString),
-				fmt.Sprintf("response body should be a valid JSON, but got %s", bodyString),
-			)
-			body := gjson.Parse(bodyString)
-			status := body.Get("success").Bool()
-			responseError := body.Get("error")
-			resultBody := body.Get("result")
-
-			if testCase.Expectation.ResponseStatusCode.Valid {
-				s.Assert().Equal(testCase.Expectation.ResponseStatusCode.Int, w.Result().StatusCode)
-			}
-			if testCase.Expectation.ResponseBodyStatus.Valid {
-				s.Assert().Equal(testCase.Expectation.ResponseBodyStatus.Bool, status)
-			}
-			if testCase.Expectation.ResponseBodyResult != nil {
-				expected, err := json.Marshal(testCase.Expectation.ResponseBodyResult)
-				s.Assert().NoError(err)
-				s.Assert().JSONEq(string(expected), resultBody.Raw)
-			}
-			if testCase.Expectation.ResponseBodyErrorCode.Valid {
-				s.Assert().Equal(testCase.Expectation.ResponseBodyErrorCode.String, responseError.Get("code").String())
-			}
-			if testCase.Expectation.ResponseBodyErrorMessage.Valid {
-				s.Assert().Equal(testCase.Expectation.ResponseBodyErrorMessage.String, responseError.Get("message").String())
-			}
-			if testCase.Expectation.ResponseBodyErrorObject != nil {
-				s.Assert().True(responseError.Get("errors").IsArray(), "Expected 'errors' to be an array but got %s", responseError.Get("errors").Raw)
-			}
-			if testCase.Expectation.IsEmailVerified.Valid {
-				user, err := s.userStorage.FindUser(context.Background(), entity.FindUser{
-					Email: sql.NullString{String: s.testUser.Email, Valid: true},
-				})
-				s.Assert().NoError(err)
-				s.Assert().Equal(testCase.Expectation.IsEmailVerified.Bool, user.IsEmailVerified)
 			}
 		})
 	}
@@ -349,17 +217,26 @@ func (s *AuthRestTestSuite) TestAuthRest_PostLogin() {
 	var (
 		PATH                   = "/v1/login"
 		METHOD                 = "POST"
-		refreshTokenCookieName = http_constant.HttpCookiePrefix + "token"
+		refreshTokenCookieName = http_pkg.HttpCookiePrefix + "token"
 	)
 
-	testCases := []test_interface.TestCase[auth_rest.PostLoginReq, postRegisterTestExpectation]{
+	ctx := context.Background()
+	testUser, err := s.userSeeder.CreateUser(ctx)
+	s.Require().NoError(err)
+	defer func() {
+		if err := s.userSeeder.DeleteUser(ctx, entity.FindUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}}); err != nil {
+			s.T().Log("Failed to delete test user before call")
+		}
+	}()
+
+	testCases := []test_interface.TestCase[auth_rest.PostLoginReq, test.PostRegisterTestExpectation]{
 		{
 			Description: "User exist and correct password should return a 200 OK response",
 			Config: auth_rest.PostLoginReq{
-				Username: s.testUser.Username,
-				Password: s.testUser.Password,
+				Username: testUser.User.Username,
+				Password: testUser.UserRaw.Password,
 			},
-			Expectation: postRegisterTestExpectation{
+			Expectation: test.PostRegisterTestExpectation{
 				ResponseStatusCode:                   test_interface.NullInt{Int: http.StatusOK, Valid: true},
 				ResponseBodyStatus:                   test_interface.NullBool{Bool: true, Valid: true},
 				ResponseHeaderRefreshTokenExist:      test_interface.NullBool{Bool: true, Valid: true},
@@ -373,7 +250,7 @@ func (s *AuthRestTestSuite) TestAuthRest_PostLogin() {
 				Username: "nonexistentuser@example.com",
 				Password: "password",
 			},
-			Expectation: postRegisterTestExpectation{
+			Expectation: test.PostRegisterTestExpectation{
 				ResponseStatusCode:                   test_interface.NullInt{Int: http.StatusNotFound, Valid: true},
 				ResponseBodyStatus:                   test_interface.NullBool{Bool: false, Valid: true},
 				ResponseHeaderRefreshTokenExist:      test_interface.NullBool{Bool: false, Valid: true},
@@ -387,10 +264,10 @@ func (s *AuthRestTestSuite) TestAuthRest_PostLogin() {
 		{
 			Description: "User exist and incorrect password should return a 403 Forbidden response",
 			Config: auth_rest.PostLoginReq{
-				Username: s.testUser.Username,
+				Username: testUser.User.Username,
 				Password: "incorrect_password",
 			},
-			Expectation: postRegisterTestExpectation{
+			Expectation: test.PostRegisterTestExpectation{
 				ResponseStatusCode:                   test_interface.NullInt{Int: http.StatusForbidden, Valid: true},
 				ResponseBodyStatus:                   test_interface.NullBool{Bool: false, Valid: true},
 				ResponseHeaderRefreshTokenExist:      test_interface.NullBool{Bool: false, Valid: true},
@@ -405,15 +282,6 @@ func (s *AuthRestTestSuite) TestAuthRest_PostLogin() {
 
 	for _, testCase := range testCases {
 		s.Run(testCase.Description, func() {
-			if _, err := s.userSeeder.SaveUser(*s.testUserHashedPassword); err != nil {
-				s.T().Log("Failed to create test user before call")
-			}
-			defer func() {
-				if err := s.userSeeder.DeleteUser(s.testUser.Username); err != nil {
-					s.T().Log("Failed to delete test user before call")
-				}
-			}()
-
 			jsonPayload, err := json.Marshal(testCase.Config)
 			s.Require().NoError(err)
 
@@ -497,34 +365,35 @@ func (s *AuthRestTestSuite) TestAuthRest_GetToken() {
 	var (
 		PATH                   = "/v1/token"
 		METHOD                 = "GET"
-		refreshTokenCookieName = http_constant.HttpCookiePrefix + "token"
+		refreshTokenCookieName = http_pkg.HttpCookiePrefix + "token"
 	)
 
-	testCases := []test_interface.HttpTestCase[any, getTokenTestExpectation]{
+	ctx := context.Background()
+	testUser, err := s.userSeeder.CreateUser(ctx)
+	s.Require().NoError(err)
+	s.Require().Less(time.Now(), testUser.UserSessions[0].ExpiredAt)
+	defer func() {
+		if err := s.userSeeder.DeleteUser(ctx, entity.FindUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}}); err != nil {
+			s.T().Log("Failed to delete test user before call")
+		}
+	}()
+
+	testCases := []test_interface.HttpTestCase[any, test.GetTokenTestExpectation]{
 		{
 			Description: "Refresh token exist should return a 200 OK response",
-			Expectation: test_interface.ResponseExpectation[getTokenTestExpectation]{
+			Expectation: test_interface.ResponseExpectation[test.GetTokenTestExpectation]{
 				ResponseStatusCode: test_interface.NullInt{Int: http.StatusOK, Valid: true},
 				ResponseBodyStatus: test_interface.NullBool{Bool: true, Valid: true},
-				ResponseBodyResult: getTokenTestExpectation{
+				ResponseBodyResult: test.GetTokenTestExpectation{
 					AccessTokenExist:         test_interface.NullBool{Bool: true, Valid: true},
 					AccessTokenDurationExist: test_interface.NullBool{Bool: true, Valid: true},
 				},
 			},
 			BeforeCall: func(req *http.Request) {
-				session, hashedRefreshToken := s.userSessionFactory.CreateUserSession(factory.CreateUserSessionParam{
-					UserUUID:         s.testUser.UUID.String(),
-					HashRefreshToken: false,
-				})
-				s.Require().Less(time.Now(), session.ExpiredAt)
-				unhashedRefreshToken := session.RefreshToken
-				session.RefreshToken = hashedRefreshToken
-				session, err := s.userSessionSeeder.SaveUserSession(*session)
-				s.Require().NoError(err)
 				req.AddCookie(&http.Cookie{
 					Name:     refreshTokenCookieName,
-					Value:    unhashedRefreshToken,
-					Path:     "/user/token",
+					Value:    testUser.UserSessionRaws[0].RefreshToken,
+					Path:     "/token",
 					Domain:   "localhost",
 					MaxAge:   2592000,
 					HttpOnly: true,
@@ -534,15 +403,15 @@ func (s *AuthRestTestSuite) TestAuthRest_GetToken() {
 		},
 		{
 			Description: "Refresh token not exist should return a 401 Unauthorized response",
-			Expectation: test_interface.ResponseExpectation[getTokenTestExpectation]{
+			Expectation: test_interface.ResponseExpectation[test.GetTokenTestExpectation]{
 				ResponseStatusCode: test_interface.NullInt{Int: http.StatusUnauthorized, Valid: true},
 				ResponseBodyStatus: test_interface.NullBool{Bool: false, Valid: true},
-				ResponseBodyResult: getTokenTestExpectation{
+				ResponseBodyResult: test.GetTokenTestExpectation{
 					AccessTokenExist:         test_interface.NullBool{Bool: false, Valid: true},
 					AccessTokenDurationExist: test_interface.NullBool{Bool: false, Valid: true},
 				},
-				ResponseBodyErrorCode:    test_interface.NullString{String: "INVALID_REFRESH_TOKEN", Valid: true},
-				ResponseBodyErrorMessage: test_interface.NullString{String: "Your session is expired. Please login again.", Valid: true},
+				ResponseBodyErrorCode:    test_interface.NullString{String: "REFRESH_TOKEN_EXPIRED", Valid: true},
+				ResponseBodyErrorMessage: test_interface.NullString{String: "Your session has expired. Please login again.", Valid: true},
 				ResponseBodyErrorObject:  make([]interface{}, 0),
 			},
 		},
@@ -550,15 +419,6 @@ func (s *AuthRestTestSuite) TestAuthRest_GetToken() {
 
 	for _, testCase := range testCases {
 		s.Run(testCase.Description, func() {
-			if _, err := s.userSeeder.SaveUser(*s.testUserHashedPassword); err != nil {
-				s.T().Log("Failed to create test user before call")
-			}
-			defer func() {
-				if err := s.userSeeder.DeleteUser(s.testUser.Username); err != nil {
-					s.T().Log("Failed to delete test user before call")
-				}
-			}()
-
 			jsonPayload, err := json.Marshal(testCase.Config)
 			s.Require().NoError(err)
 
@@ -617,8 +477,18 @@ func (s *AuthRestTestSuite) TestAuthRest_PostLogout() {
 	var (
 		PATH                   = "/v1/logout"
 		METHOD                 = "POST"
-		refreshTokenCookieName = http_constant.HttpCookiePrefix + "token"
+		refreshTokenCookieName = http_pkg.HttpCookiePrefix + "token"
 	)
+
+	ctx := context.Background()
+	testUser, err := s.userSeeder.CreateUser(ctx)
+	s.Require().NoError(err)
+	s.Require().Less(time.Now(), testUser.UserSessions[0].ExpiredAt)
+	defer func() {
+		if err := s.userSeeder.DeleteUser(ctx, entity.FindUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}}); err != nil {
+			s.T().Log("Failed to delete test user before call")
+		}
+	}()
 
 	testCases := []test_interface.HttpTestCase[any, any]{
 		{
@@ -628,18 +498,10 @@ func (s *AuthRestTestSuite) TestAuthRest_PostLogout() {
 				ResponseBodyStatus: test_interface.NullBool{Bool: true, Valid: true},
 			},
 			BeforeCall: func(req *http.Request) {
-				session, hashedRefreshToken := s.userSessionFactory.CreateUserSession(factory.CreateUserSessionParam{
-					UserUUID:         s.testUser.UUID.String(),
-					HashRefreshToken: false,
-				})
-				unhashedRefreshToken := session.RefreshToken
-				session.RefreshToken = hashedRefreshToken
-				session, err := s.userSessionSeeder.SaveUserSession(*session)
-				s.Require().NoError(err)
 				req.AddCookie(&http.Cookie{
 					Name:     refreshTokenCookieName,
-					Value:    unhashedRefreshToken,
-					Path:     "/user/token",
+					Value:    testUser.UserSessionRaws[0].RefreshToken,
+					Path:     "/token",
 					Domain:   "localhost",
 					MaxAge:   86400,
 					HttpOnly: true,
@@ -648,27 +510,16 @@ func (s *AuthRestTestSuite) TestAuthRest_PostLogout() {
 			},
 		},
 		{
-			Description: "Refresh token not exist should return a 400 Bad Request response",
+			Description: "Refresh token not exist should return a 200 OK response",
 			Expectation: test_interface.ResponseExpectation[any]{
-				ResponseStatusCode:       test_interface.NullInt{Int: http.StatusBadRequest, Valid: true},
-				ResponseBodyStatus:       test_interface.NullBool{Bool: false, Valid: true},
-				ResponseBodyErrorCode:    test_interface.NullString{String: "REFRESH_TOKEN_ALREADY_EXPIRED", Valid: true},
-				ResponseBodyErrorMessage: test_interface.NullString{String: "Your session is already expired.", Valid: true},
+				ResponseStatusCode: test_interface.NullInt{Int: http.StatusOK, Valid: true},
+				ResponseBodyStatus: test_interface.NullBool{Bool: true, Valid: true},
 			},
 		},
 	}
 
 	for _, testCase := range testCases {
 		s.Run(testCase.Description, func() {
-			if _, err := s.userSeeder.SaveUser(*s.testUserHashedPassword); err != nil {
-				s.T().Log("Failed to create test user before call")
-			}
-			defer func() {
-				if err := s.userSeeder.DeleteUser(s.testUser.Username); err != nil {
-					s.T().Log("Failed to delete test user before call")
-				}
-			}()
-
 			jsonPayload, err := json.Marshal(testCase.Config)
 			s.Require().NoError(err)
 

@@ -42,3 +42,5 @@ Theaters ||--o{ Seats : "has"
 Showtimes ||--o{ Seats : "has"
 Showtimes ||--o{ Tickets : "has"
 Tickets ||--|| Seats : "assigned to"
+
+@enduml

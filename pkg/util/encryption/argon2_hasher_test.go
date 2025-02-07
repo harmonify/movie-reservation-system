@@ -5,7 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/util/encryption"
 	generator_util "github.com/harmonify/movie-reservation-system/pkg/util/generator"
 	"github.com/stretchr/testify/require"
@@ -31,11 +30,6 @@ func (s *Argon2HasherTestSuite) SetupSuite() {
 	s.app = fx.New(
 		generator_util.GeneratorUtilModule,
 		fx.Provide(
-			func() *config.Config {
-				return &config.Config{
-					AppSecret: "1234567891123456",
-				}
-			},
 			func() encryption.Argon2HasherConfig {
 				return *encryption.Argon2HasherDefaultConfig
 			},

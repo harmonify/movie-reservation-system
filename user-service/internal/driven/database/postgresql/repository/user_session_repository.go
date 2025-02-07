@@ -8,7 +8,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
-	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/model"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -29,7 +29,7 @@ func NewUserSessionRepository(
 	tracer tracer.Tracer,
 	logger logger.Logger,
 	util *util.Util,
-) shared_service.UserSessionStorage {
+) shared.UserSessionStorage {
 	return &userSessionRepositoryImpl{
 		database: database,
 		pgErrTl:  pgErrTl,
@@ -39,7 +39,7 @@ func NewUserSessionRepository(
 	}
 }
 
-func (r *userSessionRepositoryImpl) WithTx(tx *database.Transaction) shared_service.UserSessionStorage {
+func (r *userSessionRepositoryImpl) WithTx(tx *database.Transaction) shared.UserSessionStorage {
 	if tx == nil {
 		return r
 	}
@@ -73,7 +73,7 @@ func (r *userSessionRepositoryImpl) FindSession(ctx context.Context, findModel e
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(findModel)
+	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
@@ -130,6 +130,29 @@ func (r *userSessionRepositoryImpl) RevokeManySession(ctx context.Context, refre
 	rowsAffected := result.RowsAffected
 	if rowsAffected <= 0 {
 		err := database.NewRecordNotFoundError(gorm.ErrRecordNotFound)
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
+		return err
+	}
+
+	return nil
+}
+
+func (r *userSessionRepositoryImpl) SoftDeleteSession(ctx context.Context, findModel entity.FindUserSession) error {
+	ctx, span := r.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
+	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
+	if err != nil {
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
+		return err
+	}
+
+	result := r.database.DB.
+		WithContext(ctx).
+		Where(findMap).
+		Delete(&model.UserSession{})
+	err = r.pgErrTl.Translate(result.Error)
+	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return err
 	}

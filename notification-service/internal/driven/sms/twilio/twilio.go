@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/harmonify/movie-reservation-system/notification-service/internal/core/shared"
-	"github.com/harmonify/movie-reservation-system/pkg/config"
+	"github.com/harmonify/movie-reservation-system/notification-service/internal/driven/config"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
@@ -20,7 +20,7 @@ type (
 	SmsProviderParam struct {
 		fx.In
 
-		Config *config.Config
+		Config *config.NotificationServiceConfig
 		Logger logger.Logger
 		Tracer tracer.Tracer
 		Util   *util.Util
@@ -34,7 +34,7 @@ type (
 
 	twilioSmsProviderImpl struct {
 		client *twilio.RestClient
-		config *config.Config
+		config *config.NotificationServiceConfig
 		logger logger.Logger
 		tracer tracer.Tracer
 		util   *util.Util

@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/go-playground/validator/v10"
 	generator_util "github.com/harmonify/movie-reservation-system/pkg/util/generator"
 	"go.uber.org/fx"
 	"golang.org/x/crypto/argon2"
@@ -57,20 +58,20 @@ type Argon2HasherResult struct {
 // Reference: https://tools.ietf.org/html/draft-irtf-cfrg-argon2-04#section-4
 type Argon2HasherConfig struct {
 	// The amount of memory used by the algorithm (in kibibytes).
-	Memory uint32
+	Memory uint32 `validate:"required,min=8"`
 
 	// The number of iterations over the memory.
-	Iterations uint32
+	Iterations uint32 `validate:"required,min=1"`
 
 	// The number of threads (or lanes) used by the algorithm.
 	// Recommended value is between 1 and runtime.NumCPU().
-	Parallelism uint8
+	Parallelism uint8 `validate:"required,min=1"`
 
 	// Length of the random salt. 16 bytes is recommended for password hashing.
-	SaltLength uint32
+	SaltLength uint32 `validate:"required,min=8"`
 
 	// Length of the generated key. 16 bytes or more is recommended.
-	KeyLength uint32
+	KeyLength uint32 `validate:"required,min=8"`
 }
 
 type argon2HasherImpl struct {
@@ -85,20 +86,8 @@ type argon2HasherImpl struct {
 
 // Create an Argon2 hasher with recommended parameters.
 func NewArgon2Hasher(p Argon2HasherParam, cfg Argon2HasherConfig) (Argon2HasherResult, error) {
-	if cfg.Memory <= 0 {
-		return Argon2HasherResult{}, fmt.Errorf("Memory is required")
-	}
-	if cfg.Iterations <= 0 {
-		return Argon2HasherResult{}, fmt.Errorf("Iterations is required")
-	}
-	if cfg.Parallelism <= 0 {
-		return Argon2HasherResult{}, fmt.Errorf("Parallelism is required")
-	}
-	if cfg.SaltLength <= 0 {
-		return Argon2HasherResult{}, fmt.Errorf("SaltLength is required")
-	}
-	if cfg.KeyLength <= 0 {
-		return Argon2HasherResult{}, fmt.Errorf("KeyLength is required")
+	if err := validator.New(validator.WithRequiredStructEnabled()).Struct(cfg); err != nil {
+		return Argon2HasherResult{}, err
 	}
 	return Argon2HasherResult{
 		Argon2Hasher: &argon2HasherImpl{

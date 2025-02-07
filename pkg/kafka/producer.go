@@ -5,16 +5,14 @@ import (
 	"strings"
 
 	"github.com/IBM/sarama"
-	"go.uber.org/fx"
-
 	"github.com/dnwe/otelsarama"
-	"github.com/harmonify/movie-reservation-system/pkg/config"
+	"github.com/go-playground/validator/v10"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
-	// "github.com/harmonify/movie-reservation-system/pkg/tracer/carrier"
+	"go.uber.org/fx"
 )
 
-// KafkaProducer wraps a Sarama AsyncProducer.
+// KafkaProducer wraps a sarama.SyncProducer and OTel instrumentation logic.
 type KafkaProducer struct {
 	Client sarama.SyncProducer
 
@@ -22,9 +20,26 @@ type KafkaProducer struct {
 	tracer tracer.Tracer
 }
 
+type KafkaProducerParam struct {
+	fx.In
+	fx.Lifecycle
+
+	Logger logger.Logger
+	Tracer tracer.Tracer
+}
+
+type KafkaProducerConfig struct {
+	*KafkaConfig
+	KafkaBrokers string `validate:"required"`
+}
+
 // NewKafkaProducer initializes the Kafka producer.
-func NewKafkaProducer(lc fx.Lifecycle, cfg *config.Config, logger logger.Logger, tracer tracer.Tracer) (*KafkaProducer, error) {
-	kafkaConfig, err := buildKafkaConfig(cfg)
+func NewKafkaProducer(p KafkaProducerParam, cfg *KafkaProducerConfig) (*KafkaProducer, error) {
+	if err := validator.New(validator.WithRequiredStructEnabled()).Struct(cfg); err != nil {
+		return nil, err
+	}
+
+	kafkaConfig, err := BuildKafkaConfig(cfg.KafkaConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -36,17 +51,17 @@ func NewKafkaProducer(lc fx.Lifecycle, cfg *config.Config, logger logger.Logger,
 
 	client = otelsarama.WrapSyncProducer(kafkaConfig, client)
 
-	lc.Append(fx.Hook{
+	p.Lifecycle.Append(fx.Hook{
 		OnStop: func(ctx context.Context) error {
-			logger.Info("Closing Kafka producer")
+			p.Logger.Info("Closing Kafka producer")
 			return client.Close()
 		},
 	})
 
 	return &KafkaProducer{
 		Client: client,
-		logger: logger,
-		tracer: tracer,
+		logger: p.Logger,
+		tracer: p.Tracer,
 	}, nil
 }
 

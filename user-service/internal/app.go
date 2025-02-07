@@ -3,26 +3,22 @@ package internal
 import (
 	"context"
 	"fmt"
-	"maps"
 	"path"
 	"runtime"
 
 	"github.com/harmonify/movie-reservation-system/pkg/cache"
-	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/database"
-	error_constant "github.com/harmonify/movie-reservation-system/pkg/error/constant"
-	"github.com/harmonify/movie-reservation-system/pkg/http"
+	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
-	"github.com/harmonify/movie-reservation-system/pkg/mail"
-	"github.com/harmonify/movie-reservation-system/pkg/messaging"
-	"github.com/harmonify/movie-reservation-system/pkg/metrics"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
+	"github.com/harmonify/movie-reservation-system/pkg/util/encryption"
+	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/service"
-	auth_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/auth"
-	otp_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/otp"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/config"
 	http_driver "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http"
+	kafka_driver "github.com/harmonify/movie-reservation-system/user-service/internal/driver/kafka"
 	"go.uber.org/fx"
 )
 
@@ -45,42 +41,80 @@ func StartApp() error {
 // This is a function to initialize all services and invoke their functions.
 func NewApp(p ...fx.Option) *fx.App {
 	options := []fx.Option{
+		// LIB
 		fx.Provide(
-			func() *config.ConfigFile {
+			func() (*config.UserServiceConfig, error) {
 				_, filename, _, _ := runtime.Caller(0)
-				return &config.ConfigFile{
-					Path: path.Join(filename, "..", "..", ".env"),
+				configFile := path.Join(filename, "..", "..", ".env")
+				return config.NewUserServiceConfig(configFile)
+			},
+			func(cfg *config.UserServiceConfig) (logger.Logger, error) {
+				return logger.NewLogger(&logger.LoggerConfig{
+					Env:               cfg.Env,
+					ServiceIdentifier: cfg.ServiceIdentifier,
+					LogType:           cfg.LogType,
+					LogLevel:          cfg.LogLevel,
+					LokiUrl:           cfg.LokiUrl,
+				})
+			},
+			func(lc fx.Lifecycle, cfg *config.UserServiceConfig) (tracer.Tracer, error) {
+				return tracer.NewTracer(lc, &tracer.TracerConfig{
+					Env:               cfg.Env,
+					ServiceIdentifier: cfg.ServiceIdentifier,
+					Type:              cfg.TracerType,
+					OtelEndpoint:      cfg.OtelEndpoint,
+				})
+			},
+			func(cfg *config.UserServiceConfig) *encryption.AESEncryptionConfig {
+				return &encryption.AESEncryptionConfig{
+					AppSecret: cfg.AppSecret,
 				}
 			},
+			func(cfg *config.UserServiceConfig) *encryption.SHA256HasherConfig {
+				return &encryption.SHA256HasherConfig{
+					AppSecret: cfg.AppSecret,
+				}
+			},
+			func(cfg *config.UserServiceConfig) *jwt_util.JwtUtilConfig {
+				return &jwt_util.JwtUtilConfig{
+					ServiceIdentifier:      cfg.ServiceIdentifier,
+					JwtAudienceIdentifiers: cfg.AuthJwtAudienceIdentifiers,
+					JwtIssuerIdentifier:    cfg.AuthJwtIssuerIdentifier,
+				}
+			},
+			func(p database.DatabaseParam, cfg *config.UserServiceConfig) (database.DatabaseResult, error) {
+				return database.NewDatabase(p, &database.DatabaseConfig{
+					Env:                   cfg.Env,
+					DbHost:                cfg.DbHost,
+					DbPort:                cfg.DbPort,
+					DbUser:                cfg.DbUser,
+					DbPassword:            cfg.DbPassword,
+					DbName:                cfg.DbName,
+					DbMaxIdleConn:         cfg.DbMaxIdleConn,
+					DbMaxOpenConn:         cfg.DbMaxOpenConn,
+					DbMaxLifetimeInMinute: cfg.DbMaxLifetimeInMinute,
+				})
+			},
+			func(cfg *config.UserServiceConfig) (*cache.Redis, error) {
+				return cache.NewRedis(&cache.RedisConfig{
+					RedisHost: cfg.RedisHost,
+					RedisPort: cfg.RedisPort,
+					RedisPass: cfg.RedisPass,
+				})
+			},
 		),
-		config.ConfigModule,
-
-		// Libraries
-		logger.LoggerModule,
-		tracer.TracerModule,
-		metrics.MetricsModule,
+		error_pkg.ErrorModule,
 		util.UtilModule,
 
 		// CORE
 		service.ServiceModule,
 
-		// INFRA (DRIVEN)
-		database.DatabaseModule,
-		cache.RedisModule,
-		mail.MailerModule,
-		messaging.MessagingModule,
+		// DRIVEN
 		driven.DrivenModule,
 
 		// API (DRIVER)
-		fx.Provide(
-			func() *error_constant.CustomErrorMap {
-				maps.Copy(error_constant.DefaultCustomErrorMap, auth_service.AuthServiceErrorMap)
-				maps.Copy(error_constant.DefaultCustomErrorMap, otp_service.OtpServiceErrorMap)
-				return &error_constant.DefaultCustomErrorMap
-			},
-		),
-		http.HttpModule,
 		http_driver.HttpModule,
+		kafka_driver.KafkaConsumerModule,
 	}
 
 	// Override dependencies

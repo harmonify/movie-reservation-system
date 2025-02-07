@@ -2,34 +2,32 @@ package logger
 
 import (
 	"encoding/json"
+	"fmt"
+	"time"
+
+	"go.uber.org/zap"
 )
 
 const lokiSinkKey = "loki"
 
-type lokiSink interface {
-	Sync() error
-	Close() error
-	Write(p []byte) (int, error)
-}
+type lokiSink zap.Sink
 
-type sink struct {
-	lokiPusher *lokiPusher
-}
-
-func newSink(lp *lokiPusher) lokiSink {
+func newLokiSink(lp *lokiPusherImpl) lokiSink {
 	return sink{
 		lokiPusher: lp,
 	}
 }
 
+type sink struct {
+	lokiPusher *lokiPusherImpl
+}
+
 func (s sink) Sync() error {
-	// if len(s.lokiPusher.logsBatch) > 0 {
-	// 	return s.lokiPusher.send()
-	// }
+	// No need to check the batch in sink; batching is handled locally in lokiPusherImpl
 	return nil
 }
 func (s sink) Close() error {
-	// s.lokiPusher.Stop()
+	s.lokiPusher.stop()
 	return nil
 }
 
@@ -40,6 +38,17 @@ func (s sink) Write(p []byte) (int, error) {
 		return 0, err
 	}
 	entry.raw = string(p)
-	s.lokiPusher.entries <- entry
-	return len(p), nil
+
+	retries := 3
+	for retries > 0 {
+		select {
+		case s.lokiPusher.entry <- entry:
+			return len(p), nil
+		default:
+			retries--
+			time.Sleep(20 * time.Millisecond) // Small backoff
+		}
+	}
+
+	return 0, fmt.Errorf("failed to write log after retries: channel is full")
 }

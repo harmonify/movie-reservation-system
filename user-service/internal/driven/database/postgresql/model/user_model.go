@@ -4,31 +4,32 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	"gorm.io/gorm"
 )
 
+const UserTableName = "users"
+
 type User struct {
-	UUID                  uuid.UUID `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"` // For pg14+
-	TraceID               string    `gorm:"uniqueIndex:idx_user_trace_id;unique"`
-	Username              string    `gorm:"uniqueIndex:idx_user_username;unique"`
-	Password              string    `json:"-"`
-	Email                 string    `gorm:"uniqueIndex:idx_user_email;unique"`
-	PhoneNumber           string    `gorm:"uniqueIndex:idx_user_phone_number;unique"`
-	FirstName             string
-	LastName              string
-	IsEmailVerified       bool `gorm:"default:false"`
-	IsPhoneNumberVerified bool `gorm:"default:false"`
-	CreatedAt             time.Time
-	UpdatedAt             time.Time
-	DeletedAt             gorm.DeletedAt `gorm:"index"`
+	UUID                  string         `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" faker:"-"` // For pg14+
+	TraceID               string         `gorm:"uniqueIndex:idx_user_trace_id;unique" faker:"uuid_hyphenated"`
+	Username              string         `gorm:"uniqueIndex:idx_user_username;unique" faker:"username"`
+	Password              string         `json:"-" faker:"-"`
+	Email                 string         `gorm:"uniqueIndex:idx_user_email;unique" faker:"email"`
+	PhoneNumber           string         `gorm:"uniqueIndex:idx_user_phone_number;unique" faker:"phone_number"`
+	FirstName             string         `faker:"first_name"`
+	LastName              string         `faker:"last_name"`
+	IsEmailVerified       bool           `gorm:"default:false" faker:"bool"`
+	IsPhoneNumberVerified bool           `gorm:"default:false" faker:"bool"`
+	CreatedAt             time.Time      `gorm:"autoCreateTime" faker:"-"`
+	UpdatedAt             time.Time      `gorm:"autoUpdateTime" faker:"-"`
+	DeletedAt             gorm.DeletedAt `gorm:"index" faker:"-"`
 
 	UserSessions []UserSession
 }
 
 func (m *User) TableName() string {
-	return "users"
+	return UserTableName
 }
 
 func (m *User) ToEntity() *entity.User {

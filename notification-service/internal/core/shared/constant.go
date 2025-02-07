@@ -1,43 +1,12 @@
 package shared
 
-import (
-	"fmt"
-	"os"
-	"path"
-	"runtime"
-)
-
-type EmailTemplatePath string
-
-func (p *EmailTemplatePath) String() string {
-	return string(*p)
-}
-
 const (
-	EmailVerificationTopicV1_0_0 = `notifications_email_v1.0.0`
-	SmsTopicV1_0_0               = `notifications_sms_v1.0.0`
-
-	EmailVerificationTemplateId = "email-verification"
+	EmailTypeHtml  EmailType = "html"
+	EmailTypePlain EmailType = "plain"
 )
 
-var (
-	templatesDirPath                                = path.Join(path.Dir(getCurrentFilePath()), "..", "templates")
-	EmailVerificationTemplatePath EmailTemplatePath = EmailTemplatePath(path.Join(templatesDirPath, "email-verification.gohtml"))
-)
+type EmailType string
 
-func init() {
-	if _, err := os.Stat(templatesDirPath); os.IsNotExist(err) {
-		panic(fmt.Sprintf("templates directory not found: %s", templatesDirPath))
-	}
-	if _, err := os.Stat(EmailVerificationTemplatePath.String()); os.IsNotExist(err) {
-		panic(fmt.Sprintf("email verification template file not found: %s", EmailVerificationTemplatePath))
-	}
-}
-
-func getCurrentFilePath() string {
-	_, file, _, ok := runtime.Caller(0)
-	if !ok {
-		panic(fmt.Sprintf("failed to retrieve correct path"))
-	}
-	return file
+func (p EmailType) String() string {
+	return string(p)
 }

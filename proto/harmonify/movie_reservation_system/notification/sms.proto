@@ -2,12 +2,20 @@ syntax = "proto3";
 
 package harmonify.movie_reservation_system.notification;
 
-message Sms {
+message SendSmsRequest {
     string recipient = 1;
     string body = 2;
 }
 
-message BulkSms {
+message SendSmsResponse {
+    string smsId = 1;
+}
+
+message BulkSendSmsRequest {
     repeated string recipients = 1;
     string body = 2;
+}
+
+message BulkSendSmsResponse {
+    repeated string smsIds = 1;
 }

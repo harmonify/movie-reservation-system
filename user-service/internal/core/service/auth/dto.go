@@ -14,7 +14,7 @@ type (
 
 	VerifyEmailParam struct {
 		Email string
-		Token string
+		Code  string
 	}
 
 	LoginParam struct {

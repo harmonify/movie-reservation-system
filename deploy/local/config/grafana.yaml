@@ -1,40 +1,9 @@
 apiVersion: 1
 datasources:
-    - name: Loki
-      type: loki
-      uid: loki
-      url: http://loki:3100
-      access: proxy
-      basicAuth: false
-      jsonData:
-          httpHeaderName1: "X-Scope-OrgID"
-          timeout: 60
-          maxLines: 1000
-          derivedFields:
-              # Field with internal link pointing to data source in Grafana.
-              # datasourceUid value can be anything, but it should be unique across all defined data source uids.
-              - datasourceUid: my_jaeger_uid
-                matcherRegex: "trace_id=(\\w+)"
-                name: TraceID
-                # url will be interpreted as query for the datasource
-                url: "$${__value.raw}"
-                # optional for URL Label to set a custom display label for the link.
-                urlDisplayLabel: "View Trace"
-
-              # Field with external link.
-              - matcherRegex: "trace_id=(\\w+)"
-                name: TraceID
-                url: "http://jaeger-query:16688/trace/$${__value.raw}"
-      secureJsonData:
-          httpHeaderValue1: "docker"
-      editable: true
-      version: 1
-      isDefault: true
-
     - name: Jaeger
       type: jaeger
       uid: jaeger
-      url: http://jaeger-query:16688
+      url: http://jaeger-query:16686
       access: proxy
       basicAuth: false
       editable: true
@@ -52,7 +21,7 @@ datasources:
               customQuery: true
               query: 'method="$${__span.tags.method}"'
           tracesToMetrics:
-              datasourceUid: "prom"
+              datasourceUid: "prometheus"
               spanStartTimeShift: "1h"
               spanEndTimeShift: "-1h"
               tags: [{ key: "service.name", value: "service" }, { key: "job" }]
@@ -67,6 +36,35 @@ datasources:
               spanEndTimeShift: "-1h"
           spanBar:
               type: "None"
+      isDefault: true
+
+    - name: Loki
+      type: loki
+      uid: loki
+      url: http://loki:3100
+      access: proxy
+      basicAuth: false
+      jsonData:
+          httpHeaderName1: "X-Scope-OrgID"
+          timeout: 60
+          maxLines: 1000
+          derivedFields:
+              # Field with internal link pointing to data source in Grafana.
+              # datasourceUid value can be anything, but it should be unique across all defined data source uids.
+              - datasourceUid: jaeger
+                matcherRegex: "trace_id=(\\w+)"
+                name: TraceID
+                url: "$${__value.raw}"
+
+              # Field with external link.
+              - matcherRegex: "trace_id=(\\w+)"
+                name: JaegerQueryUrl
+                url: "http://localhost:16686/trace/$${__value.raw}" # Point this to your Jaeger Query UI URL
+                urlDisplayLabel: "View Trace"
+      secureJsonData:
+          httpHeaderValue1: "docker"
+      editable: true
+      version: 1
 
     - name: Prometheus
       type: prometheus
@@ -87,9 +85,9 @@ datasources:
           exemplarTraceIdDestinations:
               # Field with internal link pointing to data source in Grafana.
               # datasourceUid value can be anything, but it should be unique across all defined data source uids.
-              - datasourceUid: my_jaeger_uid
+              - datasourceUid: jaeger
                 name: trace_id
 
               # Field with external link.
-              - name: trace_id
+              - name: trace_id_explore
                 url: "http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Jaeger%22,%7B%22query%22:%22$${__value.raw}%22%7D%5D"

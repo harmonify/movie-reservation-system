@@ -7,11 +7,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
+	config_pkg "github.com/harmonify/movie-reservation-system/pkg/config"
+	"github.com/harmonify/movie-reservation-system/pkg/database"
 	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
 	"github.com/harmonify/movie-reservation-system/user-service/internal"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
-	shared_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/shared"
-	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/factory"
+	entityfactory "github.com/harmonify/movie-reservation-system/user-service/internal/core/entity/factory"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/model"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/seeder"
 	"github.com/stretchr/testify/suite"
@@ -22,7 +25,7 @@ func TestUserRepository(t *testing.T) {
 	if os.Getenv("CI") == "true" && os.Getenv("INTEGRATION_TEST") != "true" {
 		t.Skip("Skipping test")
 	}
-
+	os.Setenv("ENV", config_pkg.EnvironmentTest)
 	suite.Run(t, new(UserRepositoryTestSuite))
 }
 
@@ -54,7 +57,7 @@ type (
 	}
 
 	softDeleteUserTestConfig struct {
-		Find *entity.FindUser
+		Find entity.FindUser
 	}
 	softDeleteUserTestExpectation struct {
 		Error error
@@ -64,22 +67,22 @@ type (
 type UserRepositoryTestSuite struct {
 	suite.Suite
 	app         *fx.App
-	userStorage shared_service.UserStorage
-	testUser    *model.User
+	db          *database.Database
 	userSeeder  seeder.UserSeeder
+	userStorage shared.UserStorage
 }
 
 func (s *UserRepositoryTestSuite) SetupSuite() {
 	s.app = internal.NewApp(
-		factory.DrivenPostgresqlFactoryModule,
+		entityfactory.UserEntityFactoryModule,
 		seeder.DrivenPostgresqlSeederModule,
 		fx.Invoke(func(
-			userStorage shared_service.UserStorage,
-			userFactory factory.UserFactory,
+			db *database.Database,
 			userSeeder seeder.UserSeeder,
+			userStorage shared.UserStorage,
 		) {
+			s.db = db
 			s.userStorage = userStorage
-			s.testUser = userFactory.CreateTestUser(factory.CreateTestUserParam{HashPassword: true})
 			s.userSeeder = userSeeder
 		}),
 	)
@@ -92,101 +95,143 @@ func (s *UserRepositoryTestSuite) SetupSuite() {
 	}
 }
 
-func (s *UserRepositoryTestSuite) SetupSubTest() {
-	_, err := s.userSeeder.SaveUser(*s.testUser)
-	s.Require().Nil(err, "Failed to setup test user")
-}
-
-func (s *UserRepositoryTestSuite) TearDownSubTest() {
-	err := s.userSeeder.DeleteUser(s.testUser.Username)
-	s.Require().Nil(err, "Failed to teardown test user")
-}
-
-func (s *UserRepositoryTestSuite) TestUserRepository_SaveUser() {
+func (s *UserRepositoryTestSuite) TestUserRepository_Basic() {
 	var newUser *entity.User
 	var err error
 
-	testCases := []test_interface.TestCase[saveUserTestConfig, saveUserTestExpectation]{
-		{
-			Description: "Should be able to find user by UUID",
-			Config: saveUserTestConfig{
-				Data: &entity.SaveUser{
-					Username:    "saveuser123",
-					Password:    "saveuser123",
-					Email:       "saveuser123@example.com",
-					PhoneNumber: "+6281230599852",
-					FirstName:   "Save",
-					LastName:    "User123",
-				},
-			},
-			Expectation: saveUserTestExpectation{
-				Error: nil,
-				Data: &entity.User{
-					Username:    "saveuser123",
-					Password:    "saveuser123",
-					Email:       "saveuser123@example.com",
-					PhoneNumber: "+6281230599852",
-					FirstName:   "Save",
-					LastName:    "User123",
-				},
-			},
-			AfterCall: func() {
-				err := s.userSeeder.DeleteUser(newUser.Username)
-				s.Require().Nil(err)
-			},
-		},
+	ctx := context.Background()
+
+	userSaveConfig := entity.SaveUser{
+		TraceID:     uuid.New().String(),
+		Username:    "saveuser123",
+		Password:    "saveuser123",
+		Email:       "saveuser123@example.com",
+		PhoneNumber: "+6281230599852",
+		FirstName:   "Save",
+		LastName:    "User123",
 	}
 
-	for _, testCase := range testCases {
-		ctx := context.Background()
-
-		s.Run(testCase.Description, func() {
-			if testCase.BeforeCall != nil {
-				testCase.BeforeCall(testCase.Config)
-			}
-
-			newUser, err = s.userStorage.SaveUser(ctx, *testCase.Config.Data)
-
-			s.Require().Equal(testCase.Expectation.Error, err)
-
-			s.Assert().NotEmpty(newUser.UUID.String())
-			s.Assert().Equal(testCase.Expectation.Data.Username, newUser.Username)
-			s.Assert().NotEmpty(newUser.Password)
-			s.Assert().Equal(testCase.Expectation.Data.Email, newUser.Email)
-			s.Assert().Equal(testCase.Expectation.Data.PhoneNumber, newUser.PhoneNumber)
-			s.Assert().Equal(testCase.Expectation.Data.FirstName, newUser.FirstName)
-			s.Assert().Equal(testCase.Expectation.Data.LastName, newUser.LastName)
-			s.Assert().Equal(false, newUser.IsEmailVerified)
-			s.Assert().Equal(false, newUser.IsPhoneNumberVerified)
-
-			now := time.Now().Unix()
-			s.Assert().GreaterOrEqual(newUser.CreatedAt.Unix(), now)
-			s.Assert().GreaterOrEqual(newUser.UpdatedAt.Unix(), now)
-			s.Assert().Empty(newUser.DeletedAt.Time)
-			s.Assert().False(newUser.DeletedAt.Valid)
-
-			if testCase.AfterCall != nil {
-				testCase.AfterCall()
-			}
-		})
+	userUpdateConfig := entity.UpdateUser{
+		Username:              sql.NullString{String: "saveuser456", Valid: true},
+		Password:              sql.NullString{String: "saveuser456", Valid: true},
+		Email:                 sql.NullString{String: "saveuser456@example.com", Valid: true},
+		PhoneNumber:           sql.NullString{String: "+6281230599853", Valid: true},
+		FirstName:             sql.NullString{String: "SaveUpdated", Valid: true},
+		LastName:              sql.NullString{String: "User456", Valid: true},
+		IsEmailVerified:       sql.NullBool{Bool: true, Valid: true},
+		IsPhoneNumberVerified: sql.NullBool{Bool: true, Valid: true},
 	}
+
+	_ = s.db.DB.Unscoped().Delete(&model.User{}, "username IN (?)", []string{userSaveConfig.Username, userUpdateConfig.Username.String})
+
+	userBeforeSave, err := s.userStorage.FindUser(ctx, entity.FindUser{Username: sql.NullString{String: userSaveConfig.Username, Valid: true}})
+	s.Require().Nil(userBeforeSave)
+	s.Require().Error(err)
+	s.Require().ErrorAs(err, &database.RecordNotFoundError{})
+
+	newUser, err = s.userStorage.SaveUser(ctx, userSaveConfig)
+	s.Require().Nil(err)
+	s.Assert().NotEmpty(newUser.UUID)
+	s.Assert().Equal(userSaveConfig.Username, newUser.Username)
+	s.Assert().Equal(userSaveConfig.Password, newUser.Password)
+	s.Assert().Equal(userSaveConfig.Email, newUser.Email)
+	s.Assert().Equal(userSaveConfig.PhoneNumber, newUser.PhoneNumber)
+	s.Assert().Equal(userSaveConfig.FirstName, newUser.FirstName)
+	s.Assert().Equal(userSaveConfig.LastName, newUser.LastName)
+	s.Assert().Equal(false, newUser.IsEmailVerified)
+	s.Assert().Equal(false, newUser.IsPhoneNumberVerified)
+	now := time.Now().Unix()
+	s.Assert().GreaterOrEqual(newUser.CreatedAt.Unix(), now)
+	s.Assert().GreaterOrEqual(newUser.UpdatedAt.Unix(), now)
+	s.Assert().Empty(newUser.DeletedAt.Time)
+	s.Require().False(newUser.DeletedAt.Valid)
+
+	userAfterSave, err := s.userStorage.FindUser(ctx, entity.FindUser{Username: sql.NullString{String: userSaveConfig.Username, Valid: true}})
+	s.Require().Nil(err)
+	s.Assert().Equal(newUser.Username, userAfterSave.Username)
+	s.Assert().Equal(newUser.Password, userAfterSave.Password)
+	s.Assert().Equal(newUser.Email, userAfterSave.Email)
+	s.Assert().Equal(newUser.PhoneNumber, userAfterSave.PhoneNumber)
+	s.Assert().Equal(newUser.FirstName, userAfterSave.FirstName)
+	s.Assert().Equal(newUser.LastName, userAfterSave.LastName)
+	s.Assert().Equal(newUser.IsEmailVerified, userAfterSave.IsEmailVerified)
+	s.Assert().Equal(newUser.IsPhoneNumberVerified, userAfterSave.IsPhoneNumberVerified)
+	s.Assert().Equal(newUser.CreatedAt, userAfterSave.CreatedAt)
+	s.Assert().Equal(newUser.UpdatedAt, userAfterSave.UpdatedAt)
+	s.Assert().Equal(newUser.DeletedAt, userAfterSave.DeletedAt)
+
+	updatedUser, err := s.userStorage.UpdateUser(
+		ctx,
+		entity.FindUser{Username: sql.NullString{String: userSaveConfig.Username, Valid: true}},
+		userUpdateConfig,
+	)
+	s.Require().Nil(err)
+	s.Assert().Equal(newUser.UUID, updatedUser.UUID)
+	s.Assert().Equal(userUpdateConfig.Username.String, updatedUser.Username)
+	s.Assert().Equal(userUpdateConfig.Password.String, updatedUser.Password)
+	s.Assert().Equal(userUpdateConfig.Email.String, updatedUser.Email)
+	s.Assert().Equal(userUpdateConfig.PhoneNumber.String, updatedUser.PhoneNumber)
+	s.Assert().Equal(userUpdateConfig.FirstName.String, updatedUser.FirstName)
+	s.Assert().Equal(userUpdateConfig.LastName.String, updatedUser.LastName)
+	s.Assert().Equal(userUpdateConfig.IsEmailVerified.Bool, updatedUser.IsEmailVerified)
+	s.Assert().Equal(userUpdateConfig.IsPhoneNumberVerified.Bool, updatedUser.IsPhoneNumberVerified)
+	s.Assert().Equal(newUser.CreatedAt, updatedUser.CreatedAt)
+	s.Assert().Greater(updatedUser.UpdatedAt, newUser.UpdatedAt)
+	s.Assert().Equal(newUser.DeletedAt, updatedUser.DeletedAt)
+
+	userAfterUpdate, err := s.userStorage.FindUser(ctx, entity.FindUser{Username: sql.NullString{String: userUpdateConfig.Username.String, Valid: true}})
+	s.Require().Nil(err)
+	s.Assert().Equal(updatedUser.UUID, userAfterUpdate.UUID)
+	s.Assert().Equal(updatedUser.Username, userAfterUpdate.Username)
+	s.Assert().Equal(updatedUser.Password, userAfterUpdate.Password)
+	s.Assert().Equal(updatedUser.Email, userAfterUpdate.Email)
+	s.Assert().Equal(updatedUser.PhoneNumber, userAfterUpdate.PhoneNumber)
+	s.Assert().Equal(updatedUser.FirstName, userAfterUpdate.FirstName)
+	s.Assert().Equal(updatedUser.LastName, userAfterUpdate.LastName)
+	s.Assert().Equal(updatedUser.IsEmailVerified, userAfterUpdate.IsEmailVerified)
+	s.Assert().Equal(updatedUser.IsPhoneNumberVerified, userAfterUpdate.IsPhoneNumberVerified)
+	s.Assert().Equal(updatedUser.CreatedAt, userAfterUpdate.CreatedAt)
+	s.Assert().Equal(updatedUser.UpdatedAt, userAfterUpdate.UpdatedAt)
+	s.Assert().Equal(updatedUser.DeletedAt, userAfterUpdate.DeletedAt)
+
+	err = s.userStorage.SoftDeleteUser(ctx, entity.FindUser{Username: sql.NullString{String: userUpdateConfig.Username.String, Valid: true}})
+	s.Require().Nil(err)
+
+	userAfterDelete, err := s.userStorage.FindUser(ctx, entity.FindUser{Username: sql.NullString{String: userUpdateConfig.Username.String, Valid: true}})
+	s.Require().Nil(userAfterDelete)
+	s.Require().Error(err)
+	s.Require().ErrorAs(err, &database.RecordNotFoundError{})
+
+	// Teardown
+	db := s.db.DB.Unscoped()
+	err = s.userStorage.
+		WithTx(&database.Transaction{DB: db}).
+		SoftDeleteUser(ctx, entity.FindUser{UUID: sql.NullString{String: newUser.UUID, Valid: true}})
+	s.Require().Nil(err, "Failed to teardown test user")
 }
 
 func (s *UserRepositoryTestSuite) TestUserRepository_FindUser() {
+	testUser, err := s.userSeeder.CreateUser(context.Background())
+	s.Require().Nil(err, "Failed to setup test user")
+	defer func() {
+		err := s.userSeeder.DeleteUser(context.Background(), entity.FindUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}})
+		s.Require().Nil(err, "Failed to teardown test user")
+	}()
+
 	testCases := []test_interface.TestCase[findUserTestConfig, findUserTestExpectation]{
 		{
 			Description: "Should be able to find user by UUID",
 			Config: findUserTestConfig{
 				Find: &entity.FindUser{
 					UUID: sql.NullString{
-						String: s.testUser.UUID.String(),
+						String: testUser.User.UUID,
 						Valid:  true,
 					},
 				},
 			},
 			Expectation: findUserTestExpectation{
 				Error: nil,
-				Data:  s.testUser.ToEntity(),
+				Data:  testUser.User,
 			},
 		},
 		{
@@ -194,14 +239,14 @@ func (s *UserRepositoryTestSuite) TestUserRepository_FindUser() {
 			Config: findUserTestConfig{
 				Find: &entity.FindUser{
 					Email: sql.NullString{
-						String: s.testUser.Email,
+						String: testUser.User.Email,
 						Valid:  true,
 					},
 				},
 			},
 			Expectation: findUserTestExpectation{
 				Error: nil,
-				Data:  s.testUser.ToEntity(),
+				Data:  testUser.User,
 			},
 		},
 		{
@@ -209,14 +254,14 @@ func (s *UserRepositoryTestSuite) TestUserRepository_FindUser() {
 			Config: findUserTestConfig{
 				Find: &entity.FindUser{
 					Username: sql.NullString{
-						String: s.testUser.Username,
+						String: testUser.User.Username,
 						Valid:  true,
 					},
 				},
 			},
 			Expectation: findUserTestExpectation{
 				Error: nil,
-				Data:  s.testUser.ToEntity(),
+				Data:  testUser.User,
 			},
 		},
 		{
@@ -224,14 +269,14 @@ func (s *UserRepositoryTestSuite) TestUserRepository_FindUser() {
 			Config: findUserTestConfig{
 				Find: &entity.FindUser{
 					PhoneNumber: sql.NullString{
-						String: s.testUser.PhoneNumber,
+						String: testUser.User.PhoneNumber,
 						Valid:  true,
 					},
 				},
 			},
 			Expectation: findUserTestExpectation{
 				Error: nil,
-				Data:  s.testUser.ToEntity(),
+				Data:  testUser.User,
 			},
 		},
 	}
@@ -256,171 +301,6 @@ func (s *UserRepositoryTestSuite) TestUserRepository_FindUser() {
 			s.Assert().Equal(testCase.Expectation.Data.LastName, user.LastName)
 			s.Assert().Equal(testCase.Expectation.Data.IsEmailVerified, user.IsEmailVerified)
 			s.Assert().Equal(testCase.Expectation.Data.IsPhoneNumberVerified, user.IsPhoneNumberVerified)
-
-			if testCase.AfterCall != nil {
-				testCase.AfterCall()
-			}
-		})
-	}
-}
-
-func (s *UserRepositoryTestSuite) TestUserRepository_UpdateUser() {
-	expectedUser1 := s.testUser.ToEntity()
-	expectedUser1.FirstName = "Testing"
-
-	expectedUser2 := s.testUser.ToEntity()
-	expectedUser2.Email = "test2@example.com"
-
-	expectedUser3 := s.testUser.ToEntity()
-	expectedUser3.PhoneNumber = "+62812345678922"
-	expectedUser3.LastName = "User3"
-	expectedUser3.IsEmailVerified = true
-	expectedUser3.IsPhoneNumberVerified = true
-
-	testCases := []test_interface.TestCase[updateUserTestConfig, updateUserTestExpectation]{
-		{
-			Description: "Should be able to update any field by UUID",
-			Config: updateUserTestConfig{
-				Find: &entity.FindUser{
-					UUID: sql.NullString{
-						String: s.testUser.UUID.String(),
-						Valid:  true,
-					},
-				},
-				Update: &entity.UpdateUser{
-					FirstName: sql.NullString{String: "Testing", Valid: true},
-				},
-			},
-			Expectation: updateUserTestExpectation{
-				Error: nil,
-				Data:  expectedUser1,
-			},
-		},
-		{
-			Description: "Should be able to update any field by email",
-			Config: updateUserTestConfig{
-				Find: &entity.FindUser{
-					Email: sql.NullString{
-						String: s.testUser.Email,
-						Valid:  true,
-					},
-				},
-				Update: &entity.UpdateUser{
-					Email: sql.NullString{String: "test2@example.com", Valid: true},
-				},
-			},
-			Expectation: updateUserTestExpectation{
-				Error: nil,
-				Data:  expectedUser2,
-			},
-		},
-		{
-			Description: "Should be able to update any field by username",
-			Config: updateUserTestConfig{
-				Find: &entity.FindUser{
-					Username: sql.NullString{
-						String: s.testUser.Username,
-						Valid:  true,
-					},
-				},
-				Update: &entity.UpdateUser{
-					PhoneNumber:           sql.NullString{String: "+62812345678922", Valid: true},
-					LastName:              sql.NullString{String: "User3", Valid: true},
-					IsEmailVerified:       sql.NullBool{Bool: true, Valid: true},
-					IsPhoneNumberVerified: sql.NullBool{Bool: true, Valid: true},
-				},
-			},
-			Expectation: updateUserTestExpectation{
-				Error: nil,
-				Data:  expectedUser3,
-			},
-		},
-	}
-
-	for _, testCase := range testCases {
-		ctx := context.Background()
-
-		s.Run(testCase.Description, func() {
-			if testCase.BeforeCall != nil {
-				testCase.BeforeCall(testCase.Config)
-			}
-
-			updated, err := s.userStorage.UpdateUser(ctx, *testCase.Config.Find, *testCase.Config.Update)
-
-			s.Require().Equal(testCase.Expectation.Error, err)
-
-			s.Assert().Equal(testCase.Expectation.Data.UUID, updated.UUID)
-			s.Assert().Equal(testCase.Expectation.Data.Username, updated.Username)
-			s.Assert().Equal(testCase.Expectation.Data.Email, updated.Email)
-			s.Assert().Equal(testCase.Expectation.Data.PhoneNumber, updated.PhoneNumber)
-			s.Assert().Equal(testCase.Expectation.Data.FirstName, updated.FirstName)
-			s.Assert().Equal(testCase.Expectation.Data.LastName, updated.LastName)
-			s.Assert().Equal(testCase.Expectation.Data.IsEmailVerified, updated.IsEmailVerified)
-			s.Assert().Equal(testCase.Expectation.Data.IsPhoneNumberVerified, updated.IsPhoneNumberVerified)
-
-			if testCase.AfterCall != nil {
-				testCase.AfterCall()
-			}
-		})
-	}
-}
-
-func (s *UserRepositoryTestSuite) TestUserRepository_SoftDeleteUser() {
-	testCases := []test_interface.TestCase[softDeleteUserTestConfig, softDeleteUserTestExpectation]{
-		{
-			Description: "Should be able to delete with UUID",
-			Config: softDeleteUserTestConfig{
-				Find: &entity.FindUser{
-					UUID: sql.NullString{
-						String: s.testUser.UUID.String(),
-						Valid:  true,
-					},
-				},
-			},
-			Expectation: softDeleteUserTestExpectation{
-				Error: nil,
-			},
-		},
-		{
-			Description: "Should be able to delete with email",
-			Config: softDeleteUserTestConfig{
-				Find: &entity.FindUser{
-					Email: sql.NullString{
-						String: s.testUser.Email,
-						Valid:  true,
-					},
-				},
-			},
-			Expectation: softDeleteUserTestExpectation{
-				Error: nil,
-			},
-		},
-		{
-			Description: "Should be able to delete with username",
-			Config: softDeleteUserTestConfig{
-				Find: &entity.FindUser{
-					Username: sql.NullString{
-						String: s.testUser.Username,
-						Valid:  true,
-					},
-				},
-			},
-			Expectation: softDeleteUserTestExpectation{
-				Error: nil,
-			},
-		},
-	}
-
-	for _, testCase := range testCases {
-		ctx := context.Background()
-
-		s.Run(testCase.Description, func() {
-			if testCase.BeforeCall != nil {
-				testCase.BeforeCall(testCase.Config)
-			}
-
-			err := s.userStorage.SoftDeleteUser(ctx, *testCase.Config.Find)
-			s.Require().Equal(testCase.Expectation.Error, err)
 
 			if testCase.AfterCall != nil {
 				testCase.AfterCall()

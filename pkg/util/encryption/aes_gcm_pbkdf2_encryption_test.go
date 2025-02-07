@@ -5,7 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/util/encryption"
 	generator_util "github.com/harmonify/movie-reservation-system/pkg/util/generator"
 	"github.com/stretchr/testify/suite"
@@ -30,14 +29,9 @@ func (s *AESEncryptionTestSuite) SetupSuite() {
 	s.app = fx.New(
 		generator_util.GeneratorUtilModule,
 		fx.Provide(
-			func() *config.Config {
-				return &config.Config{
-					AppSecret: "1234567891123456",
-				}
-			},
-			func() *encryption.AesGcmPbkdf2EncryptionConfig {
-				return &encryption.AesGcmPbkdf2EncryptionConfig{
-					PBKDF2Iterations: int(15000),
+			func() *encryption.AESEncryptionConfig {
+				return &encryption.AESEncryptionConfig{
+					AppSecret: "test",
 				}
 			},
 			encryption.NewAESEncryption,

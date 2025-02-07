@@ -25,7 +25,7 @@ func NewApp(p ...fx.Option) *fx.App {
 				}
 			},
 		),
-		kafka.MigrationModule,
+		kafka_migration.MigrationModule,
 		shared.SharedModule,
 		cmd.CommandModule,
 

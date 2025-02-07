@@ -12,6 +12,7 @@ var (
 			repository.NewUserRepository,
 			repository.NewUserKeyRepository,
 			repository.NewUserSessionRepository,
+			repository.NewOutboxRepository,
 		),
 	)
 )

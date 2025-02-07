@@ -28,19 +28,13 @@ func NewEncryption(
 
 var (
 	EncryptionModule = fx.Module(
-		"encryption",
+		"encryption-util",
 		fx.Provide(
-			func() *AesGcmPbkdf2EncryptionConfig {
-				return &AesGcmPbkdf2EncryptionConfig{
-					PBKDF2Iterations: int(15000),
-				}
-			},
 			NewAESEncryption,
 
-			func() Argon2HasherConfig {
-				return *Argon2HasherDefaultConfig
+			func(p Argon2HasherParam) (Argon2HasherResult, error) {
+				return NewArgon2Hasher(p, *Argon2HasherDefaultConfig)
 			},
-			NewArgon2Hasher,
 
 			NewBcryptHasher,
 

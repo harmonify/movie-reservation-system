@@ -3,12 +3,10 @@ package kafka_test
 import (
 	"context"
 	"os"
-	"reflect"
 	"testing"
 	"time"
 
 	"github.com/IBM/sarama"
-	"github.com/harmonify/movie-reservation-system/pkg/config"
 	"github.com/harmonify/movie-reservation-system/pkg/kafka"
 	"github.com/harmonify/movie-reservation-system/pkg/kafka/test"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
@@ -45,11 +43,44 @@ type KafkaTestSuite struct {
 func (s *KafkaTestSuite) SetupSuite() {
 	s.app = fx.New(
 		fx.Provide(
-			func() *config.Config {
-				return &config.Config{
+			func() *tracer.TracerConfig {
+				return &tracer.TracerConfig{
+					Env:               "test",
+					ServiceIdentifier: "test",
+					Type:              "console",
+					OtelEndpoint:      "",
+				}
+			},
+			func() *kafka.KafkaConfig {
+				return &kafka.KafkaConfig{
+					KafkaVersion: "3.9.2",
+				}
+			},
+			func() *logger.LoggerConfig {
+				return &logger.LoggerConfig{
+					Env:               "test",
+					ServiceIdentifier: "test",
+					LogType:           "console",
+					LogLevel:          "debug",
+				}
+			},
+			func(kc *kafka.KafkaConfig) *kafka.KafkaAdminConfig {
+				return &kafka.KafkaAdminConfig{
+					KafkaConfig:  kc,
+					KafkaBrokers: "localhost:9092",
+				}
+			},
+			func(kc *kafka.KafkaConfig) *kafka.KafkaProducerConfig {
+				return &kafka.KafkaProducerConfig{
+					KafkaConfig:  kc,
+					KafkaBrokers: "localhost:9092",
+				}
+			},
+			func(kc *kafka.KafkaConfig) *kafka.KafkaConsumerGroupConfig {
+				return &kafka.KafkaConsumerGroupConfig{
+					KafkaConfig:        kc,
 					KafkaBrokers:       "localhost:9092",
-					KafkaVersion:       "3.9.0",
-					KafkaConsumerGroup: "pkg",
+					KafkaConsumerGroup: "test-group",
 				}
 			},
 			logger.NewConsoleLogger,
@@ -57,6 +88,7 @@ func (s *KafkaTestSuite) SetupSuite() {
 			kafka.NewKafkaAdmin,
 			kafka.NewKafkaProducer,
 			kafka.NewKafkaConsumerGroup,
+			kafka.NewKafkaDLQProducer,
 			test.NewTestConsumer,
 			kafka.AsRoute(
 				test.NewTestRoute,
@@ -74,28 +106,28 @@ func (s *KafkaTestSuite) SetupSuite() {
 			s.basicConsumer = c
 			s.router = r
 		}),
-
+		fx.Invoke(func(a *kafka.KafkaAdmin) {
+			err := a.Client.CreateTopic(
+				test.TestBasicTopic,
+				&sarama.TopicDetail{
+					NumPartitions:     1,
+					ReplicationFactor: 1,
+				},
+				false,
+			)
+			s.Require().Nil(err, "Admin should successfully create test topic for setup process, but got: %s", err)
+			err = a.Client.CreateTopic(
+				test.TestRouterTopic,
+				&sarama.TopicDetail{
+					NumPartitions:     1,
+					ReplicationFactor: 1,
+				},
+				false,
+			)
+			s.Require().Nil(err, "Admin should successfully create 2nd test topic for setup process, but got: %s", err)
+		}),
 		fx.NopLogger,
 	)
-
-	err := s.admin.Client.CreateTopic(
-		test.TestBasicTopic,
-		&sarama.TopicDetail{
-			NumPartitions:     1,
-			ReplicationFactor: 1,
-		},
-		false,
-	)
-	s.Require().Nil(err, "Admin should successfully create test topic for setup process, but got: %s", err)
-	err = s.admin.Client.CreateTopic(
-		test.TestRouterTopic,
-		&sarama.TopicDetail{
-			NumPartitions:     1,
-			ReplicationFactor: 1,
-		},
-		false,
-	)
-	s.Require().Nil(err, "Admin should successfully create 2nd test topic for setup process, but got: %s", err)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
@@ -222,15 +254,16 @@ func (s *KafkaTestSuite) TestKafkaSuite_Router() {
 		consumerSpanCtx := trace.SpanContextFromContext(ce.Context)
 		s.T().Logf("Consumer context: topic=%s spanid=%s traceid=%s", ce.Event.Topic, consumerSpanCtx.SpanID(), consumerSpanCtx.TraceID())
 		// ASSERT
-		s.Require().Equal(consumerSpanCtx.TraceID().String(), ce.Event.TraceID, "Router should correctly parse the message header to the event trace id property")
-		s.Require().Equal(producerSpan.SpanContext().TraceID().String(), ce.Event.TraceID, "Consumer route should receive the correct trace id")
+		s.Require().Equal(producerSpan.SpanContext().TraceID().String(), consumerSpanCtx.TraceID().String(), "Consumer route should receive the correct trace id")
 
 		s.Require().Equal(test.TestRouterTopic, ce.Event.Topic, "Consumer route should receive the event from the correct topic")
 
 		s.Require().Equal(string(expectedKey), string(ce.Event.Key), "Consumer route should receive the event with the correct key")
 
-		val, ok := ce.Event.Value.(*test_proto.Test)
-		s.Require().True(ok, "Consumer route should receive correct event value type of %s, but got: %s", reflect.TypeFor[*test_proto.Test]().Name(), reflect.TypeOf(val))
+		val := &test_proto.Test{}
+		if err := proto.Unmarshal(ce.Event.Value, val); err != nil {
+			s.T().Fatal("Consumer should successfully unmarshal the event value")
+		}
 		s.Require().Equal(expectedValue.GetMessage(), val.GetMessage(), "Consumer route should receive the correct message")
 	case <-consumerCtx.Done():
 		s.T().Fatal("Test timed out waiting for the event to be processed")
