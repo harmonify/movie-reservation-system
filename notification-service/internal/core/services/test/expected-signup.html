@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Verification</title>
+    <title>Welcome Email</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -60,13 +60,13 @@
 <body>
     <div class="email-container">
         <div class="email-header">
-            Verify Your Email Address
+            Welcome to Movie Reservation System
         </div>
         <div class="email-body">
             <p>Hi John Doe,</p>
-            <p>Thank you for signing up! Please confirm your email address by clicking the button below.</p>
-            <a href="http://localhost:8080/email/verify?email=john_doe@example.com&token=ae60e10ca0a173c2ece3d5d693e1fa21084075aca85edc14a5ce8d58a6503fff" class="email-button">Verify Email</a>
-            <p>If you did not create this account, you can ignore this email.</p>
+            <p>Thank you for signing up! Please verify your email address by clicking the button below.</p>
+            <a href="http://localhost:8080/email/verify?email=john_doe@example.com&amp;code=ae60e10ca0a173c2ece3d5d693e1fa21084075aca85edc14a5ce8d58a6503fff" class="email-button">Verify Email Address</a>
+            <p>If you did not sign up for an account, you can safely ignore this email.</p>
         </div>
         <div class="email-footer">
             &copy; 2025 Movie Reservation System. All rights reserved.
@@ -74,4 +74,3 @@
     </div>
 </body>
 </html>
-{{end}}

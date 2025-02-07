@@ -10,6 +10,7 @@ import (
 
 	"github.com/harmonify/movie-reservation-system/notification-service/internal/core/services"
 	"github.com/harmonify/movie-reservation-system/notification-service/internal/core/templates"
+	"github.com/harmonify/movie-reservation-system/notification-service/internal/driven/config"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
@@ -43,6 +44,16 @@ type EmailTemplateServiceTestSuite struct {
 func (s *EmailTemplateServiceTestSuite) SetupSuite() {
 	s.app = fx.New(
 		fx.Provide(
+			func() *config.NotificationServiceConfig {
+				return &config.NotificationServiceConfig{
+					AppDefaultSupportEmail: "support@example.com",
+				}
+			},
+			func() *tracer.TracerConfig {
+				return &tracer.TracerConfig{
+					ServiceIdentifier: "notification-service",
+				}
+			},
 			logger.NewConsoleLogger,
 			tracer.NewNopTracer,
 			services.NewEmailTemplateService,
@@ -74,7 +85,7 @@ func (s *EmailTemplateServiceTestSuite) TestEmailTemplateService_Render() {
 				},
 			},
 			Expectation: func() renderTestExpectation {
-				expectedValue, err := os.ReadFile(path.Join(path.Dir(file), "test", "expected-email-verification.html"))
+				expectedValue, err := os.ReadFile(path.Join(path.Dir(file), "test", "expected-signup.html"))
 				s.Require().Nil(err)
 				return renderTestExpectation{
 					Result: string(expectedValue),
