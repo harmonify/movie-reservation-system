@@ -29,6 +29,11 @@ func (s *AESEncryptionTestSuite) SetupSuite() {
 	s.app = fx.New(
 		generator_util.GeneratorUtilModule,
 		fx.Provide(
+			func() *encryption.AESEncryptionConfig {
+				return &encryption.AESEncryptionConfig{
+					AppSecret: "test",
+				}
+			},
 			encryption.NewAESEncryption,
 		),
 		fx.Invoke(func(

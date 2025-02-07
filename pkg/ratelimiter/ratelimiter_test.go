@@ -285,12 +285,22 @@ func createNewRegistry(t *testing.T) (*fx.App, ratelimiter.RateLimiterRegistry, 
 			},
 			func() logger.Logger {
 				l, err := logger.NewLogger(&logger.LoggerConfig{
-					LogLevel: "debug",
+					Env:               "test",
+					ServiceIdentifier: "test",
+					LogType:           "console",
+					LogLevel:          "debug",
 				})
 				if err != nil {
-					t.Fatal("Failed to create logger")
+					t.Fatalf("Failed to create logger: %v", err)
 				}
 				return l
+			},
+			func() *cache.RedisConfig {
+				return &cache.RedisConfig{
+					RedisHost: "localhost",
+					RedisPort: "6379",
+					RedisPass: "secret",
+				}
 			},
 		),
 		cache.RedisModule,

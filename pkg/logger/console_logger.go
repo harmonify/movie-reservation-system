@@ -60,7 +60,7 @@ func (l *ConsoleLoggerImpl) GetZapLogger() *zap.Logger {
 func (l *ConsoleLoggerImpl) With(fields ...zap.Field) Logger {
 	return &ConsoleLoggerImpl{
 		Logger: l.Logger.With(fields...),
-		span: l.span,
+		span:   l.span,
 	}
 }
 
@@ -89,9 +89,8 @@ func (l *ConsoleLoggerImpl) Error(msg string, fields ...zap.Field) {
 
 	callerInfo := fmt.Sprintf("%s:%d", file, line)
 
-	eventOpt := trace.EventOption(trace.WithAttributes(attribute.String("caller", callerInfo)))
 	if l.span != nil {
-		l.span.RecordError(fmt.Errorf("%s", msg), eventOpt)
+		l.span.RecordError(fmt.Errorf("%s", msg), trace.WithAttributes(attribute.String("caller", callerInfo)))
 		l.span.SetStatus(codes.Error, msg)
 	}
 

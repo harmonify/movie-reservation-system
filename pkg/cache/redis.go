@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/redis/go-redis/extra/redisotel/v9"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 )
@@ -25,14 +26,20 @@ func NewRedis(cfg *RedisConfig) (*Redis, error) {
 		return nil, err
 	}
 
-	client := redis.NewClient(&redis.Options{
+	rdb := redis.NewClient(&redis.Options{
 		Addr:     cfg.RedisHost + ":" + cfg.RedisPort,
 		Password: cfg.RedisPass,
 	})
+	if err := redisotel.InstrumentTracing(rdb); err != nil {
+		return nil, err
+	}
+	if err := redisotel.InstrumentMetrics(rdb); err != nil {
+		return nil, err
+	}
 
-	_, err := client.Ping(context.TODO()).Result()
+	_, err := rdb.Ping(context.TODO()).Result()
 
 	return &Redis{
-		Client: client,
+		Client: rdb,
 	}, err
 }

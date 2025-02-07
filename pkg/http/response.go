@@ -10,6 +10,8 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	struct_util "github.com/harmonify/movie-reservation-system/pkg/util/struct"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
@@ -92,6 +94,8 @@ func (r *httpResponseImpl) Build(ctx context.Context, successHttpCode int, data 
 }
 
 func (r *httpResponseImpl) logResponse(ctx context.Context, httpCode int, response *Response, detailedError *error_pkg.ErrorWithDetails) {
+	span := trace.SpanFromContext(ctx)
+
 	fields := []zap.Field{}
 
 	if detailedError != nil {
@@ -101,14 +105,15 @@ func (r *httpResponseImpl) logResponse(ctx context.Context, httpCode int, respon
 		)
 	}
 
-	var stringResponse string
 	if httpCode >= http.StatusInternalServerError || r.logger.Level() == zap.DebugLevel {
 		byteResponse, _ := json.Marshal(response)
-		stringResponse = string(byteResponse)
-		fields = append(fields, zap.Any("response", stringResponse))
+		fields = append(fields, zap.ByteString("response", byteResponse))
 	}
 
 	if httpCode >= http.StatusInternalServerError {
+		span.SetStatus(codes.Error, detailedError.Error())
+		span.RecordError(detailedError, trace.WithStackTrace(true))
+		fields = append(fields, zap.StackSkip("stack", 2))
 		r.logger.WithCtx(ctx).Error("Response error", fields...)
 	} else if r.logger.Level() == zap.DebugLevel {
 		r.logger.WithCtx(ctx).Debug("Response debug", fields...)

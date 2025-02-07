@@ -80,7 +80,7 @@ func (h *jwtHttpMiddlewareImpl) verifyAuthorizationHeader(ctx context.Context, c
 	authHeader := c.Request.Header.Get("Authorization")
 	splitAccessToken := strings.Split(authHeader, " ")
 	if len(splitAccessToken) != 2 || splitAccessToken[1] == "" {
-		h.logger.WithCtx(ctx).Error("invalid authorization header")
+		h.logger.WithCtx(ctx).Debug("invalid authorization header")
 		return nil, error_pkg.InvalidAuthorizationHeaderError
 	}
 
@@ -88,7 +88,7 @@ func (h *jwtHttpMiddlewareImpl) verifyAuthorizationHeader(ctx context.Context, c
 
 	payload, err := h.util.JWTUtil.JWTVerify(ctx, accessToken)
 	if err != nil {
-		h.logger.WithCtx(ctx).Error("failed to verify jwt", zap.Error(err))
+		h.logger.WithCtx(ctx).Debug("failed to verify jwt", zap.Error(err))
 		return nil, err
 	}
 

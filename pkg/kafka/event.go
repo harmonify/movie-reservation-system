@@ -10,10 +10,10 @@ import (
 type (
 	Event struct {
 		Headers   []*sarama.RecordHeader `json:"headers"`
-		Timestamp time.Time           `json:"timestamp,omitempty"`
-		Key       string              `json:"key,omitempty"`
-		Value     interface{}         `json:"value,omitempty"`
-		Topic     string              `json:"topic,omitempty"`
+		Timestamp time.Time              `json:"timestamp,omitempty"`
+		Key       string                 `json:"key,omitempty"`
+		Value     []byte                 `json:"value,omitempty"`
+		Topic     string                 `json:"topic,omitempty"`
 	}
 
 	EventListener interface {

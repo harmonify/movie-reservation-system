@@ -95,6 +95,11 @@ func (s *JwtUtilTestSuite) SetupSuite() {
 					AppSecret: "123456",
 				}
 			},
+			func() *encryption.SHA256HasherConfig {
+				return &encryption.SHA256HasherConfig{
+					AppSecret: "test",
+				}
+			},
 			func(lc fx.Lifecycle) (tracer.Tracer, error) {
 				return tracer.NewTracer(lc, &tracer.TracerConfig{
 					Env:               "test",

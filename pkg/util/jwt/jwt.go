@@ -140,21 +140,21 @@ func (i *jwtUtilImpl) JWTVerify(ctx context.Context, tokenString string) (*JWTBo
 		func(token *jwt.Token) (interface{}, error) {
 			publicKey, ok := token.Header["kid"].(string)
 			if !ok || publicKey == "" {
-				i.logger.WithCtx(ctx).Error("public key is empty")
+				i.logger.WithCtx(ctx).Info("public key is empty")
 				return nil, fmt.Errorf("public key is empty")
 			}
 
 			// Decode PEM block
 			block, _ := pem.Decode([]byte(publicKey))
 			if block == nil {
-				i.logger.WithCtx(ctx).Error("failed to decode public key into PEM")
+				i.logger.WithCtx(ctx).Info("failed to decode public key into PEM")
 				return nil, fmt.Errorf("failed to decode public key into PEM")
 			}
 
 			// Parse RSA public key
 			rsaPublicKey, err := x509.ParsePKCS1PublicKey(block.Bytes)
 			if err != nil {
-				i.logger.WithCtx(ctx).Error("failed to parse RSA public key from PEM", zap.Error(err))
+				i.logger.WithCtx(ctx).Info("failed to parse RSA public key from PEM", zap.Error(err))
 				return nil, err
 			}
 
@@ -167,18 +167,18 @@ func (i *jwtUtilImpl) JWTVerify(ctx context.Context, tokenString string) (*JWTBo
 		jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()}),
 	)
 	if err != nil {
-		i.logger.WithCtx(ctx).Error("failed to parse JWT", zap.Error(err))
+		i.logger.WithCtx(ctx).Info("failed to parse JWT", zap.Error(err))
 		return nil, error_pkg.InvalidJwtError
 	}
 
 	if !parsedToken.Valid {
-		i.logger.WithCtx(ctx).Debug("invalid JWT", zap.Any("parsed_token", parsedToken))
+		i.logger.WithCtx(ctx).Info("invalid JWT", zap.Any("parsed_token", parsedToken))
 		return nil, error_pkg.InvalidJwtError
 	}
 
 	claims, ok := parsedToken.Claims.(*JWTCustomClaims)
 	if !ok {
-		i.logger.WithCtx(ctx).Error("failed to assert correct JWT claims type")
+		i.logger.WithCtx(ctx).Info("failed to assert correct JWT claims type")
 		return nil, error_pkg.InvalidJwtClaimsError
 	}
 

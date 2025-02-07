@@ -187,9 +187,9 @@ func (_c *GeneratorUtil_GenerateRandomHex_Call) RunAndReturn(run func(uint32) (s
 	return _c
 }
 
-// GenerateRandomNumber provides a mock function with given fields: n
-func (_m *GeneratorUtil) GenerateRandomNumber(n uint32) (string, error) {
-	ret := _m.Called(n)
+// GenerateRandomNumber provides a mock function with given fields: length
+func (_m *GeneratorUtil) GenerateRandomNumber(length uint32) (string, error) {
+	ret := _m.Called(length)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GenerateRandomNumber")
@@ -198,16 +198,16 @@ func (_m *GeneratorUtil) GenerateRandomNumber(n uint32) (string, error) {
 	var r0 string
 	var r1 error
 	if rf, ok := ret.Get(0).(func(uint32) (string, error)); ok {
-		return rf(n)
+		return rf(length)
 	}
 	if rf, ok := ret.Get(0).(func(uint32) string); ok {
-		r0 = rf(n)
+		r0 = rf(length)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
 	if rf, ok := ret.Get(1).(func(uint32) error); ok {
-		r1 = rf(n)
+		r1 = rf(length)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -221,12 +221,12 @@ type GeneratorUtil_GenerateRandomNumber_Call struct {
 }
 
 // GenerateRandomNumber is a helper method to define mock.On call
-//   - n uint32
-func (_e *GeneratorUtil_Expecter) GenerateRandomNumber(n interface{}) *GeneratorUtil_GenerateRandomNumber_Call {
-	return &GeneratorUtil_GenerateRandomNumber_Call{Call: _e.mock.On("GenerateRandomNumber", n)}
+//   - length uint32
+func (_e *GeneratorUtil_Expecter) GenerateRandomNumber(length interface{}) *GeneratorUtil_GenerateRandomNumber_Call {
+	return &GeneratorUtil_GenerateRandomNumber_Call{Call: _e.mock.On("GenerateRandomNumber", length)}
 }
 
-func (_c *GeneratorUtil_GenerateRandomNumber_Call) Run(run func(n uint32)) *GeneratorUtil_GenerateRandomNumber_Call {
+func (_c *GeneratorUtil_GenerateRandomNumber_Call) Run(run func(length uint32)) *GeneratorUtil_GenerateRandomNumber_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(uint32))
 	})

@@ -105,10 +105,7 @@ func (l *LokiLoggerImpl) Error(msg string, fields ...zap.Field) {
 	if l.span != nil {
 		l.span.RecordError(
 			err,
-			trace.WithAttributes(
-				attribute.String("caller", callerInfo),
-			),
-			trace.WithStackTrace(true),
+			trace.WithAttributes(attribute.String("caller", callerInfo)),
 		)
 		l.span.SetStatus(codes.Error, msg)
 	}

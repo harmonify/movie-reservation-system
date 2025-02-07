@@ -17,12 +17,8 @@ type TestRoute struct {
 	listeners []kafka.EventListener
 }
 
-func (r *TestRoute) Decode(ctx context.Context, value []byte) (interface{}, error) {
-	val := &test_proto.Test{}
-	if err := proto.Unmarshal(value, val); err != nil {
-		return nil, kafka.ErrMalformedMessage
-	}
-	return val, nil
+func (r *TestRoute) Identifier() string {
+	return "TestRoute"
 }
 
 func (r *TestRoute) Match(ctx context.Context, event *kafka.Event) (bool, error) {
@@ -36,8 +32,8 @@ func (r *TestRoute) Handle(ctx context.Context, event *kafka.Event) error {
 	}
 
 	// Production handling logic
-	val, ok := event.Value.(*test_proto.Test)
-	if !ok {
+	val := &test_proto.Test{}
+	if err := proto.Unmarshal(event.Value, val); err != nil {
 		return kafka.ErrMalformedMessage
 	}
 	r.logger.Debug(
@@ -65,3 +61,5 @@ func NewTestRoute(logger logger.Logger) *TestRoute {
 		listeners: []kafka.EventListener{},
 	}
 }
+
+var _ kafka.Route = (*TestRoute)(nil)

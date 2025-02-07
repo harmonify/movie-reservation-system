@@ -30,6 +30,11 @@ func (s *RSAEncryptionTestSuite) SetupSuite() {
 	s.app = fx.New(
 		generator_util.GeneratorUtilModule,
 		fx.Provide(
+			func() *encryption.AESEncryptionConfig {
+				return &encryption.AESEncryptionConfig{
+					AppSecret: "test",
+				}
+			},
 			encryption.NewAESEncryption,
 			encryption.NewRSAEncryption,
 		),
