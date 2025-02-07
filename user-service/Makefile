@@ -74,17 +74,17 @@ migration\:postgresql\:create: ## Create new migration file
 	fi
 	@ENV=$$(grep '^ENV=' .env | cut -d '=' -f2); \
     echo "Detected ENV: $$ENV"; \
-	godotenv -f .env sql-migrate new -config=./cmd/database/postgresql/migration-config.yml -env=$$ENV $(name)
+	godotenv -f .env sql-migrate new -config=./deploy/database/postgresql/migration-config.yml -env=$$ENV $(name)
 
 .PHONY: migration\:postgresql\:up
 migration\:postgresql\:up: ## Run migrations up
 	@ENV=$$(grep '^ENV=' .env | cut -d '=' -f2); \
-	godotenv -f .env sql-migrate up -config=./cmd/database/postgresql/migration-config.yml -env=$$ENV
+	godotenv -f .env sql-migrate up -config=./deploy/database/postgresql/migration-config.yml -env=$$ENV
 
 .PHONY: migration\:postgresql\:down
 migration\:postgresql\:down: ## Run migrations down
 	@ENV=$$(grep '^ENV=' .env | cut -d '=' -f2); \
-	godotenv -f .env sql-migrate down -config=./cmd/database/postgresql/migration-config.yml -env=$$ENV
+	godotenv -f .env sql-migrate down -config=./deploy/database/postgresql/migration-config.yml -env=$$ENV
 
 .PHONY: debezium\:register-postgresql-source-connector
 debezium\:register-postgresql-source-connector: ## Register PostgreSQL source connector
