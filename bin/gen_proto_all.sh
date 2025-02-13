@@ -2,7 +2,7 @@
 
 root="$(realpath "$(dirname "$(dirname "$0")")")"
 source_dir_path="$root/proto/harmonify/movie_reservation_system"
-output_dir_paths=("$root/user-service/internal/driven/proto" "$root/notification-service/internal/driven/proto" "$root/movie-service/internal/driven/proto" "$root/reservation-service/internal/driven/proto")
+output_dir_paths=("$root/user-service/internal/driven/proto" "$root/notification-service/internal/driven/proto" "$root/movie-service/internal/driven/proto" "$root/movie-search-service/internal/driven/proto" "$root/theater-service/internal/driven/proto" "$root/reservation-service/internal/driven/proto")
 
 proto_files_path=("$source_dir_path"/**/*.proto)
 go_opt_args="--go_opt=paths=source_relative"

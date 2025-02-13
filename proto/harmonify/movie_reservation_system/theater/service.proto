@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package harmonify.movie_reservation_system.theater;
+
+service TheaterService {
+    // Get movies with active showtimes
+    rpc GetActiveMovies(GetActiveMoviesRequest) returns (GetActiveMoviesResponse) {}
+    // Get active showtimes for a movie
+    rpc GetActiveShowtimes(GetActiveShowtimesRequest) returns (GetActiveShowtimesResponse) {}
+    // Get available seats for a showtime
+    rpc GetAvailableSeats(GetAvailableSeatsRequest) returns (GetAvailableSeatsResponse) {}
+}
+
+message GetActiveMoviesRequest {
+    string theater_id = 1;
+    bool include_upcoming = 2;
+}
+
+message GetActiveMoviesResponse {
+    // List of unique movies with active showtimes
+    repeated Movie movies = 1;
+
+    message Movie {
+        string movie_id = 1;
+    }
+}
+
+message GetActiveShowtimesRequest {
+    string theater_id = 1;
+    string movie_id = 2;
+}
+
+message GetActiveShowtimesResponse {
+    repeated Showtime showtimes = 1;
+
+    message Showtime {
+        string showtime_id = 1;
+        uint32 start_time = 2;
+        uint32 available_seats = 3;
+    }
+}
+
+message GetAvailableSeatsRequest {
+    string showtime_id = 1;
+}
+
+message GetAvailableSeatsResponse {
+    repeated Seat seats = 1;
+
+    message Seat {
+        string seat_id = 1;
+        string seat_row = 2;
+        string seat_column = 3;
+    }
+}
+
+
