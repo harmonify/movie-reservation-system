@@ -26,7 +26,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/seeder"
 	http_driver "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http"
 	user_rest "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/user"
-	"github.com/harmonify/movie-reservation-system/user-service/mocks"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/mocks"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"github.com/tidwall/gjson"

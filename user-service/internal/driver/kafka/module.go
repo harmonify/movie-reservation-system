@@ -118,6 +118,6 @@ func (r *Router) Start(ctx context.Context) error {
 }
 
 func (r *Router) Close(ctx context.Context) error {
-	r.logger.Info("Closing router")
+	r.logger.WithCtx(ctx).Info("Closing router")
 	return r.router.Close()
 }
