@@ -112,7 +112,11 @@ func (v *structValidatorImpl) ConstructValidationErrorFields(err error) (errorFi
 			}
 		}
 	} else {
-		errorFields = make([]error, 0)
+		errorFields = make([]error, 0, 1)
+		errorFields = append(errorFields, &ValidationError{
+			Field:   "",
+			Message: err.Error(),
+		})
 	}
 
 	return

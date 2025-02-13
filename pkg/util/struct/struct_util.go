@@ -17,10 +17,8 @@ import (
 )
 
 type StructUtil interface {
-	// SetNonPrimitiveDefaultValue sets the default value for non-primitive data types.
-	// It returns nil if the data is nil or zero value.
-	// It returns the data if the data is not nil or zero value.
-	SetNonPrimitiveDefaultValue(ctx context.Context, data interface{}) (result interface{})
+	// SetOrDefault sets result to the data or default value (matching the provided data type) if the data is nil or zero value.
+	SetOrDefault(ctx context.Context, data interface{}) (result interface{})
 
 	// ConvertSqlStructToMap converts a struct with SQL nullable types to a map with snake_case keys,
 	// excluding invalid nullable types.
@@ -57,7 +55,7 @@ func NewStructUtil(p StructUtilParam) StructUtilResult {
 	}
 }
 
-func (u *structUtilImpl) SetNonPrimitiveDefaultValue(ctx context.Context, data any) (result any) {
+func (u *structUtilImpl) SetOrDefault(ctx context.Context, data any) (result any) {
 	ctx, span := u.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 

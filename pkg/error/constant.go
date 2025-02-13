@@ -7,12 +7,7 @@ import (
 )
 
 var (
-	DefaultError = &ErrorWithDetails{
-		Code:     ErrorCode("ERROR"),
-		HttpCode: http.StatusInternalServerError,
-		GrpcCode: codes.Internal,
-		Message:  "Something went wrong from our side. Please try again later.",
-	}
+	DefaultError = InternalServerError
 
 	InternalServerError = &ErrorWithDetails{
 		Code:     ErrorCode("INTERNAL_SERVER_ERROR"),
@@ -23,6 +18,13 @@ var (
 
 	InvalidRequestBodyError = &ErrorWithDetails{
 		Code:     ErrorCode("INVALID_REQUEST_BODY_ERROR"),
+		HttpCode: http.StatusBadRequest,
+		GrpcCode: codes.InvalidArgument,
+		Message:  "Please ensure you have filled all the required information correctly and try again. If the problem persists, please contact our technical support.",
+	}
+
+	InvalidRequestQueryError = &ErrorWithDetails{
+		Code:     ErrorCode("INVALID_REQUEST_QUERY_ERROR"),
 		HttpCode: http.StatusBadRequest,
 		GrpcCode: codes.InvalidArgument,
 		Message:  "Please ensure you have filled all the required information correctly and try again. If the problem persists, please contact our technical support.",

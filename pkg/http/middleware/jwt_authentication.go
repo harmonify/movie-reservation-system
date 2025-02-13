@@ -59,7 +59,7 @@ func (h *jwtHttpMiddlewareImpl) AuthenticateUser(c *gin.Context) {
 	ctx, span := h.tracer.StartSpanWithCaller(c.Request.Context())
 	defer span.End()
 
-	h.logger.Debug("auth header", zap.String("authorization_header", c.Request.Header.Get("Authorization")))
+	h.logger.WithCtx(ctx).Debug("auth header", zap.String("authorization_header", c.Request.Header.Get("Authorization")))
 
 	payload, err := h.verifyAuthorizationHeader(ctx, c)
 	if err != nil {
@@ -101,7 +101,7 @@ func (h *jwtHttpMiddlewareImpl) OptAuthenticateUser(c *gin.Context) {
 
 	authHeader := c.Request.Header.Get("Authorization")
 
-	h.logger.Debug("auth header", zap.String("authorization_header", authHeader))
+	h.logger.WithCtx(ctx).Debug("auth header", zap.String("authorization_header", authHeader))
 
 	if authHeader != "" {
 		payload, err := h.verifyAuthorizationHeader(ctx, c)
