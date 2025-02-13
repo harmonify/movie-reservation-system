@@ -12,13 +12,14 @@ import (
 )
 
 type Util struct {
-	EncryptionUtil *encryption.Encryption
-	FormatterUtil  formatter.FormatterUtil
-	GeneratorUtil  generator_util.GeneratorUtil
-	HttpUtil       http_util.HttpUtil
-	JWTUtil        jwt_util.JwtUtil
-	StructUtil     struct_util.StructUtil
-	ValidationUtil validation.Validator
+	EncryptionUtil  *encryption.Encryption
+	FormatterUtil   formatter.FormatterUtil
+	GeneratorUtil   generator_util.GeneratorUtil
+	HttpUtil        http_util.HttpUtil
+	JWTUtil         jwt_util.JwtUtil
+	StructUtil      struct_util.StructUtil
+	MongoStructUtil struct_util.MongoStructUtil
+	ValidationUtil  validation.Validator
 }
 
 func NewUtil(
@@ -28,16 +29,18 @@ func NewUtil(
 	httpUtil http_util.HttpUtil,
 	jwtUtil jwt_util.JwtUtil,
 	structUtil struct_util.StructUtil,
+	mongoStructUtil struct_util.MongoStructUtil,
 	validationUtil validation.Validator,
 ) *Util {
 	return &Util{
-		EncryptionUtil: encryptionUtil,
-		FormatterUtil:  formatterUtil,
-		GeneratorUtil:  generatorUtil,
-		HttpUtil:       httpUtil,
-		JWTUtil:        jwtUtil,
-		StructUtil:     structUtil,
-		ValidationUtil: validationUtil,
+		EncryptionUtil:  encryptionUtil,
+		FormatterUtil:   formatterUtil,
+		GeneratorUtil:   generatorUtil,
+		HttpUtil:        httpUtil,
+		JWTUtil:         jwtUtil,
+		StructUtil:      structUtil,
+		MongoStructUtil: mongoStructUtil,
+		ValidationUtil:  validationUtil,
 	}
 }
 

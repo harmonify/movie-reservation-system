@@ -7,6 +7,7 @@ var (
 		"struct-util",
 		fx.Provide(
 			NewStructUtil,
+			NewMongoStructUtil,
 		),
 	)
 )
