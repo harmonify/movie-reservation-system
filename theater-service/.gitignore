@@ -1,0 +1,16 @@
+.data/*
+!.data/.gitkeep
+
+.dist/*
+!.dist/.gitkeep
+
+.coverage/*
+!.coverage/.gitkeep
+
+.env
+.env.*
+!.env.example
+!.env.test.example
+
+.vscode
+**/*.DS_Store

@@ -85,6 +85,7 @@ func NewApp(p ...fx.Option) *fx.App {
 			func(p database.DatabaseParam, cfg *config.UserServiceConfig) (database.DatabaseResult, error) {
 				return database.NewDatabase(p, &database.DatabaseConfig{
 					Env:                   cfg.Env,
+					DbType:                cfg.DbType,
 					DbHost:                cfg.DbHost,
 					DbPort:                cfg.DbPort,
 					DbUser:                cfg.DbUser,

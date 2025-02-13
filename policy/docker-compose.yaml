@@ -1,0 +1,19 @@
+services:
+    opa:
+        image: openpolicyagent/opa:1.1.0-static
+        command:
+            [
+                "run",
+                "--server",
+                # "--log-level",
+                # "debug",
+                "--addr",
+                ":8181",
+                "/policies",
+            ]
+        ports:
+            - "8181:8181"
+        networks:
+            - core-net
+        volumes:
+            - ./policies:/policies

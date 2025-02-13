@@ -19,19 +19,19 @@ type UserServiceConfig struct {
 
 	FrontEndUrl string `mapstructure:"FRONTEND_URL"`
 
-	DbHost                string `mapstructure:"PG_HOST"`
-	DbPort                int    `mapstructure:"PG_PORT" validate:"min=1,max=65535"`
-	DbUser                string `mapstructure:"PG_USER"`
-	DbPassword            string `mapstructure:"PG_PASSWORD"`
-	DbName                string `mapstructure:"PG_DATABASE"`
-	DbMigration           bool   `mapstructure:"PG_AUTO_MIGRATION" validate:"boolean"`
-	DbMaxIdleConn         int    `mapstructure:"PG_MAX_IDLE_CONN"`
-	DbMaxOpenConn         int    `mapstructure:"PG_MAX_OPEN_CONN"`
-	DbMaxLifetimeInMinute int    `mapstructure:"PG_MAX_LIFETIME_IN_MINUTE"`
+	DbType                string `mapstructure:"DB_TYPE" validate:"required,oneof=postgresql mysql"`
+	DbHost                string `mapstructure:"DB_HOST"`
+	DbPort                int    `mapstructure:"DB_PORT" validate:"min=1,max=65535"`
+	DbUser                string `mapstructure:"DB_USER"`
+	DbPassword            string `mapstructure:"DB_PASSWORD"`
+	DbName                string `mapstructure:"DB_DATABASE"`
+	DbMaxIdleConn         int    `mapstructure:"DB_MAX_IDLE_CONN"`
+	DbMaxOpenConn         int    `mapstructure:"DB_MAX_OPEN_CONN"`
+	DbMaxLifetimeInMinute int    `mapstructure:"DB_MAX_LIFETIME_IN_MINUTE"`
 
-	RedisHost string `mapstructure:"REDIS_HOST"`
-	RedisPort string `mapstructure:"REDIS_PORT"`
-	RedisPass string `mapstructure:"REDIS_PASS"`
+	RedisHost string `mapstructure:"REDIS_HOST" validate:"required"`
+	RedisPort string `mapstructure:"REDIS_PORT" validate:"required,numeric"`
+	RedisPass string `mapstructure:"REDIS_PASS" validate:"required"`
 
 	GrpcPort                   string `mapstructure:"GRPC_PORT" validate:"numeric"`
 	GrpcNotificationServiceUrl string `mapstructure:"GRPC_NOTIFICATION_SERVICE_URL" validate:"required,url"`

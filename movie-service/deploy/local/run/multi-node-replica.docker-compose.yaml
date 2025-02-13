@@ -1,0 +1,104 @@
+# Connect with this URI: mongodb://root:root@localhost:27017,localhost:27018,localhost:27019/?replicaSet=rs0
+services:
+    mongodb-primary:
+        image: mongo:7.0
+        container_name: mongodb-primary
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: root
+            MONGO_INITDB_ROOT_PASSWORD: root
+        volumes:
+            - ../../../.data/mongodb-primary/db:/data/db
+            - "../../../.data/mongodb-primary/configdb:/data/configdb"
+            # Mount the keyFile for internal replica set authentication.
+            - ./mongo-keyfile:/etc/secrets/mongo-keyfile:ro
+            # Mount the replica set initialization script.
+            - ./init-multi-node-replica-set.sh:/docker-entrypoint-initdb.d/init-multi-node-replica-set.sh:ro
+        command:
+            [
+                "--replSet",
+                "rs0",
+                "--bind_ip_all",
+                "--port",
+                "27017",
+                "--keyFile",
+                "/etc/secrets/mongo-keyfile",
+            ]
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        ports:
+            - "27017:27017"
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "mongosh",
+                    "--port",
+                    "27017",
+                    "--quiet",
+                    "--eval",
+                    "rs.status() || exit 1",
+                ]
+            interval: 5s
+            timeout: 30s
+            retries: 30
+        networks:
+            - movie-service-net
+
+    mongodb-secondary:
+        image: mongo:7.0
+        container_name: mongodb-secondary
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: root
+            MONGO_INITDB_ROOT_PASSWORD: root
+        volumes:
+            - ../../../.data/mongodb-secondary/db:/data/db
+            - "../../../.data/mongodb-secondary/configdb:/data/configdb"
+            - ./mongo-keyfile:/etc/secrets/mongo-keyfile:ro
+        command:
+            [
+                "--replSet",
+                "rs0",
+                "--bind_ip_all",
+                "--port",
+                "27018",
+                "--keyFile",
+                "/etc/secrets/mongo-keyfile",
+            ]
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        ports:
+            - "27018:27018"
+        networks:
+            - movie-service-net
+        links:
+            - mongodb-primary
+            - mongodb-arbiter
+
+    mongodb-arbiter:
+        image: mongo:7.0
+        container_name: mongodb-arbiter
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: root
+            MONGO_INITDB_ROOT_PASSWORD: root
+        volumes:
+            # The arbiter does not store data, but volumes are defined for consistency.
+            - ../../../.data/mongodb-arbiter/db:/data/db
+            - "../../../.data/mongodb-arbiter/configdb:/data/configdb"
+            - ./mongo-keyfile:/etc/secrets/mongo-keyfile:ro
+        command:
+            [
+                "--replSet",
+                "rs0",
+                "--bind_ip_all",
+                "--port",
+                "27019",
+                "--keyFile",
+                "/etc/secrets/mongo-keyfile",
+            ]
+        ports:
+            - "27019:27019"
+        networks:
+            - movie-service-net
+        links:
+            - mongodb-primary
+            - mongodb-secondary

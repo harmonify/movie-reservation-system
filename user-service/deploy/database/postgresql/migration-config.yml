@@ -1,6 +1,6 @@
 dev:
-  dialect: postgres
-  datasource: host=${PG_HOST} port=${PG_PORT} user=${PG_USER} password=${PG_PASSWORD} dbname=${PG_DATABASE} sslmode=disable
-  dir: cmd/database/postgresql/migration
-  table: migrations
-  pool: 1
+    dialect: postgres
+    datasource: host=${DB_HOST} port=${DB_PORT} user=${DB_USER} password=${DB_PASSWORD} dbname=${DB_DATABASE} sslmode=disable
+    dir: deploy/database/postgresql/migration
+    table: migrations
+    pool: 1

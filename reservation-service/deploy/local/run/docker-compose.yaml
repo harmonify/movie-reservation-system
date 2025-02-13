@@ -1,23 +1,23 @@
 services:
-    elasticsearch:
-        image: elasticsearch:8.17.0
-        ports:
-            - "9200:9200"
+    reservation-service-postgres:
+        image: debezium/postgres:16-alpine
+        restart: "on-failure:5"
         environment:
-            - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-            - bootstrap.memory_lock=true
-            - discovery.type=single-node
-            - node.name=elasticsearch
+            POSTGRES_USER: root
+            POSTGRES_PASSWORD: root
+            POSTGRES_DB: mrs-reservation-service
+        ports:
+            - 5433:5432
         volumes:
-            - ../../../.data/elasticsearch:/usr/share/elasticsearch/data
+            - ./config/postgresql:/docker-entrypoint-initdb.d
+            - ../../../.data/postgres:/data
+        networks:
+            - reservation-service-net
 
-    mongodb:
-        # If you are using a Raspberry Pi, use mongo:4.4.18
-        image: mongo:7.0
-        environment:
-            MONGO_INITDB_ROOT_USERNAME: root
-            MONGO_INITDB_ROOT_PASSWORD: root
-        volumes:
-            - ../../../.data/mongodb:/data/db
+    reservation-service-redis:
+        image: redis:7
+        command: ["redis-server", "--requirepass", "secret"]
         ports:
-            - 27017:27017
+            - "6383:6379"
+        networks:
+            - reservation-service-net

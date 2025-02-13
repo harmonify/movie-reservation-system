@@ -17,8 +17,8 @@ SET
 SELECT
     pg_reload_conf();
 
-CREATE DATABASE "mvs-user-service" IF NOT EXISTS;
+CREATE DATABASE "mrs-user-service" IF NOT EXISTS;
 
-\c "mvs-user-service";
+\c "mrs-user-service";
 
 CREATE EXTENSION "pgcrypto" IF NOT EXISTS;

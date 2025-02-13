@@ -1,16 +1,48 @@
+# Connect with this URI: "mongodb://root:root@localhost:27017/?replicaSet=rs0"
 services:
-    mongodb:
-        # If you are using a Raspberry Pi, use mongo:4.4.18
+    movie-service-mongodb:
         image: mongo:7.0
         environment:
-            MONGO_INITDB_ROOT_USERNAME: root
-            MONGO_INITDB_ROOT_PASSWORD: root
+            MONGO_INITDB_ROOT_USERNAME: "root"
+            MONGO_INITDB_ROOT_PASSWORD: "root"
         volumes:
-            - ../../../.data/mongodb:/data/db
+            - ../../../.data/mongodb/db:/data/db
+            - "../../../.data/mongodb/configdb:/data/configdb"
+            # Mount the keyFile for internal replica set authentication.
+            - ./mongo-keyfile:/etc/secrets/mongo-keyfile:ro
+        command:
+            [
+                "--replSet",
+                "rs0",
+                "--bind_ip_all",
+                "--port",
+                "27017",
+                "--keyFile",
+                "/etc/secrets/mongo-keyfile",
+            ]
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
         ports:
-            - 27017:27017
+            - "27017:27017"
         networks:
             - movie-service-net
+        healthcheck:
+            test: 'echo ''db.runCommand("ping").ok'' | mongosh --quiet'
+            interval: 10s
+            timeout: 5s
+            retries: 3
+            start_period: 10s
 
-networks:
-    movie-service-net:
+    movie-service-mongodb-init:
+        image: "mongo:7.0"
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: "root"
+            MONGO_INITDB_ROOT_PASSWORD: "root"
+        command: "/init.sh"
+        volumes:
+            - ./init-single-node-replica-set.sh:/init.sh
+        depends_on:
+            movie-service-mongodb:
+                condition: service_healthy
+        networks:
+            - movie-service-net

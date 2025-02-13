@@ -37,7 +37,7 @@ start: ## Run server in normal mode
 
 .PHONY: start-dev
 start-dev: ## Run server in development mode (will restart if any changes)
-	air -c .air.toml | zap-pretty
+	mkdir -pv .dist && (air -c .air.toml | zap-pretty)
 
 .PHONY: test
 test: ## Run test

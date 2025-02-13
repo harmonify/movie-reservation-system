@@ -18,7 +18,7 @@ type Redis struct {
 type RedisConfig struct {
 	RedisHost string `validate:"required"`
 	RedisPort string `validate:"required,min=1,max=65535"`
-	RedisPass string
+	RedisPass string `validate:"required"`
 }
 
 func NewRedis(cfg *RedisConfig) (*Redis, error) {

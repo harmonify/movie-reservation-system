@@ -1,0 +1,1054 @@
+[
+    {
+        "_id": {
+            "$oid": "67aca34611b768c325052910"
+        },
+        "trace_id": "0bcf6000-783f-4505-95d5-aeb7cdb269c7",
+        "created_at": {
+            "$date": "2025-02-12T00:00:00.000Z"
+        },
+        "updated_at": {
+            "$date": "2025-02-12T00:00:00.000Z"
+        },
+        "title": "The Shawshank Redemption",
+        "description": "Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency.",
+        "genres": [
+            "Drama"
+        ],
+        "poster_image_url": "https://example.com/posters/tt0111161.jpg",
+        "photo_urls": [
+            "https://example.com/photos/tt0111161_1.jpg",
+            "https://example.com/photos/tt0111161_2.jpg"
+        ],
+        "trailer_url": "https://example.com/trailers/tt0111161.mp4",
+        "runtime": 8520000000000,
+        "release_date": "1994-09-23T00:00:00Z",
+        "parental_guidance": [
+            {
+                "code": "R",
+                "country_code": "US"
+            }
+        ],
+        "dub": {
+            "name": "English",
+            "code": "en"
+        },
+        "available_subtitles": [
+            {
+                "name": "Spanish",
+                "code": "es"
+            },
+            {
+                "name": "French",
+                "code": "fr"
+            }
+        ],
+        "cast": [
+            {
+                "_id": {
+                    "$oid": "67aca62d11b768c325052941"
+                },
+                "trace_id": "0bcf6000-783f-4505-95d5-aeb7cdb269c7",
+                "created_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "updated_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "name": "Tim Robbins",
+                "picture_url": "https://example.com/people/tim_robbins.jpg"
+            },
+            {
+                "_id": {
+                    "$oid": "67aca62d11b768c325052942"
+                },
+                "trace_id": "0bcf6000-783f-4505-95d5-aeb7cdb269c7",
+                "created_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "updated_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "name": "Morgan Freeman",
+                "picture_url": "https://example.com/people/morgan_freeman.jpg"
+            }
+        ],
+        "director": {
+            "_id": {
+                "$oid": "67aca62d11b768c325052943"
+            },
+            "trace_id": "0bcf6000-783f-4505-95d5-aeb7cdb269c7",
+            "created_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "updated_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "name": "Frank Darabont",
+            "picture_url": "https://example.com/people/frank_darabont.jpg"
+        },
+        "writer": {
+            "_id": {
+                "$oid": "67aca62e11b768c325052944"
+            },
+            "trace_id": "0bcf6000-783f-4505-95d5-aeb7cdb269c7",
+            "created_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "updated_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "name": "Frank Darabont",
+            "picture_url": "https://example.com/people/frank_darabont.jpg"
+        },
+        "production_company": "Castle Rock Entertainment"
+    },
+    {
+        "_id": {
+            "$oid": "67aca60911b768c325052940"
+        },
+        "trace_id": "05f78bec-dec7-477a-a1f2-630e11414ea8",
+        "created_at": {
+            "$date": "2025-02-12T00:00:00.000Z"
+        },
+        "updated_at": {
+            "$date": "2025-02-12T00:00:00.000Z"
+        },
+        "title": "The Godfather",
+        "description": "The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son.",
+        "genres": [
+            "Crime",
+            "Drama"
+        ],
+        "poster_image_url": "https://example.com/posters/tt0068646.jpg",
+        "photo_urls": [
+            "https://example.com/photos/tt0068646_1.jpg",
+            "https://example.com/photos/tt0068646_2.jpg"
+        ],
+        "trailer_url": "https://example.com/trailers/tt0068646.mp4",
+        "runtime": 10500000000000,
+        "release_date": "1972-03-24T00:00:00Z",
+        "parental_guidance": [
+            {
+                "code": "R",
+                "country_code": "US"
+            }
+        ],
+        "dub": {
+            "name": "English",
+            "code": "en"
+        },
+        "available_subtitles": [
+            {
+                "name": "Spanish",
+                "code": "es"
+            },
+            {
+                "name": "French",
+                "code": "fr"
+            }
+        ],
+        "cast": [
+            {
+                "_id": {
+                    "$oid": "67aca5ea11b768c32505293c"
+                },
+                "trace_id": "05f78bec-dec7-477a-a1f2-630e11414ea8",
+                "created_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "updated_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "name": "Marlon Brando",
+                "picture_url": "https://example.com/people/marlon_brando.jpg"
+            },
+            {
+                "_id": {
+                    "$oid": "67aca5ea11b768c32505293d"
+                },
+                "trace_id": "05f78bec-dec7-477a-a1f2-630e11414ea8",
+                "created_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "updated_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "name": "Al Pacino",
+                "picture_url": "https://example.com/people/al_pacino.jpg"
+            }
+        ],
+        "director": {
+            "_id": {
+                "$oid": "67aca5eb11b768c32505293e"
+            },
+            "trace_id": "05f78bec-dec7-477a-a1f2-630e11414ea8",
+            "created_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "updated_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "name": "Francis Ford Coppola",
+            "picture_url": "https://example.com/people/francis_coppola.jpg"
+        },
+        "writer": {
+            "_id": {
+                "$oid": "67aca5eb11b768c32505293f"
+            },
+            "trace_id": "05f78bec-dec7-477a-a1f2-630e11414ea8",
+            "created_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "updated_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "name": "Francis Ford Coppola",
+            "picture_url": "https://example.com/people/francis_coppola.jpg"
+        },
+        "production_company": "Paramount Pictures"
+    },
+    {
+        "_id": {
+            "$oid": "67aca34811b768c325052912"
+        },
+        "trace_id": "b0c455c4-29dc-471d-9f15-ffcfbba3ed79",
+        "created_at": {
+            "$date": "2025-02-12T00:00:00.000Z"
+        },
+        "updated_at": {
+            "$date": "2025-02-12T00:00:00.000Z"
+        },
+        "title": "The Dark Knight",
+        "description": "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests of his ability to fight injustice.",
+        "genres": [
+            "Action",
+            "Crime",
+            "Drama"
+        ],
+        "poster_image_url": "https://example.com/posters/tt0468569.jpg",
+        "photo_urls": [
+            "https://example.com/photos/tt0468569_1.jpg",
+            "https://example.com/photos/tt0468569_2.jpg"
+        ],
+        "trailer_url": "https://example.com/trailers/tt0468569.mp4",
+        "runtime": 9120000000000,
+        "release_date": "2008-07-18T00:00:00Z",
+        "parental_guidance": [
+            {
+                "code": "PG-13",
+                "country_code": "US"
+            }
+        ],
+        "dub": {
+            "name": "English",
+            "code": "en"
+        },
+        "available_subtitles": [
+            {
+                "name": "Spanish",
+                "code": "es"
+            },
+            {
+                "name": "French",
+                "code": "fr"
+            }
+        ],
+        "cast": [
+            {
+                "_id": {
+                    "$oid": "67aca5d011b768c32505293b"
+                },
+                "trace_id": "b0c455c4-29dc-471d-9f15-ffcfbba3ed79",
+                "created_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "updated_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "name": "Christian Bale",
+                "picture_url": "https://example.com/people/christian_bale.jpg"
+            },
+            {
+                "_id": {
+                    "$oid": "67aca5cf11b768c32505293a"
+                },
+                "trace_id": "b0c455c4-29dc-471d-9f15-ffcfbba3ed79",
+                "created_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "updated_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "name": "Heath Ledger",
+                "picture_url": "https://example.com/people/heath_ledger.jpg"
+            }
+        ],
+        "director": {
+            "_id": {
+                "$oid": "67aca5cf11b768c325052939"
+            },
+            "trace_id": "b0c455c4-29dc-471d-9f15-ffcfbba3ed79",
+            "created_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "updated_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "name": "Christopher Nolan",
+            "picture_url": "https://example.com/people/christopher_nolan.jpg"
+        },
+        "writer": {
+            "_id": {
+                "$oid": "67aca5ce11b768c325052938"
+            },
+            "trace_id": "b0c455c4-29dc-471d-9f15-ffcfbba3ed79",
+            "created_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "updated_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "name": "Christopher Nolan",
+            "picture_url": "https://example.com/people/christopher_nolan.jpg"
+        },
+        "production_company": "Warner Bros. Pictures"
+    },
+    {
+        "_id": {
+            "$oid": "67aca34811b768c325052913"
+        },
+        "trace_id": "3051d4c8-52d4-4030-8c70-010540446817",
+        "created_at": {
+            "$date": "2025-02-12T00:00:00.000Z"
+        },
+        "updated_at": {
+            "$date": "2025-02-12T00:00:00.000Z"
+        },
+        "title": "Pulp Fiction",
+        "description": "The lives of two mob hitmen, a boxer, a gangster's wife, and a pair of diner bandits intertwine in four tales of violence and redemption.",
+        "genres": [
+            "Crime",
+            "Drama"
+        ],
+        "poster_image_url": "https://example.com/posters/tt0110912.jpg",
+        "photo_urls": [
+            "https://example.com/photos/tt0110912_1.jpg",
+            "https://example.com/photos/tt0110912_2.jpg"
+        ],
+        "trailer_url": "https://example.com/trailers/tt0110912.mp4",
+        "runtime": 9240000000000,
+        "release_date": "1994-10-14T00:00:00Z",
+        "parental_guidance": [
+            {
+                "code": "R",
+                "country_code": "US"
+            }
+        ],
+        "dub": {
+            "name": "English",
+            "code": "en"
+        },
+        "available_subtitles": [
+            {
+                "name": "Spanish",
+                "code": "es"
+            },
+            {
+                "name": "French",
+                "code": "fr"
+            }
+        ],
+        "cast": [
+            {
+                "_id": {
+                    "$oid": "67aca5a111b768c325052934"
+                },
+                "trace_id": "3051d4c8-52d4-4030-8c70-010540446817",
+                "created_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "updated_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "name": "John Travolta",
+                "picture_url": "https://example.com/people/john_travolta.jpg"
+            },
+            {
+                "_id": {
+                    "$oid": "67aca5a111b768c325052935"
+                },
+                "trace_id": "3051d4c8-52d4-4030-8c70-010540446817",
+                "created_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "updated_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "name": "Samuel L. Jackson",
+                "picture_url": "https://example.com/people/samuel_jackson.jpg"
+            }
+        ],
+        "director": {
+            "_id": {
+                "$oid": "67aca5a211b768c325052936"
+            },
+            "trace_id": "3051d4c8-52d4-4030-8c70-010540446817",
+            "created_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "updated_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "name": "Quentin Tarantino",
+            "picture_url": "https://example.com/people/quentin_tarantino.jpg"
+        },
+        "writer": {
+            "_id": {
+                "$oid": "67aca5a211b768c325052937"
+            },
+            "trace_id": "3051d4c8-52d4-4030-8c70-010540446817",
+            "created_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "updated_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "name": "Quentin Tarantino",
+            "picture_url": "https://example.com/people/quentin_tarantino.jpg"
+        },
+        "production_company": "Miramax Films"
+    },
+    {
+        "_id": {
+            "$oid": "67aca34911b768c325052914"
+        },
+        "trace_id": "4b2ac7a8-61ff-4fbd-acd0-b78173a970af",
+        "created_at": {
+            "$date": "2025-02-12T00:00:00.000Z"
+        },
+        "updated_at": {
+            "$date": "2025-02-12T00:00:00.000Z"
+        },
+        "title": "The Lord of the Rings: The Return of the King",
+        "description": "Gandalf and Aragorn lead the World of Men against Sauron's army to draw his gaze from Frodo and Sam as they approach Mount Doom with the One Ring.",
+        "genres": [
+            "Adventure",
+            "Drama",
+            "Fantasy"
+        ],
+        "poster_image_url": "https://example.com/posters/tt0167260.jpg",
+        "photo_urls": [
+            "https://example.com/photos/tt0167260_1.jpg",
+            "https://example.com/photos/tt0167260_2.jpg"
+        ],
+        "trailer_url": "https://example.com/trailers/tt0167260.mp4",
+        "runtime": 12060000000000,
+        "release_date": "2003-12-17T00:00:00Z",
+        "parental_guidance": [
+            {
+                "code": "PG-13",
+                "country_code": "US"
+            }
+        ],
+        "dub": {
+            "name": "English",
+            "code": "en"
+        },
+        "available_subtitles": [
+            {
+                "name": "Spanish",
+                "code": "es"
+            },
+            {
+                "name": "French",
+                "code": "fr"
+            }
+        ],
+        "cast": [
+            {
+                "_id": {
+                    "$oid": "67aca58111b768c325052933"
+                },
+                "trace_id": "4b2ac7a8-61ff-4fbd-acd0-b78173a970af",
+                "created_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "updated_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "name": "Elijah Wood",
+                "picture_url": "https://example.com/people/elijah_wood.jpg"
+            },
+            {
+                "_id": {
+                    "$oid": "67aca58111b768c325052932"
+                },
+                "trace_id": "4b2ac7a8-61ff-4fbd-acd0-b78173a970af",
+                "created_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "updated_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "name": "Ian McKellen",
+                "picture_url": "https://example.com/people/ian_mckellen.jpg"
+            }
+        ],
+        "director": {
+            "_id": {
+                "$oid": "67aca58111b768c325052931"
+            },
+            "trace_id": "4b2ac7a8-61ff-4fbd-acd0-b78173a970af",
+            "created_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "updated_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "name": "Peter Jackson",
+            "picture_url": "https://example.com/people/peter_jackson.jpg"
+        },
+        "writer": {
+            "_id": {
+                "$oid": "67aca58011b768c325052930"
+            },
+            "trace_id": "4b2ac7a8-61ff-4fbd-acd0-b78173a970af",
+            "created_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "updated_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "name": "Peter Jackson",
+            "picture_url": "https://example.com/people/peter_jackson.jpg"
+        },
+        "production_company": "New Line Cinema"
+    },
+    {
+        "_id": {
+            "$oid": "67aca38211b768c325052915"
+        },
+        "trace_id": "46b66fa6-f82d-44a6-91be-5d841860a320",
+        "created_at": {
+            "$date": "2025-02-12T00:00:00.000Z"
+        },
+        "updated_at": {
+            "$date": "2025-02-12T00:00:00.000Z"
+        },
+        "title": "Forrest Gump",
+        "description": "The presidencies of Kennedy and Johnson, the events of Vietnam, Watergate and other history unfold through the perspective of an Alabama man with an IQ of 75.",
+        "genres": [
+            "Drama",
+            "Romance"
+        ],
+        "poster_image_url": "https://example.com/posters/tt0109830.jpg",
+        "photo_urls": [
+            "https://example.com/photos/tt0109830_1.jpg",
+            "https://example.com/photos/tt0109830_2.jpg"
+        ],
+        "trailer_url": "https://example.com/trailers/tt0109830.mp4",
+        "runtime": 8520000000000,
+        "release_date": "1994-07-06T00:00:00Z",
+        "parental_guidance": [
+            {
+                "code": "PG-13",
+                "country_code": "US"
+            }
+        ],
+        "dub": {
+            "name": "English",
+            "code": "en"
+        },
+        "available_subtitles": [
+            {
+                "name": "Spanish",
+                "code": "es"
+            },
+            {
+                "name": "French",
+                "code": "fr"
+            }
+        ],
+        "cast": [
+            {
+                "_id": {
+                    "$oid": "67aca55311b768c32505292e"
+                },
+                "trace_id": "46b66fa6-f82d-44a6-91be-5d841860a320",
+                "created_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "updated_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "name": "Tom Hanks",
+                "picture_url": "https://example.com/people/tom_hanks.jpg"
+            },
+            {
+                "_id": {
+                    "$oid": "67aca57511b768c32505292f"
+                },
+                "trace_id": "46b66fa6-f82d-44a6-91be-5d841860a320",
+                "created_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "updated_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "name": "Robin Wright",
+                "picture_url": "https://example.com/people/robin_wright.jpg"
+            }
+        ],
+        "director": {
+            "_id": {
+                "$oid": "67aca55211b768c32505292d"
+            },
+            "trace_id": "46b66fa6-f82d-44a6-91be-5d841860a320",
+            "created_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "updated_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "name": "Robert Zemeckis",
+            "picture_url": "https://example.com/people/robert_zemeckis.jpg"
+        },
+        "writer": {
+            "_id": {
+                "$oid": "67aca55211b768c32505292c"
+            },
+            "trace_id": "46b66fa6-f82d-44a6-91be-5d841860a320",
+            "created_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "updated_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "name": "Eric Roth",
+            "picture_url": "https://example.com/people/eric_roth.jpg"
+        },
+        "production_company": "Paramount Pictures"
+    },
+    {
+        "_id": {
+            "$oid": "67aca38211b768c325052916"
+        },
+        "trace_id": "a81867a6-c108-45ab-9e32-40415aec233c",
+        "created_at": {
+            "$date": "2025-02-12T00:00:00.000Z"
+        },
+        "updated_at": {
+            "$date": "2025-02-12T00:00:00.000Z"
+        },
+        "title": "Inception",
+        "description": "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a CEO.",
+        "genres": [
+            "Action",
+            "Adventure",
+            "Sci-Fi"
+        ],
+        "poster_image_url": "https://example.com/posters/tt1375666.jpg",
+        "photo_urls": [
+            "https://example.com/photos/tt1375666_1.jpg",
+            "https://example.com/photos/tt1375666_2.jpg"
+        ],
+        "trailer_url": "https://example.com/trailers/tt1375666.mp4",
+        "runtime": 8880000000000,
+        "release_date": "2010-07-16T00:00:00Z",
+        "parental_guidance": [
+            {
+                "code": "PG-13",
+                "country_code": "US"
+            }
+        ],
+        "dub": {
+            "name": "English",
+            "code": "en"
+        },
+        "available_subtitles": [
+            {
+                "name": "Spanish",
+                "code": "es"
+            },
+            {
+                "name": "French",
+                "code": "fr"
+            }
+        ],
+        "cast": [
+            {
+                "_id": {
+                    "$oid": "67aca53711b768c32505292a"
+                },
+                "trace_id": "a81867a6-c108-45ab-9e32-40415aec233c",
+                "created_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "updated_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "name": "Leonardo DiCaprio",
+                "picture_url": "https://example.com/people/leonardo_dicaprio.jpg"
+            },
+            {
+                "_id": {
+                    "$oid": "67aca53611b768c325052929"
+                },
+                "trace_id": "a81867a6-c108-45ab-9e32-40415aec233c",
+                "created_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "updated_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "name": "Joseph Gordon-Levitt",
+                "picture_url": "https://example.com/people/joseph_gordon_levitt.jpg"
+            }
+        ],
+        "director": {
+            "_id": {
+                "$oid": "67aca53611b768c325052928"
+            },
+            "trace_id": "a81867a6-c108-45ab-9e32-40415aec233c",
+            "created_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "updated_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "name": "Christopher Nolan",
+            "picture_url": "https://example.com/people/christopher_nolan.jpg"
+        },
+        "writer": {
+            "_id": {
+                "$oid": "67aca50f11b768c325052927"
+            },
+            "trace_id": "a81867a6-c108-45ab-9e32-40415aec233c",
+            "created_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "updated_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "name": "Christopher Nolan",
+            "picture_url": "https://example.com/people/christopher_nolan.jpg"
+        },
+        "production_company": "Warner Bros. Pictures"
+    },
+    {
+        "_id": {
+            "$oid": "67aca38311b768c325052917"
+        },
+        "trace_id": "0413f03b-ac0c-43a0-91d6-e899cbd1ec80",
+        "created_at": {
+            "$date": "2025-02-12T00:00:00.000Z"
+        },
+        "updated_at": {
+            "$date": "2025-02-12T00:00:00.000Z"
+        },
+        "title": "Fight Club",
+        "description": "An insomniac office worker and a devil-may-care soap maker form an underground fight club that evolves into something much, much more.",
+        "genres": [
+            "Drama"
+        ],
+        "poster_image_url": "https://example.com/posters/tt0137523.jpg",
+        "photo_urls": [
+            "https://example.com/photos/tt0137523_1.jpg",
+            "https://example.com/photos/tt0137523_2.jpg"
+        ],
+        "trailer_url": "https://example.com/trailers/tt0137523.mp4",
+        "runtime": 8340000000000,
+        "release_date": "1999-10-15T00:00:00Z",
+        "parental_guidance": [
+            {
+                "code": "R",
+                "country_code": "US"
+            }
+        ],
+        "dub": {
+            "name": "English",
+            "code": "en"
+        },
+        "available_subtitles": [
+            {
+                "name": "Spanish",
+                "code": "es"
+            },
+            {
+                "name": "French",
+                "code": "fr"
+            }
+        ],
+        "cast": [
+            {
+                "_id": {
+                    "$oid": "67aca50e11b768c325052926"
+                },
+                "trace_id": "0413f03b-ac0c-43a0-91d6-e899cbd1ec80",
+                "created_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "updated_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "name": "Brad Pitt",
+                "picture_url": "https://example.com/people/brad_pitt.jpg"
+            },
+            {
+                "_id": {
+                    "$oid": "67aca50e11b768c325052925"
+                },
+                "trace_id": "0413f03b-ac0c-43a0-91d6-e899cbd1ec80",
+                "created_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "updated_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "name": "Edward Norton",
+                "picture_url": "https://example.com/people/edward_norton.jpg"
+            }
+        ],
+        "director": {
+            "_id": {
+                "$oid": "67aca50c11b768c325052924"
+            },
+            "trace_id": "0413f03b-ac0c-43a0-91d6-e899cbd1ec80",
+            "created_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "updated_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "name": "David Fincher",
+            "picture_url": "https://example.com/people/david_fincher.jpg"
+        },
+        "writer": {
+            "_id": {
+                "$oid": "67aca4c411b768c325052923"
+            },
+            "trace_id": "0413f03b-ac0c-43a0-91d6-e899cbd1ec80",
+            "created_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "updated_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "name": "Chuck Palahniuk",
+            "picture_url": "https://example.com/people/chuck_palahniuk.jpg"
+        },
+        "production_company": "20th Century Fox"
+    },
+    {
+        "_id": {
+            "$oid": "67aca38311b768c325052918"
+        },
+        "trace_id": "672240d3-2a0d-4643-8ef3-7eee4b20e380",
+        "created_at": {
+            "$date": "2025-02-12T00:00:00.000Z"
+        },
+        "updated_at": {
+            "$date": "2025-02-12T00:00:00.000Z"
+        },
+        "title": "The Matrix",
+        "description": "A computer hacker learns from mysterious rebels about the true nature of his reality and his role in the war against its controllers.",
+        "genres": [
+            "Action",
+            "Sci-Fi"
+        ],
+        "poster_image_url": "https://example.com/posters/tt0133093.jpg",
+        "photo_urls": [
+            "https://example.com/photos/tt0133093_1.jpg",
+            "https://example.com/photos/tt0133093_2.jpg"
+        ],
+        "trailer_url": "https://example.com/trailers/tt0133093.mp4",
+        "runtime": 8160000000000,
+        "release_date": "1999-03-31T00:00:00Z",
+        "parental_guidance": [
+            {
+                "code": "R",
+                "country_code": "US"
+            }
+        ],
+        "dub": {
+            "name": "English",
+            "code": "en"
+        },
+        "available_subtitles": [
+            {
+                "name": "Spanish",
+                "code": "es"
+            },
+            {
+                "name": "French",
+                "code": "fr"
+            }
+        ],
+        "cast": [
+            {
+                "_id": {
+                    "$oid": "67aca4c311b768c325052922"
+                },
+                "trace_id": "672240d3-2a0d-4643-8ef3-7eee4b20e380",
+                "created_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "updated_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "name": "Keanu Reeves",
+                "picture_url": "https://example.com/people/keanu_reeves.jpg"
+            },
+            {
+                "_id": {
+                    "$oid": "67aca4c311b768c325052921"
+                },
+                "trace_id": "672240d3-2a0d-4643-8ef3-7eee4b20e380",
+                "created_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "updated_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "name": "Laurence Fishburne",
+                "picture_url": "https://example.com/people/laurence_fishburne.jpg"
+            }
+        ],
+        "director": {
+            "_id": {
+                "$oid": "67aca4c211b768c325052920"
+            },
+            "trace_id": "672240d3-2a0d-4643-8ef3-7eee4b20e380",
+            "created_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "updated_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "name": "Lana Wachowski",
+            "picture_url": "https://example.com/people/lana_wachowski.jpg"
+        },
+        "writer": {
+            "_id": {
+                "$oid": "67aca48a11b768c32505291f"
+            },
+            "trace_id": "672240d3-2a0d-4643-8ef3-7eee4b20e380",
+            "created_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "updated_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "name": "Lilly Wachowski",
+            "picture_url": "https://example.com/people/lilly_wachowski.jpg"
+        },
+        "production_company": "Warner Bros. Pictures"
+    },
+    {
+        "_id": {
+            "$oid": "67aca38311b768c325052919"
+        },
+        "trace_id": "cb6cc68e-9c78-45e5-9f92-ba5064c5d1ca",
+        "created_at": {
+            "$date": "2025-02-12T00:00:00.000Z"
+        },
+        "updated_at": {
+            "$date": "2025-02-12T00:00:00.000Z"
+        },
+        "title": "Goodfellas",
+        "description": "The story of Henry Hill and his life in the mob, covering his relationship with his wife Karen Hill and his mob partners Jimmy Conway and Tommy DeVito in the Italian-American crime syndicate.",
+        "genres": [
+            "Biography",
+            "Crime",
+            "Drama"
+        ],
+        "poster_image_url": "https://example.com/posters/tt0099685.jpg",
+        "photo_urls": [
+            "https://example.com/photos/tt0099685_1.jpg",
+            "https://example.com/photos/tt0099685_2.jpg"
+        ],
+        "trailer_url": "https://example.com/trailers/tt0099685.mp4",
+        "runtime": 8760000000000,
+        "release_date": "1990-09-19T00:00:00Z",
+        "parental_guidance": [
+            {
+                "code": "R",
+                "country_code": "US"
+            }
+        ],
+        "dub": {
+            "name": "English",
+            "code": "en"
+        },
+        "available_subtitles": [
+            {
+                "name": "Spanish",
+                "code": "es"
+            },
+            {
+                "name": "French",
+                "code": "fr"
+            }
+        ],
+        "cast": [
+            {
+                "_id": {
+                    "$oid": "67aca48a11b768c32505291e"
+                },
+                "trace_id": "cb6cc68e-9c78-45e5-9f92-ba5064c5d1ca",
+                "created_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "updated_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "name": "Robert De Niro",
+                "picture_url": "https://example.com/people/robert_de_niro.jpg"
+            },
+            {
+                "_id": {
+                    "$oid": "67aca48911b768c32505291d"
+                },
+                "trace_id": "cb6cc68e-9c78-45e5-9f92-ba5064c5d1ca",
+                "created_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "updated_at": {
+                    "$date": "2025-02-12T00:00:00.000Z"
+                },
+                "name": "Ray Liotta",
+                "picture_url": "https://example.com/people/ray_liotta.jpg"
+            }
+        ],
+        "director": {
+            "_id": {
+                "$oid": "67aca48911b768c32505291c"
+            },
+            "trace_id": "cb6cc68e-9c78-45e5-9f92-ba5064c5d1ca",
+            "created_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "updated_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "name": "Martin Scorsese",
+            "picture_url": "https://example.com/people/martin_scorsese.jpg"
+        },
+        "writer": {
+            "_id": {
+                "$oid": "67aca48811b768c32505291b"
+            },
+            "trace_id": "cb6cc68e-9c78-45e5-9f92-ba5064c5d1ca",
+            "created_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "updated_at": {
+                "$date": "2025-02-12T00:00:00.000Z"
+            },
+            "name": "Nicholas Pileggi",
+            "picture_url": "https://example.com/people/nicholas_pileggi.jpg"
+        },
+        "production_company": "Warner Bros. Pictures"
+    }
+]

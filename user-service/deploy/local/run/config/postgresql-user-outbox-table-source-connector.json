@@ -6,7 +6,7 @@
         "database.port": "5432",
         "database.user": "root",
         "database.password": "root",
-        "database.dbname": "mvs-user-service",
+        "database.dbname": "mrs-user-service",
         "table.field.event.id": "id",
         "table.field.event.key": "aggregateid",
         "table.field.event.payload": "payload",

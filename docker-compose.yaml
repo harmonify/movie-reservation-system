@@ -4,17 +4,35 @@ include:
     - path: "./deploy/local/jaeger.docker-compose.yaml"
     - path: "./deploy/local/prometheus.docker-compose.yaml"
     - path: "./deploy/local/grafana.docker-compose.yaml"
+    - path: "./policy/docker-compose.yaml"
     - path: "./user-service/deploy/local/run/docker-compose.yaml"
     - path: "./movie-service/deploy/local/run/docker-compose.yaml"
     - path: "./movie-search-service/deploy/local/run/docker-compose.yaml"
-    # - path: "./theater-service/deploy/local/run/docker-compose.yaml"
-    # - path: "./ticket-service/deploy/local/run/docker-compose.yaml"
-    # - path: "./order-service/deploy/local/run/docker-compose.yaml"
+    - path: "./theater-service/deploy/local/run/docker-compose.yaml"
+    - path: "./reservation-service/deploy/local/run/docker-compose.yaml"
 
 networks:
     core-net:
-        name: mvs-core-net
+        name: mrs-core-net
         enable_ipv6: false
     monitoring-net:
-        name: mvs-monitoring-net
+        name: mrs-monitoring-net
+        enable_ipv6: false
+    user-service-net:
+        name: mrs-user-service-net
+        enable_ipv6: false
+    notification-service-net:
+        name: mrs-notification-service-net
+        enable_ipv6: false
+    movie-service-net:
+        name: mrs-movie-service-net
+        enable_ipv6: false
+    movie-search-service-net:
+        name: mrs-movie-search-service-net
+        enable_ipv6: false
+    theater-service-net:
+        name: mrs-theater-service-net
+        enable_ipv6: false
+    reservation-service-net:
+        name: mrs-reservation-service-net
         enable_ipv6: false
