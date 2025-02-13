@@ -140,12 +140,12 @@ func (_c *StructUtil_ConvertSqlStructToMap_Call) RunAndReturn(run func(context.C
 	return _c
 }
 
-// SetNonPrimitiveDefaultValue provides a mock function with given fields: ctx, data
-func (_m *StructUtil) SetNonPrimitiveDefaultValue(ctx context.Context, data interface{}) interface{} {
+// SetOrDefault provides a mock function with given fields: ctx, data
+func (_m *StructUtil) SetOrDefault(ctx context.Context, data interface{}) interface{} {
 	ret := _m.Called(ctx, data)
 
 	if len(ret) == 0 {
-		panic("no return value specified for SetNonPrimitiveDefaultValue")
+		panic("no return value specified for SetOrDefault")
 	}
 
 	var r0 interface{}
@@ -160,31 +160,31 @@ func (_m *StructUtil) SetNonPrimitiveDefaultValue(ctx context.Context, data inte
 	return r0
 }
 
-// StructUtil_SetNonPrimitiveDefaultValue_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetNonPrimitiveDefaultValue'
-type StructUtil_SetNonPrimitiveDefaultValue_Call struct {
+// StructUtil_SetOrDefault_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetOrDefault'
+type StructUtil_SetOrDefault_Call struct {
 	*mock.Call
 }
 
-// SetNonPrimitiveDefaultValue is a helper method to define mock.On call
+// SetOrDefault is a helper method to define mock.On call
 //   - ctx context.Context
 //   - data interface{}
-func (_e *StructUtil_Expecter) SetNonPrimitiveDefaultValue(ctx interface{}, data interface{}) *StructUtil_SetNonPrimitiveDefaultValue_Call {
-	return &StructUtil_SetNonPrimitiveDefaultValue_Call{Call: _e.mock.On("SetNonPrimitiveDefaultValue", ctx, data)}
+func (_e *StructUtil_Expecter) SetOrDefault(ctx interface{}, data interface{}) *StructUtil_SetOrDefault_Call {
+	return &StructUtil_SetOrDefault_Call{Call: _e.mock.On("SetOrDefault", ctx, data)}
 }
 
-func (_c *StructUtil_SetNonPrimitiveDefaultValue_Call) Run(run func(ctx context.Context, data interface{})) *StructUtil_SetNonPrimitiveDefaultValue_Call {
+func (_c *StructUtil_SetOrDefault_Call) Run(run func(ctx context.Context, data interface{})) *StructUtil_SetOrDefault_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(interface{}))
 	})
 	return _c
 }
 
-func (_c *StructUtil_SetNonPrimitiveDefaultValue_Call) Return(result interface{}) *StructUtil_SetNonPrimitiveDefaultValue_Call {
+func (_c *StructUtil_SetOrDefault_Call) Return(result interface{}) *StructUtil_SetOrDefault_Call {
 	_c.Call.Return(result)
 	return _c
 }
 
-func (_c *StructUtil_SetNonPrimitiveDefaultValue_Call) RunAndReturn(run func(context.Context, interface{}) interface{}) *StructUtil_SetNonPrimitiveDefaultValue_Call {
+func (_c *StructUtil_SetOrDefault_Call) RunAndReturn(run func(context.Context, interface{}) interface{}) *StructUtil_SetOrDefault_Call {
 	_c.Call.Return(run)
 	return _c
 }

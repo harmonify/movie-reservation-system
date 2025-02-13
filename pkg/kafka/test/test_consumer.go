@@ -65,7 +65,7 @@ func (c *TestConsumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim s
 				listener.OnMessage(ctx, message)
 			}
 
-			c.logger.Info(fmt.Sprintf("Message claimed: value = %s, timestamp = %v, topic = %s", string(message.Value), message.Timestamp, message.Topic))
+			c.logger.WithCtx(ctx).Info(fmt.Sprintf("Message claimed: value = %s, timestamp = %v, topic = %s", string(message.Value), message.Timestamp, message.Topic))
 			session.MarkMessage(message, "")
 		case <-session.Context().Done():
 			return nil

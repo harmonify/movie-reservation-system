@@ -49,7 +49,7 @@ func NewKafkaConsumerGroup(lc fx.Lifecycle, cfg *KafkaConsumerGroupConfig, logge
 
 	lc.Append(fx.Hook{
 		OnStop: func(ctx context.Context) error {
-			logger.Info("Closing Kafka consumer")
+			logger.WithCtx(ctx).Info("Closing Kafka consumer")
 			return client.Close()
 		},
 	})

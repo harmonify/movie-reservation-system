@@ -5,6 +5,8 @@ package mocks
 import (
 	gin "github.com/gin-gonic/gin"
 
+	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -21,35 +23,50 @@ func (_m *JwtRbacHttpMiddleware) EXPECT() *JwtRbacHttpMiddleware_Expecter {
 	return &JwtRbacHttpMiddleware_Expecter{mock: &_m.Mock}
 }
 
-// CheckPermission provides a mock function with given fields: _a0
-func (_m *JwtRbacHttpMiddleware) CheckPermission(_a0 *gin.Context) {
-	_m.Called(_a0)
+// CheckPermissions provides a mock function with given fields: _a0
+func (_m *JwtRbacHttpMiddleware) CheckPermissions(_a0 func(*jwt_util.JWTBodyPayload) bool) gin.HandlerFunc {
+	ret := _m.Called(_a0)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CheckPermissions")
+	}
+
+	var r0 gin.HandlerFunc
+	if rf, ok := ret.Get(0).(func(func(*jwt_util.JWTBodyPayload) bool) gin.HandlerFunc); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(gin.HandlerFunc)
+		}
+	}
+
+	return r0
 }
 
-// JwtRbacHttpMiddleware_CheckPermission_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CheckPermission'
-type JwtRbacHttpMiddleware_CheckPermission_Call struct {
+// JwtRbacHttpMiddleware_CheckPermissions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CheckPermissions'
+type JwtRbacHttpMiddleware_CheckPermissions_Call struct {
 	*mock.Call
 }
 
-// CheckPermission is a helper method to define mock.On call
-//   - _a0 *gin.Context
-func (_e *JwtRbacHttpMiddleware_Expecter) CheckPermission(_a0 interface{}) *JwtRbacHttpMiddleware_CheckPermission_Call {
-	return &JwtRbacHttpMiddleware_CheckPermission_Call{Call: _e.mock.On("CheckPermission", _a0)}
+// CheckPermissions is a helper method to define mock.On call
+//   - _a0 func(*jwt_util.JWTBodyPayload) bool
+func (_e *JwtRbacHttpMiddleware_Expecter) CheckPermissions(_a0 interface{}) *JwtRbacHttpMiddleware_CheckPermissions_Call {
+	return &JwtRbacHttpMiddleware_CheckPermissions_Call{Call: _e.mock.On("CheckPermissions", _a0)}
 }
 
-func (_c *JwtRbacHttpMiddleware_CheckPermission_Call) Run(run func(_a0 *gin.Context)) *JwtRbacHttpMiddleware_CheckPermission_Call {
+func (_c *JwtRbacHttpMiddleware_CheckPermissions_Call) Run(run func(_a0 func(*jwt_util.JWTBodyPayload) bool)) *JwtRbacHttpMiddleware_CheckPermissions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*gin.Context))
+		run(args[0].(func(*jwt_util.JWTBodyPayload) bool))
 	})
 	return _c
 }
 
-func (_c *JwtRbacHttpMiddleware_CheckPermission_Call) Return() *JwtRbacHttpMiddleware_CheckPermission_Call {
-	_c.Call.Return()
+func (_c *JwtRbacHttpMiddleware_CheckPermissions_Call) Return(_a0 gin.HandlerFunc) *JwtRbacHttpMiddleware_CheckPermissions_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *JwtRbacHttpMiddleware_CheckPermission_Call) RunAndReturn(run func(*gin.Context)) *JwtRbacHttpMiddleware_CheckPermission_Call {
+func (_c *JwtRbacHttpMiddleware_CheckPermissions_Call) RunAndReturn(run func(func(*jwt_util.JWTBodyPayload) bool) gin.HandlerFunc) *JwtRbacHttpMiddleware_CheckPermissions_Call {
 	_c.Call.Return(run)
 	return _c
 }
