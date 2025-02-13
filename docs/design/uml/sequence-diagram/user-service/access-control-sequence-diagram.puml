@@ -1,0 +1,28 @@
+@startuml access control
+
+actor User
+boundary Client
+collections "Resource Server" as ResourceServer
+participant "User Service" as UserService
+participant "Policy Enforcement Point" as PEP
+participant "Policy Decision Point\n(RBAC/ABAC)" as PDP
+
+User -> Client ++: Request
+Client -> ResourceServer ++: Request
+ResourceServer -> UserService ++: Check access
+UserService -> PEP ++: Request access
+PEP -> PDP ++: Request Policy Decision
+PDP -> PDP: Evaluate Policies
+return Policy Decision
+return Grant / Deny
+return Access Granted / Denied
+alt Access Granted
+    ResourceServer -> ResourceServer: Process Request
+    ResourceServer -> Client: Response 200 OK
+else Access Denied
+    ResourceServer -> Client: Response 403 Forbidden
+end
+
+Client -> User: Display Response
+
+@enduml

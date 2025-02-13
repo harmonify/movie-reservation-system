@@ -1,0 +1,27 @@
+@startuml search movie
+
+User -> Client : Open home page
+Client -> MovieSearchService : GET /movies?theaterId=2&\nkeyword=Truman&\ngenre=Comedy&\nsortBy=release_date_desc&\nlimit=10
+MovieSearchService -> MovieSearchService : Validate
+MovieSearchService -> Database : Fetch movies
+Database -> MovieSearchService : Return movies
+MovieSearchService -> Client : 200 OK {\n  movies: [...],\n  total_count: 24,\n  has_next_page: true,\n  next_cursor: aaaaa\n}
+Client -> User : Display movies
+
+User -> Client : Load more
+Client -> MovieSearchService : GET /movies?cursor=aaaaa
+MovieSearchService -> MovieSearchService : Decode cursor {\n  theaterId: 2,\n  keyword: Truman,\n  genre: Comedy,\n  sort_by: release_date_desc,\n  limit: 10,\n  last_seen_sort_value: 2025-01-28T00:00:00Z\n}
+MovieSearchService -> Database : Fetch movies
+Database -> MovieSearchService : Return movies
+MovieSearchService -> Client : 200 OK {\n  movies: [...],\n  total_count: 24,\n  has_next_page: true,\n  next_cursor: bbbbb\n}
+Client -> User : Display more movies
+
+User -> Client : Load more
+Client -> MovieSearchService : GET /movies?cursor=bbbbb
+MovieSearchService -> MovieSearchService : Decode cursor {\n  theaterId: 2,\n  keyword: Truman,\n  genre: Comedy,\n  sort_by: release_date_desc,\n  limit: 10,\n  last_seen_sort_value: 2025-02-04T00:00:00Z\n}
+MovieSearchService -> Database : Fetch movies
+Database -> MovieSearchService : Return movies
+MovieSearchService -> Client : 200 OK {\n  movies: [...],\n  total_count: 24,\n  has_next_page: false\n  next_cursor: null\n}
+Client -> User : Display more movies
+
+@enduml
