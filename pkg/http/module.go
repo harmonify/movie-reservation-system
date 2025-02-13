@@ -6,6 +6,7 @@ import (
 
 var (
 	HttpModule = fx.Provide(
+		NewHttpResponseBuilder,
 		NewHttpResponse,
 		NewHttpValidator,
 	)
