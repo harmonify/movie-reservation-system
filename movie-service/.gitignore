@@ -15,4 +15,4 @@
 .vscode
 **/*.DS_Store
 
-deploy/local/run/mongo-keyfile
+deploy/local/run/mongo.key
