@@ -135,6 +135,20 @@ services:
         environment:
             - CONNECT_URL=http://connect:8083
             - SCHEMA_REGISTRY_URL=http://schema-registry:8081
+            # TODO: handle DLQ
+            # Versioning feature: ID is appended at the end of the connector name.
+            # When the ID is changed:
+            # - The source connector will be restarted to read from the beginning of the source system. This behavior varies between the source connectors. Generally, the source connector will initially perform a snapshot of the latest state of the source system and then catch up by streaming the source system operation logs since the last snapshot. For Debezium PostgreSQL source connector, it streams the WAL logs after initial snapshot. For Official MongoDB source connector, it streams the oplog after initial snapshot.
+            # - The source connector will write to a new topic (with new id suffix). If configured, the source connector will also delete the old connectors.
+            # - The sink connector will be restarted to read from the earliest offset in the Kafka topic.
+            # - The sink connector will write to a new index (with new id suffix). If configured, the sink connector will also delete the old index.
+            # The ID is used to handle the following scenarios:
+            # - Where data structure frequently changes, i.e. during development and testing.
+            # - When we want to reprocess the data from the beginning, i.e. for rebuilding the read model / search index
+            # Notes:
+            # - For development and testing environment, we could use UUID or ULID as the ID, since we don't need to manage the ID.
+            # - After development and testing, we change the ID to v + major version number, i.e. v1, v2, v3, etc. (depending on the versioning strategy).
+            - USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_CONNECTOR_ID=v1
             - USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_CONNECTOR_NAME=user-service-outbox-postgresql-source-connector
             - USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_DB_HOST=user-service-postgres
             - USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_DB_PORT=5432
@@ -143,20 +157,23 @@ services:
             - USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_DB_NAME=mrs-user-service
             - USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_DB_SCHEMA=public
             - USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_DB_TABLE=user_outbox
-            - USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_TOPIC_NAME_TEMPLATE=public.user.$${routedByValue}.v1
             - USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_RUN_MIGRATION=true
-            # TODO: handle DLQ
+            - USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_DELETE_OLD_CONNECTORS=true
+            - MOVIE_SERVICE_MOVIES_MONGODB_SOURCE_CONNECTOR_ID=01JMC8DA23Y19K2G9FRGW1NVST
             - MOVIE_SERVICE_MOVIES_MONGODB_SOURCE_CONNECTOR_NAME=movie-service-movies-mongodb-source-connector
             - MOVIE_SERVICE_MOVIES_MONGODB_SOURCE_MONGO_CONNECTION_STRING=mongodb://root:root@host.docker.internal:27017/?replicaSet=rs0
             - MOVIE_SERVICE_MOVIES_MONGODB_SOURCE_MONGO_DATABASE_NAME=mrs-movie-service
             - MOVIE_SERVICE_MOVIES_MONGODB_SOURCE_MONGO_COLLECTION_NAME=movies
             - MOVIE_SERVICE_MOVIES_MONGODB_SOURCE_RUN_MIGRATION=true
-            - MOVIE_SEARCH_SERVICE_ELASTICSEARCH_SINK_CONNECTOR_NAME=movie-search-service-elasticsearch-sink-connector
-            - MOVIE_SEARCH_SERVICE_ELASTICSEARCH_SINK_ELASTICSEARCH_CONNECTION_URL=http://movie-search-service-elasticsearch:9200
-            - MOVIE_SEARCH_SERVICE_ELASTICSEARCH_SINK_ELASTICSEARCH_USERNAME=elastic
-            - MOVIE_SEARCH_SERVICE_ELASTICSEARCH_SINK_ELASTICSEARCH_PASSWORD=elastic
-            - MOVIE_SEARCH_SERVICE_ELASTICSEARCH_SINK_ELASTICSEARCH_INDEX_NAME=movies
-            - MOVIE_SEARCH_SERVICE_ELASTICSEARCH_SINK_RUN_MIGRATION=true
+            - MOVIE_SERVICE_MOVIES_MONGODB_SOURCE_DELETE_OLD_CONNECTORS=true
+            - MOVIE_SEARCH_SERVICE_MOVIES_ELASTICSEARCH_SINK_CONNECTOR_ID=01JMC8EGY65H5S2N3G2E4B9S2Z
+            - MOVIE_SEARCH_SERVICE_MOVIES_ELASTICSEARCH_SINK_CONNECTOR_NAME=movie-search-service-elasticsearch-sink-connector
+            - MOVIE_SEARCH_SERVICE_MOVIES_ELASTICSEARCH_SINK_ELASTICSEARCH_CONNECTION_URL=http://movie-search-service-elasticsearch:9200
+            - MOVIE_SEARCH_SERVICE_MOVIES_ELASTICSEARCH_SINK_ELASTICSEARCH_USERNAME=elastic
+            - MOVIE_SEARCH_SERVICE_MOVIES_ELASTICSEARCH_SINK_ELASTICSEARCH_PASSWORD=elastic
+            - MOVIE_SEARCH_SERVICE_MOVIES_ELASTICSEARCH_SINK_RUN_MIGRATION=true
+            - MOVIE_SEARCH_SERVICE_MOVIES_ELASTICSEARCH_SINK_DELETE_OLD_CONNECTORS=true
+            - MOVIE_SEARCH_SERVICE_MOVIES_ELASTICSEARCH_SINK_DELETE_OLD_INDEX=true
 
     kafka-exporter:
         image: danielqsj/kafka-exporter:v1.8.0

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -euo pipefail
+set -u
 
 TABLE_NAME=""$USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_DB_SCHEMA"."$USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_DB_TABLE""
 
@@ -53,13 +53,15 @@ CONNECTOR_DATA=$(
     "tracing.span.context.field": "context",
     "tracing.with.context.field.only": "true",
     "transforms": "outbox",
-    "transforms.outbox.route.topic.replacement": "$USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_TOPIC_NAME_TEMPLATE",
+    "transforms.outbox.route.topic.replacement": "public.user.\${routedByValue}.$USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_CONNECTOR_ID",
     "transforms.outbox.type": "io.debezium.transforms.outbox.EventRouter",
     "route.by.field": "aggregatetype",
     "value.converter": "io.debezium.converters.BinaryDataConverter"
 }
 EOF
 )
+
+EXACT_CONNECTOR_NAME=""$USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_CONNECTOR_NAME"-"$USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_CONNECTOR_ID""
 
 # Run the migration
 if [ "$USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_RUN_MIGRATION" == "true" ]; then
@@ -73,27 +75,61 @@ if [ "$USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_RUN_MIGRATION" == "true" ]; then
 		-U "$USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_DB_USER" \
 		-d "$USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_DB_NAME" \
 		-c "$OUTBOX_TABLE_MIGRATION"
+	if [ "$?" -ne 0 ]; then
+		echo "Failed to create the outbox table."
+		rm $PGPASSFILE
+		exit 1
+	fi
+	rm $PGPASSFILE
 fi
 
-echo "Registering the user service outbox PostgreSQL source connector with the following configuration:"
-echo "$CONNECTOR_DATA"
+# Delete the old connectors
+if [ "$USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_DELETE_OLD_CONNECTORS" == "true" ]; then
+	# If previous version of the connector (with the same prefix) is already registered, delete it
+	res=$(curl -vS -X GET ""$CONNECT_URL"/connectors")
+	if [ "$?" -ne 0 ]; then
+		echo "Failed to get the list of connectors."
+		exit 1
+	fi
+	echo "Previous connectors: "$res""
+	previous_connector_names=$(echo "$res" | jq -c '.[]' | tr -d '"' | grep "$USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_CONNECTOR_NAME" | grep -v "$EXACT_CONNECTOR_NAME")
+	for connector_name in $previous_connector_names; do
+		echo "Deleting the previous version of the connector: "$connector_name""
+		curl -vS -X DELETE ""$CONNECT_URL"/connectors/"$connector_name""
+		if [ "$?" -ne 0 ]; then
+			echo "Failed to delete the previous version of the connector: "$connector_name""
+			exit 1
+		fi
+	done
+fi
 
 # Check if the connector is already registered
-if [ $(curl -s -o /dev/null -w "%{http_code}" ""$CONNECT_URL"/connectors/"$USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_CONNECTOR_NAME"/status") -eq 404 ]; then
-	# Register the connector
+if [ $(curl -s -o /dev/null -w "%{http_code}" ""$CONNECT_URL"/connectors/"$EXACT_CONNECTOR_NAME"/status") -eq 404 ]; then
 	CONNECTOR_DATA=$(
 		cat <<EOF
 {
-    "name": "$USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_CONNECTOR_NAME",
+    "name": "$EXACT_CONNECTOR_NAME",
     "config": $CONNECTOR_DATA
 }
 EOF
 	)
+	echo "Registering the user service outbox PostgreSQL source connector with the following configuration:"
+	echo "$CONNECTOR_DATA"
 	curl -vS -X POST ""$CONNECT_URL"/connectors/" -H "Content-Type: application/json" -d "$CONNECTOR_DATA"
+	if [ "$?" -ne 0 ]; then
+		echo "Failed to register the user service outbox PostgreSQL source connector."
+		exit 1
+	fi
+	echo "Registered the user service outbox PostgreSQL source connector."
 else
-	# Update the connector
-	curl -vS -X PUT ""$CONNECT_URL"/connectors/"$USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_CONNECTOR_NAME"/config" -H "Content-Type: application/json" -d "$CONNECTOR_DATA"
+	echo "Updating the user service outbox PostgreSQL source connector with the following configuration:"
+	echo "$CONNECTOR_DATA"
+	curl -vS -X PUT ""$CONNECT_URL"/connectors/"$EXACT_CONNECTOR_NAME"/config" -H "Content-Type: application/json" -d "$CONNECTOR_DATA"
+	if [ "$?" -ne 0 ]; then
+		echo "Failed to update the user service outbox PostgreSQL source connector."
+		exit 1
+	fi
+	echo "Updated the user service outbox PostgreSQL source connector."
 fi
 
 echo
-echo "Done registering the user service outbox PostgreSQL source connector."
