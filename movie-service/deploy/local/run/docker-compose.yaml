@@ -9,7 +9,7 @@ services:
             - ../../../.data/mongodb/db:/data/db
             - "../../../.data/mongodb/configdb:/data/configdb"
             # Mount the keyFile for internal replica set authentication.
-            - ./mongo-keyfile:/etc/secrets/mongo-keyfile:ro
+            - ./mongo.key:/etc/secrets/mongo.key:ro
         command:
             [
                 "--replSet",
@@ -18,10 +18,12 @@ services:
                 "--port",
                 "27017",
                 "--keyFile",
-                "/etc/secrets/mongo-keyfile",
+                "/etc/secrets/mongo.key",
             ]
         extra_hosts:
             - "host.docker.internal:host-gateway"
+        expose:
+            - "27017"
         ports:
             - "27017:27017"
         networks:
@@ -34,10 +36,13 @@ services:
             start_period: 10s
 
     movie-service-mongodb-init:
+        container_name: movie-service-mongodb-init
         image: "mongo:7.0"
         environment:
-            MONGO_INITDB_ROOT_USERNAME: "root"
-            MONGO_INITDB_ROOT_PASSWORD: "root"
+            # The MONGO_URI is used to connect to the MongoDB instance. It must not contain the replica set name.
+            MONGO_URI: "mongodb://root:root@movie-service-mongodb:27017"
+            MONGO_REPLICA_SET_NAME: "rs0"
+            MONGO_REPLICA_SET_MEMBER: "host.docker.internal:27017"
         command: "/init.sh"
         volumes:
             - ./init-single-node-replica-set.sh:/init.sh

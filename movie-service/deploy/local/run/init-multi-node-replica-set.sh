@@ -4,10 +4,10 @@
 sleep 10
 
 # Check if the replica set is already initiated
-mongosh "mongodb://$MONGO_INITDB_ROOT_USERNAME:$MONGO_INITDB_ROOT_PASSWORD@localhost:27017" --quiet --eval "rs.status()" > /dev/null 2>&1
+mongosh "mongodb://root:root@mongodb-primary:27017" --quiet --eval "rs.status()" > /dev/null 2>&1
 if [ $? -ne 0 ]; then
   echo "Replica set not initiated. Initiating now..."
-  mongosh  "mongodb://$MONGO_INITDB_ROOT_USERNAME:$MONGO_INITDB_ROOT_PASSWORD@localhost:27017" --quiet <<EOF
+  mongosh  "mongodb://root:root@mongodb-primary:27017" --quiet <<EOF
 rs.initiate({
   _id: "rs0",
   members: [

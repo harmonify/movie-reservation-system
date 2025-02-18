@@ -10,7 +10,7 @@ services:
             - ../../../.data/mongodb-primary/db:/data/db
             - "../../../.data/mongodb-primary/configdb:/data/configdb"
             # Mount the keyFile for internal replica set authentication.
-            - ./mongo-keyfile:/etc/secrets/mongo-keyfile:ro
+            - ./mongo.key:/etc/secrets/mongo.key:ro
             # Mount the replica set initialization script.
             - ./init-multi-node-replica-set.sh:/docker-entrypoint-initdb.d/init-multi-node-replica-set.sh:ro
         command:
@@ -21,7 +21,7 @@ services:
                 "--port",
                 "27017",
                 "--keyFile",
-                "/etc/secrets/mongo-keyfile",
+                "/etc/secrets/mongo.key",
             ]
         extra_hosts:
             - "host.docker.internal:host-gateway"
@@ -53,7 +53,7 @@ services:
         volumes:
             - ../../../.data/mongodb-secondary/db:/data/db
             - "../../../.data/mongodb-secondary/configdb:/data/configdb"
-            - ./mongo-keyfile:/etc/secrets/mongo-keyfile:ro
+            - ./mongo.key:/etc/secrets/mongo.key:ro
         command:
             [
                 "--replSet",
@@ -62,7 +62,7 @@ services:
                 "--port",
                 "27018",
                 "--keyFile",
-                "/etc/secrets/mongo-keyfile",
+                "/etc/secrets/mongo.key",
             ]
         extra_hosts:
             - "host.docker.internal:host-gateway"
@@ -84,7 +84,7 @@ services:
             # The arbiter does not store data, but volumes are defined for consistency.
             - ../../../.data/mongodb-arbiter/db:/data/db
             - "../../../.data/mongodb-arbiter/configdb:/data/configdb"
-            - ./mongo-keyfile:/etc/secrets/mongo-keyfile:ro
+            - ./mongo.key:/etc/secrets/mongo.key:ro
         command:
             [
                 "--replSet",
@@ -93,7 +93,7 @@ services:
                 "--port",
                 "27019",
                 "--keyFile",
-                "/etc/secrets/mongo-keyfile",
+                "/etc/secrets/mongo.key",
             ]
         ports:
             - "27019:27019"
@@ -102,3 +102,15 @@ services:
         links:
             - mongodb-primary
             - mongodb-secondary
+
+    movie-service-mongodb-init:
+        container_name: movie-service-mongodb-init
+        image: "mongo:7.0"
+        command: "/init.sh"
+        volumes:
+            - ./init-multi-node-replica-set.sh:/init.sh
+        depends_on:
+            mongodb-primary:
+                condition: service_healthy
+        networks:
+            - movie-service-net

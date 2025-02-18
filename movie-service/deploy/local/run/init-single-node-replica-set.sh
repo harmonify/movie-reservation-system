@@ -1,17 +1,28 @@
 #!/bin/bash
 
+set -euo pipefail
+
+if [ -z "$MONGO_URI" ]; then
+	echo "MONGO_URI is not set."
+	exit 1
+fi
+
+if [ -z "$MONGO_REPLICA_SET_MEMBER" ]; then
+	MONGO_REPLICA_SET_MEMBER="host.docker.internal:27017"
+fi
+
 # Wait a bit to ensure that mongod is fully up
-sleep 10
+sleep 2
 
 # Check if the replica set is already initiated
-mongosh "mongodb://$MONGO_INITDB_ROOT_USERNAME:$MONGO_INITDB_ROOT_PASSWORD@movie-service-mongodb:27017" --quiet --eval "rs.status()" >/dev/null 2>&1
+mongosh "$MONGO_URI" --quiet --eval "rs.status()" >/dev/null 2>&1
 if [ $? -ne 0 ]; then
 	echo "Replica set not initiated. Initiating now..."
-	mongosh "mongodb://$MONGO_INITDB_ROOT_USERNAME:$MONGO_INITDB_ROOT_PASSWORD@movie-service-mongodb:27017" --quiet <<EOF
+	mongosh "$MONGO_URI" --quiet <<EOF
 rs.initiate({
-  _id: "rs0",
+  _id: "$MONGO_REPLICA_SET_NAME",
   members: [
-    { _id: 0, host: "localhost:27017", priority: 1 },
+    { _id: 0, host: "$MONGO_REPLICA_SET_MEMBER", priority: 1 },
   ]
 });
 EOF
@@ -21,5 +32,16 @@ EOF
 	fi
 	echo "Replica set initiated."
 else
-	echo "Replica set already initiated."
+	# update the replica set configuration
+	echo "Replica set already initiated. Updating configuration..."
+	mongosh "$MONGO_URI" --quiet <<EOF
+cfg = rs.conf();
+cfg.members[0].host = "$MONGO_REPLICA_SET_MEMBER";
+rs.reconfig(cfg, { force: true });
+EOF
+	if [ $? -ne 0 ]; then
+		echo "Failed to update replica set configuration."
+		exit 1
+	fi
+	echo "Replica set configuration updated."
 fi
