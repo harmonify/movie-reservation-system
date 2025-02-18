@@ -20,6 +20,7 @@ type MovieSearchServiceConfig struct {
 	FrontEndUrl string `mapstructure:"FRONTEND_URL"`
 
 	MongoUri        string `mapstructure:"MONGO_URI" validate:"required,mongodb_connection_string"`
+	MongoDbName     string `mapstructure:"MONGO_DB_NAME" validate:"required"`
 	MongoReplicaSet string `mapstructure:"MONGO_REPLICA_SET" validate:"required"`
 
 	RedisHost string `mapstructure:"REDIS_HOST" validate:"required"`
