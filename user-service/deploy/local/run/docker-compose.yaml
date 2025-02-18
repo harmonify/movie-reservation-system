@@ -6,6 +6,8 @@ services:
             POSTGRES_USER: root
             POSTGRES_PASSWORD: root
             POSTGRES_DB: mrs-user-service
+        expose:
+            - "5432"
         ports:
             - 5432:5432
         volumes:
@@ -13,29 +15,34 @@ services:
             - ../../../.data/postgres:/data
         networks:
             - user-service-net
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U root -d postgres"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
 
-    user-service-connect:
-        image: quay.io/debezium/connect:3.0
-        environment:
-            BOOTSTRAP_SERVERS: kafka:29092
-            GROUP_ID: "1"
-            CONFIG_STORAGE_TOPIC: private.user.connect_configs.v1
-            OFFSET_STORAGE_TOPIC: private.user.connect_offsets.v1
-            STATUS_STORAGE_TOPIC: private.user.connect_statuses.v1
-            # https://kafka.apache.org/documentation/#connect_running
-            CONNECT_REST_ADVERTISED_LISTENER: connect
-            CONNECT_REST_HOST: 0.0.0.0
-            CONNECT_REST_PORT: 8083
-        ports:
-            - "8083:8083"
-        depends_on:
-            - kafka
-            - user-service-postgres
-        networks:
-            - user-service-net
-            - core-net
-        # volumes:
-        #     - ./debezium-connector-postgres:/kafka/connect/debezium-connector-postgres
+    # user-service-connect:
+    #     image: quay.io/debezium/connect:3.0
+    #     environment:
+    #         BOOTSTRAP_SERVERS: kafka:29092
+    #         GROUP_ID: "1"
+    #         CONFIG_STORAGE_TOPIC: private.user.connect_configs.v1
+    #         OFFSET_STORAGE_TOPIC: private.user.connect_offsets.v1
+    #         STATUS_STORAGE_TOPIC: private.user.connect_statuses.v1
+    #         # https://kafka.apache.org/documentation/#connect_running
+    #         CONNECT_REST_ADVERTISED_LISTENER: connect
+    #         CONNECT_REST_HOST: 0.0.0.0
+    #         CONNECT_REST_PORT: 8083
+    #     ports:
+    #         - "8083:8083"
+    #     depends_on:
+    #         kafka:
+    #             condition: service_healthy
+    #         user-service-postgres:
+    #             condition: service_healthy
+    #     networks:
+    #         - user-service-net
+    #         - core-net
 
     user-service-postgres-exporter:
         image: prometheuscommunity/postgres-exporter:v0.16.0
@@ -46,7 +53,8 @@ services:
         ports:
             - "9187:9187"
         depends_on:
-            - user-service-postgres
+            user-service-postgres:
+                condition: service_healthy
         networks:
             - user-service-net
             - monitoring-net
@@ -58,6 +66,11 @@ services:
             - "6379:6379"
         networks:
             - user-service-net
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
 
     user-service-redis-exporter:
         image: oliver006/redis_exporter:v1.67.0
@@ -66,7 +79,8 @@ services:
         ports:
             - "9121:9121"
         depends_on:
-            - user-service-redis
+            user-service-redis:
+                condition: service_healthy
         networks:
             - user-service-net
             - monitoring-net
