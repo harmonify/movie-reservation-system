@@ -24,63 +24,6 @@ func (_m *RbacStorage) EXPECT() *RbacStorage_Expecter {
 	return &RbacStorage_Expecter{mock: &_m.Mock}
 }
 
-// BulkGrantPermission provides a mock function with given fields: ctx, p
-func (_m *RbacStorage) BulkGrantPermission(ctx context.Context, p []shared.GrantPermissionParam) (bool, error) {
-	ret := _m.Called(ctx, p)
-
-	if len(ret) == 0 {
-		panic("no return value specified for BulkGrantPermission")
-	}
-
-	var r0 bool
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []shared.GrantPermissionParam) (bool, error)); ok {
-		return rf(ctx, p)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, []shared.GrantPermissionParam) bool); ok {
-		r0 = rf(ctx, p)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, []shared.GrantPermissionParam) error); ok {
-		r1 = rf(ctx, p)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// RbacStorage_BulkGrantPermission_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BulkGrantPermission'
-type RbacStorage_BulkGrantPermission_Call struct {
-	*mock.Call
-}
-
-// BulkGrantPermission is a helper method to define mock.On call
-//   - ctx context.Context
-//   - p []shared.GrantPermissionParam
-func (_e *RbacStorage_Expecter) BulkGrantPermission(ctx interface{}, p interface{}) *RbacStorage_BulkGrantPermission_Call {
-	return &RbacStorage_BulkGrantPermission_Call{Call: _e.mock.On("BulkGrantPermission", ctx, p)}
-}
-
-func (_c *RbacStorage_BulkGrantPermission_Call) Run(run func(ctx context.Context, p []shared.GrantPermissionParam)) *RbacStorage_BulkGrantPermission_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]shared.GrantPermissionParam))
-	})
-	return _c
-}
-
-func (_c *RbacStorage_BulkGrantPermission_Call) Return(_a0 bool, _a1 error) *RbacStorage_BulkGrantPermission_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *RbacStorage_BulkGrantPermission_Call) RunAndReturn(run func(context.Context, []shared.GrantPermissionParam) (bool, error)) *RbacStorage_BulkGrantPermission_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // CheckPermission provides a mock function with given fields: ctx, p
 func (_m *RbacStorage) CheckPermission(ctx context.Context, p shared.CheckPermissionParam) (bool, error) {
 	ret := _m.Called(ctx, p)
@@ -134,63 +77,6 @@ func (_c *RbacStorage_CheckPermission_Call) Return(_a0 bool, _a1 error) *RbacSto
 }
 
 func (_c *RbacStorage_CheckPermission_Call) RunAndReturn(run func(context.Context, shared.CheckPermissionParam) (bool, error)) *RbacStorage_CheckPermission_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GrantPermission provides a mock function with given fields: ctx, p
-func (_m *RbacStorage) GrantPermission(ctx context.Context, p shared.GrantPermissionParam) (bool, error) {
-	ret := _m.Called(ctx, p)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GrantPermission")
-	}
-
-	var r0 bool
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, shared.GrantPermissionParam) (bool, error)); ok {
-		return rf(ctx, p)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, shared.GrantPermissionParam) bool); ok {
-		r0 = rf(ctx, p)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, shared.GrantPermissionParam) error); ok {
-		r1 = rf(ctx, p)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// RbacStorage_GrantPermission_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GrantPermission'
-type RbacStorage_GrantPermission_Call struct {
-	*mock.Call
-}
-
-// GrantPermission is a helper method to define mock.On call
-//   - ctx context.Context
-//   - p shared.GrantPermissionParam
-func (_e *RbacStorage_Expecter) GrantPermission(ctx interface{}, p interface{}) *RbacStorage_GrantPermission_Call {
-	return &RbacStorage_GrantPermission_Call{Call: _e.mock.On("GrantPermission", ctx, p)}
-}
-
-func (_c *RbacStorage_GrantPermission_Call) Run(run func(ctx context.Context, p shared.GrantPermissionParam)) *RbacStorage_GrantPermission_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(shared.GrantPermissionParam))
-	})
-	return _c
-}
-
-func (_c *RbacStorage_GrantPermission_Call) Return(_a0 bool, _a1 error) *RbacStorage_GrantPermission_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *RbacStorage_GrantPermission_Call) RunAndReturn(run func(context.Context, shared.GrantPermissionParam) (bool, error)) *RbacStorage_GrantPermission_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -252,26 +138,26 @@ func (_c *RbacStorage_GrantRole_Call) RunAndReturn(run func(context.Context, sha
 	return _c
 }
 
-// RevokePermission provides a mock function with given fields: ctx, p
-func (_m *RbacStorage) RevokePermission(ctx context.Context, p shared.RevokePermissionParam) (bool, error) {
+// RevokeRole provides a mock function with given fields: ctx, p
+func (_m *RbacStorage) RevokeRole(ctx context.Context, p shared.RevokeRoleParam) (bool, error) {
 	ret := _m.Called(ctx, p)
 
 	if len(ret) == 0 {
-		panic("no return value specified for RevokePermission")
+		panic("no return value specified for RevokeRole")
 	}
 
 	var r0 bool
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, shared.RevokePermissionParam) (bool, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, shared.RevokeRoleParam) (bool, error)); ok {
 		return rf(ctx, p)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, shared.RevokePermissionParam) bool); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, shared.RevokeRoleParam) bool); ok {
 		r0 = rf(ctx, p)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, shared.RevokePermissionParam) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, shared.RevokeRoleParam) error); ok {
 		r1 = rf(ctx, p)
 	} else {
 		r1 = ret.Error(1)
@@ -280,31 +166,31 @@ func (_m *RbacStorage) RevokePermission(ctx context.Context, p shared.RevokePerm
 	return r0, r1
 }
 
-// RbacStorage_RevokePermission_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RevokePermission'
-type RbacStorage_RevokePermission_Call struct {
+// RbacStorage_RevokeRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RevokeRole'
+type RbacStorage_RevokeRole_Call struct {
 	*mock.Call
 }
 
-// RevokePermission is a helper method to define mock.On call
+// RevokeRole is a helper method to define mock.On call
 //   - ctx context.Context
-//   - p shared.RevokePermissionParam
-func (_e *RbacStorage_Expecter) RevokePermission(ctx interface{}, p interface{}) *RbacStorage_RevokePermission_Call {
-	return &RbacStorage_RevokePermission_Call{Call: _e.mock.On("RevokePermission", ctx, p)}
+//   - p shared.RevokeRoleParam
+func (_e *RbacStorage_Expecter) RevokeRole(ctx interface{}, p interface{}) *RbacStorage_RevokeRole_Call {
+	return &RbacStorage_RevokeRole_Call{Call: _e.mock.On("RevokeRole", ctx, p)}
 }
 
-func (_c *RbacStorage_RevokePermission_Call) Run(run func(ctx context.Context, p shared.RevokePermissionParam)) *RbacStorage_RevokePermission_Call {
+func (_c *RbacStorage_RevokeRole_Call) Run(run func(ctx context.Context, p shared.RevokeRoleParam)) *RbacStorage_RevokeRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(shared.RevokePermissionParam))
+		run(args[0].(context.Context), args[1].(shared.RevokeRoleParam))
 	})
 	return _c
 }
 
-func (_c *RbacStorage_RevokePermission_Call) Return(_a0 bool, _a1 error) *RbacStorage_RevokePermission_Call {
+func (_c *RbacStorage_RevokeRole_Call) Return(_a0 bool, _a1 error) *RbacStorage_RevokeRole_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *RbacStorage_RevokePermission_Call) RunAndReturn(run func(context.Context, shared.RevokePermissionParam) (bool, error)) *RbacStorage_RevokePermission_Call {
+func (_c *RbacStorage_RevokeRole_Call) RunAndReturn(run func(context.Context, shared.RevokeRoleParam) (bool, error)) *RbacStorage_RevokeRole_Call {
 	_c.Call.Return(run)
 	return _c
 }

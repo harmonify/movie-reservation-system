@@ -38,7 +38,7 @@ type (
 		UserStorage        shared.UserStorage
 		UserKeyStorage     shared.UserKeyStorage
 		UserSessionStorage shared.UserSessionStorage
-		RbacStorage        shared.RbacStorage
+		userRoleStorage    shared.UserRoleStorage
 		OutboxStorage      shared.OutboxStorage
 		Util               *util.Util
 		Config             *config.UserServiceConfig
@@ -59,7 +59,7 @@ type (
 		userStorage        shared.UserStorage
 		userKeyStorage     shared.UserKeyStorage
 		userSessionStorage shared.UserSessionStorage
-		rbacStorage        shared.RbacStorage
+		userRoleStorage    shared.UserRoleStorage
 		outboxStorage      shared.OutboxStorage
 		util               *util.Util
 		config             *config.UserServiceConfig
@@ -78,7 +78,7 @@ func NewAuthService(p AuthServiceParam) AuthServiceResult {
 			userSessionStorage: p.UserSessionStorage,
 			userKeyStorage:     p.UserKeyStorage,
 			outboxStorage:      p.OutboxStorage,
-			rbacStorage:        p.RbacStorage,
+			userRoleStorage:    p.userRoleStorage,
 			util:               p.Util,
 			config:             p.Config,
 			tokenService:       p.TokenService,
@@ -147,9 +147,9 @@ func (s *authServiceImpl) Register(ctx context.Context, p RegisterParam) error {
 		}
 
 		// Grant user role
-		_, err = s.rbacStorage.WithTx(tx).GrantRole(ctx, shared.GrantRoleParam{
-			UUID: user.UUID,
-			Role: shared.RoleUser,
+		_, err = s.userRoleStorage.WithTx(tx).SaveUserRole(ctx, entity.SaveUserRole{
+			UserUUID: user.UUID,
+			RoleName: entity.RoleUser,
 		})
 		if err != nil {
 			s.logger.WithCtx(ctx).Error("Failed to grant user role", zap.Error(err))
@@ -202,7 +202,7 @@ func (s *authServiceImpl) Login(ctx context.Context, p LoginParam) (*LoginResult
 	}
 
 	// Get user record
-	user, err := s.userStorage.FindUser(ctx, entity.FindUser{Username: sql.NullString{String: p.Username, Valid: true}})
+	user, err := s.userStorage.GetUser(ctx, entity.GetUser{Username: sql.NullString{String: p.Username, Valid: true}})
 	if err != nil {
 		var terr *database.RecordNotFoundError
 		if errors.As(err, &terr) {
@@ -212,7 +212,7 @@ func (s *authServiceImpl) Login(ctx context.Context, p LoginParam) (*LoginResult
 		return nil, err
 	}
 	// Get user key record
-	userKey, err := s.userKeyStorage.FindUserKey(ctx, entity.FindUserKey{
+	userKey, err := s.userKeyStorage.GetUserKey(ctx, entity.GetUserKey{
 		UserUUID: sql.NullString{String: user.UUID, Valid: true},
 	})
 	if err != nil {
@@ -284,14 +284,14 @@ func (s *authServiceImpl) GetToken(ctx context.Context, p GetTokenParam) (*GetTo
 	}
 
 	// Get user record
-	user, err := s.userStorage.FindUser(ctx, entity.FindUser{UUID: sql.NullString{String: verifyResult.User.UserUUID, Valid: true}})
+	user, err := s.userStorage.GetUser(ctx, entity.GetUser{UUID: sql.NullString{String: verifyResult.User.UserUUID, Valid: true}})
 	if err != nil {
 		s.logger.WithCtx(ctx).Error("Failed to get user", zap.Error(err))
 		return nil, err
 	}
 
 	// Get user key record
-	userKey, err := s.userKeyStorage.FindUserKey(ctx, entity.FindUserKey{
+	userKey, err := s.userKeyStorage.GetUserKey(ctx, entity.GetUserKey{
 		UserUUID: sql.NullString{String: user.UUID, Valid: true},
 	})
 	if err != nil {

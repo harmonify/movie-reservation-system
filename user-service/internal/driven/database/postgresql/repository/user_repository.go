@@ -83,17 +83,17 @@ func (r *userRepositoryImpl) SaveUser(ctx context.Context, createModel entity.Sa
 	return userModel.ToEntity(), err
 }
 
-func (r *userRepositoryImpl) FindUser(ctx context.Context, findModel entity.FindUser) (*entity.User, error) {
+func (r *userRepositoryImpl) GetUser(ctx context.Context, getModel entity.GetUser) (*entity.User, error) {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
+	getMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, getModel)
 	if err != nil {
 		return nil, err
 	}
 
 	userModel := model.User{}
-	result := r.database.DB.WithContext(ctx).Where(findMap).First(&userModel)
+	result := r.database.DB.WithContext(ctx).Where(getMap).First(&userModel)
 	err = r.pgErrTl.Translate(result.Error)
 	if err != nil {
 		return nil, err
@@ -102,16 +102,16 @@ func (r *userRepositoryImpl) FindUser(ctx context.Context, findModel entity.Find
 	return userModel.ToEntity(), err
 }
 
-func (r *userRepositoryImpl) FindUserWithResult(ctx context.Context, findModel entity.FindUser, resultModel interface{}) error {
+func (r *userRepositoryImpl) GetUserWithResult(ctx context.Context, getModel entity.GetUser, resultModel interface{}) error {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
+	getMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, getModel)
 	if err != nil {
 		return err
 	}
 
-	result := r.database.DB.WithContext(ctx).Table(model.UserTableName).Where(findMap).First(resultModel)
+	result := r.database.DB.WithContext(ctx).Table(model.UserTableName).Where(getMap).First(resultModel)
 	err = r.pgErrTl.Translate(result.Error)
 	if err != nil {
 		return err
@@ -120,7 +120,7 @@ func (r *userRepositoryImpl) FindUserWithResult(ctx context.Context, findModel e
 	return err
 }
 
-func (r *userRepositoryImpl) UpdateUser(ctx context.Context, findModel entity.FindUser, updateModel entity.UpdateUser) (*entity.User, error) {
+func (r *userRepositoryImpl) UpdateUser(ctx context.Context, getModel entity.GetUser, updateModel entity.UpdateUser) (*entity.User, error) {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -129,7 +129,7 @@ func (r *userRepositoryImpl) UpdateUser(ctx context.Context, findModel entity.Fi
 		return nil, err
 	}
 
-	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
+	getMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, getModel)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func (r *userRepositoryImpl) UpdateUser(ctx context.Context, findModel entity.Fi
 	result := r.database.DB.
 		WithContext(ctx).
 		Model(&userModel).
-		Where(findMap).
+		Where(getMap).
 		Clauses(clause.Returning{}).
 		Updates(updateMap)
 
@@ -158,8 +158,8 @@ func (r *userRepositoryImpl) UpdateUser(ctx context.Context, findModel entity.Fi
 	return userModel.ToEntity(), nil
 }
 
-func (r *userRepositoryImpl) SoftDeleteUser(ctx context.Context, findModel entity.FindUser) error {
-	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
+func (r *userRepositoryImpl) SoftDeleteUser(ctx context.Context, getModel entity.GetUser) error {
+	getMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, getModel)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return err
@@ -167,7 +167,7 @@ func (r *userRepositoryImpl) SoftDeleteUser(ctx context.Context, findModel entit
 
 	result := r.database.DB.
 		WithContext(ctx).
-		Where(findMap).
+		Where(getMap).
 		Delete(&model.User{})
 
 	err = r.pgErrTl.Translate(result.Error)

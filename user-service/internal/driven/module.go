@@ -3,7 +3,6 @@ package driven
 import (
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/cache/redis"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql"
-	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/rbac"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/rpc/grpc"
 	"go.uber.org/fx"
 )
@@ -13,7 +12,6 @@ var (
 		"driven",
 		redis.DrivenRedisModule,
 		postgresql.DrivenPostgresqlModule,
-		rbac.DrivenCasbinModule,
 		grpc.DrivenGrpcModule,
 	)
 )

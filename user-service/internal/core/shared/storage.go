@@ -14,35 +14,50 @@ type (
 
 	UserStorage interface {
 		WithTx(tx *database.Transaction) UserStorage
-		FindUser(ctx context.Context, findModel entity.FindUser) (*entity.User, error)
-		// FindUserWithResult is a generic function to find a user with a result model
+		GetUser(ctx context.Context, getModel entity.GetUser) (*entity.User, error)
+		// GetUserWithResult is a generic function to Get a user with a result model
 		// The result model parameter should be a pointer to a struct
-		FindUserWithResult(ctx context.Context, findModel entity.FindUser, resultModel interface{}) error
+		GetUserWithResult(ctx context.Context, getModel entity.GetUser, resultModel interface{}) error
 		SaveUser(ctx context.Context, createModel entity.SaveUser) (*entity.User, error)
-		UpdateUser(ctx context.Context, findModel entity.FindUser, updateModel entity.UpdateUser) (*entity.User, error)
-		SoftDeleteUser(ctx context.Context, findModel entity.FindUser) error
+		UpdateUser(ctx context.Context, getModel entity.GetUser, updateModel entity.UpdateUser) (*entity.User, error)
+		SoftDeleteUser(ctx context.Context, getModel entity.GetUser) error
 	}
 
 	UserSessionStorage interface {
 		WithTx(tx *database.Transaction) UserSessionStorage
-		FindSession(ctx context.Context, findModel entity.FindUserSession) (*entity.UserSession, error)
+		GetSession(ctx context.Context, getModel entity.GetUserSession) (*entity.UserSession, error)
 		SaveSession(ctx context.Context, createModel entity.SaveUserSession) (*entity.UserSession, error)
 		RevokeSession(ctx context.Context, refreshToken string) (err error)
 		RevokeManySession(ctx context.Context, refreshTokens []string) (err error)
-		SoftDeleteSession(ctx context.Context, findModel entity.FindUserSession) error
+		SoftDeleteSession(ctx context.Context, getModel entity.GetUserSession) error
 	}
 
 	UserKeyStorage interface {
 		WithTx(tx *database.Transaction) UserKeyStorage
-		FindUserKey(ctx context.Context, findModel entity.FindUserKey) (*entity.UserKey, error)
+		GetUserKey(ctx context.Context, getModel entity.GetUserKey) (*entity.UserKey, error)
 		SaveUserKey(ctx context.Context, createModel entity.SaveUserKey) (*entity.UserKey, error)
-		UpdateUserKey(ctx context.Context, findModel entity.FindUserKey, updateModel entity.UpdateUserKey) (*entity.UserKey, error)
-		SoftDeleteUserKey(ctx context.Context, findModel entity.FindUserKey) error
+		UpdateUserKey(ctx context.Context, getModel entity.GetUserKey, updateModel entity.UpdateUserKey) (*entity.UserKey, error)
+		SoftDeleteUserKey(ctx context.Context, getModel entity.GetUserKey) error
 	}
 
 	OutboxStorage interface {
 		WithTx(tx *database.Transaction) OutboxStorage
 		SaveOutbox(ctx context.Context, createModel entity.SaveUserOutbox) (*entity.UserOutbox, error)
+	}
+
+	RoleStorage interface {
+		WithTx(tx *database.Transaction) RoleStorage
+		GetRole(ctx context.Context, getModel entity.GetRole) (*entity.Role, error)
+		SaveRole(ctx context.Context, createModel entity.SaveRole) (*entity.Role, error)
+		UpdateRole(ctx context.Context, getModel entity.GetRole, updateModel entity.UpdateRole) (*entity.Role, error)
+		SoftDeleteRole(ctx context.Context, getModel entity.GetRole) error
+	}
+
+	UserRoleStorage interface {
+		WithTx(tx *database.Transaction) UserRoleStorage
+		GetUserRole(ctx context.Context, getModel entity.GetUserRole) (*entity.UserRole, error)
+		SaveUserRole(ctx context.Context, createModel entity.SaveUserRole) (*entity.UserRole, error)
+		DeleteUserRole(ctx context.Context, getModel entity.GetUserRole) error
 	}
 
 	OtpCache interface {
@@ -57,11 +72,10 @@ type (
 		DeletePhoneNumberVerificationAttempt(ctx context.Context, uuid string) (bool, error)
 	}
 
-	// TODO: v2 - generic interface for otp cache (support multiple otp types through parameter)
 	OtpCacheV2 interface {
 		// SaveOtp saves the otp code for the given uuid and otp type
 		SaveOtp(ctx context.Context, uuid string, otpType OtpType, code string) error
-		// GetOtp gets the otp for the given uuid and otp type
+		// GetOtp Gets the otp for the given uuid and otp type
 		// If the otp is not found, it will return otp_service.OtpNotFoundError
 		GetOtp(ctx context.Context, uuid string, otpType OtpType) (*Otp, error)
 		// DeleteOtp deletes the otp for the given uuid and otp type

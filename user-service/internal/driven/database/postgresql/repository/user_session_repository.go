@@ -69,18 +69,18 @@ func (r *userSessionRepositoryImpl) SaveSession(ctx context.Context, createModel
 	return userSessionModel.ToEntity(), nil
 }
 
-func (r *userSessionRepositoryImpl) FindSession(ctx context.Context, findModel entity.FindUserSession) (*entity.UserSession, error) {
+func (r *userSessionRepositoryImpl) GetSession(ctx context.Context, getModel entity.GetUserSession) (*entity.UserSession, error) {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
+	getMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, getModel)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
 	}
 
 	userSessionModel := model.UserSession{}
-	result := r.database.DB.WithContext(ctx).Where(findMap).First(&userSessionModel)
+	result := r.database.DB.WithContext(ctx).Where(getMap).First(&userSessionModel)
 	err = r.pgErrTl.Translate(result.Error)
 	if err != nil {
 		return nil, err
@@ -137,11 +137,11 @@ func (r *userSessionRepositoryImpl) RevokeManySession(ctx context.Context, refre
 	return nil
 }
 
-func (r *userSessionRepositoryImpl) SoftDeleteSession(ctx context.Context, findModel entity.FindUserSession) error {
+func (r *userSessionRepositoryImpl) SoftDeleteSession(ctx context.Context, getModel entity.GetUserSession) error {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
+	getMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, getModel)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return err
@@ -149,7 +149,7 @@ func (r *userSessionRepositoryImpl) SoftDeleteSession(ctx context.Context, findM
 
 	result := r.database.DB.
 		WithContext(ctx).
-		Where(findMap).
+		Where(getMap).
 		Delete(&model.UserSession{})
 	err = r.pgErrTl.Translate(result.Error)
 	if err != nil {

@@ -75,9 +75,7 @@ func (d *Database) WithTx(tx *Transaction) *Database {
 
 func (d *Database) Transaction(fc func(tx *Transaction) error) error {
 	err := d.DB.Transaction(func(_tx *gorm.DB) error {
-		tx := &Transaction{
-			DB: _tx,
-		}
+		tx := NewTransaction(_tx)
 		return fc(tx)
 	})
 

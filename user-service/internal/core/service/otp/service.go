@@ -144,9 +144,9 @@ func (s *otpServiceImpl) SendVerificationEmail(ctx context.Context, p SendVerifi
 	ctx, span := s.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	user, err := s.userStorage.FindUser(ctx, entity.FindUser{UUID: sql.NullString{String: p.UUID, Valid: true}})
+	user, err := s.userStorage.GetUser(ctx, entity.GetUser{UUID: sql.NullString{String: p.UUID, Valid: true}})
 	if err != nil {
-		s.logger.WithCtx(ctx).Error("failed to find user", zap.Error(err))
+		s.logger.WithCtx(ctx).Error("failed to get user", zap.Error(err))
 		return error_pkg.NotFoundError
 	}
 
@@ -208,11 +208,11 @@ func (s *otpServiceImpl) VerifyEmail(ctx context.Context, p VerifyEmailParam) er
 	_, span := s.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	user, err := s.userStorage.FindUser(ctx, entity.FindUser{
+	user, err := s.userStorage.GetUser(ctx, entity.GetUser{
 		UUID: sql.NullString{String: p.UUID, Valid: true},
 	})
 	if err != nil {
-		s.logger.WithCtx(ctx).Error("Failed to find user", zap.Error(err))
+		s.logger.WithCtx(ctx).Error("Failed to get user", zap.Error(err))
 		return err
 	}
 
@@ -254,7 +254,7 @@ func (s *otpServiceImpl) VerifyEmail(ctx context.Context, p VerifyEmailParam) er
 
 	_, err = s.userStorage.UpdateUser(
 		ctx,
-		entity.FindUser{
+		entity.GetUser{
 			UUID:  sql.NullString{String: p.UUID, Valid: true},
 			Email: sql.NullString{String: user.Email, Valid: true},
 		},
@@ -274,9 +274,9 @@ func (s *otpServiceImpl) SendPhoneNumberVerificationOtp(ctx context.Context, p S
 	defer span.End()
 
 	var user *entity.UserPhoneNumber
-	err := s.userStorage.FindUserWithResult(ctx, entity.FindUser{UUID: sql.NullString{String: p.UUID, Valid: true}}, &user)
+	err := s.userStorage.GetUserWithResult(ctx, entity.GetUser{UUID: sql.NullString{String: p.UUID, Valid: true}}, &user)
 	if err != nil {
-		s.logger.WithCtx(ctx).Error("Failed to find user", zap.Error(err))
+		s.logger.WithCtx(ctx).Error("Failed to get user", zap.Error(err))
 		return error_pkg.NotFoundError
 	}
 
@@ -326,9 +326,9 @@ func (s *otpServiceImpl) VerifyPhoneNumber(ctx context.Context, p VerifyPhoneNum
 	defer span.End()
 
 	var user *entity.UserPhoneNumber
-	err := s.userStorage.FindUserWithResult(
+	err := s.userStorage.GetUserWithResult(
 		ctx,
-		entity.FindUser{
+		entity.GetUser{
 			UUID: sql.NullString{String: p.UUID, Valid: true},
 		},
 		&user,
@@ -373,7 +373,7 @@ func (s *otpServiceImpl) VerifyPhoneNumber(ctx context.Context, p VerifyPhoneNum
 
 	_, err = s.userStorage.UpdateUser(
 		ctx,
-		entity.FindUser{
+		entity.GetUser{
 			UUID:        sql.NullString{String: p.UUID, Valid: true},
 			PhoneNumber: sql.NullString{String: user.PhoneNumber, Valid: true},
 		},

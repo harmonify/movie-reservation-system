@@ -52,11 +52,11 @@ func (s *userServiceImpl) GetUser(ctx context.Context, p GetUserParam) (*GetUser
 	ctx, span := s.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	user, err := s.userStorage.FindUser(ctx, entity.FindUser{
+	user, err := s.userStorage.GetUser(ctx, entity.GetUser{
 		UUID: sql.NullString{String: p.UUID, Valid: true},
 	})
 	if err != nil {
-		s.logger.WithCtx(ctx).Error("failed to find user", zap.Error(err))
+		s.logger.WithCtx(ctx).Error("failed to get user", zap.Error(err))
 		return nil, err
 	}
 
@@ -87,7 +87,7 @@ func (s *userServiceImpl) UpdateUser(ctx context.Context, p UpdateUserParam) (*U
 
 	user, err := s.userStorage.UpdateUser(
 		ctx,
-		entity.FindUser{
+		entity.GetUser{
 			UUID: sql.NullString{String: p.UUID, Valid: true},
 		},
 		entity.UpdateUser{

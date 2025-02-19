@@ -156,7 +156,7 @@ func (s *tokenServiceImpl) VerifyRefreshToken(ctx context.Context, p VerifyRefre
 		return nil, err
 	}
 
-	session, err := s.userSessionStorage.FindSession(ctx, entity.FindUserSession{
+	session, err := s.userSessionStorage.GetSession(ctx, entity.GetUserSession{
 		RefreshToken: sql.NullString{String: hashedRefreshToken, Valid: true},
 	})
 	if err != nil {

@@ -70,18 +70,18 @@ func (r *userKeyRepositoryImpl) SaveUserKey(ctx context.Context, createModel ent
 	return userKeyModel.ToEntity(), err
 }
 
-func (r *userKeyRepositoryImpl) FindUserKey(ctx context.Context, findModel entity.FindUserKey) (*entity.UserKey, error) {
+func (r *userKeyRepositoryImpl) GetUserKey(ctx context.Context, getModel entity.GetUserKey) (*entity.UserKey, error) {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
+	getMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, getModel)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
 	}
 
 	userKeyModel := model.UserKey{}
-	result := r.database.DB.WithContext(ctx).Where(findMap).First(&userKeyModel)
+	result := r.database.DB.WithContext(ctx).Where(getMap).First(&userKeyModel)
 	err = r.pgErrTl.Translate(result.Error)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
@@ -91,11 +91,11 @@ func (r *userKeyRepositoryImpl) FindUserKey(ctx context.Context, findModel entit
 	return userKeyModel.ToEntity(), err
 }
 
-func (r *userKeyRepositoryImpl) UpdateUserKey(ctx context.Context, findModel entity.FindUserKey, updateModel entity.UpdateUserKey) (*entity.UserKey, error) {
+func (r *userKeyRepositoryImpl) UpdateUserKey(ctx context.Context, getModel entity.GetUserKey, updateModel entity.UpdateUserKey) (*entity.UserKey, error) {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
+	getMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, getModel)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
@@ -111,7 +111,7 @@ func (r *userKeyRepositoryImpl) UpdateUserKey(ctx context.Context, findModel ent
 	result := r.database.DB.
 		WithContext(ctx).
 		Model(&userKeyModel).
-		Where(findMap).
+		Where(getMap).
 		Clauses(clause.Returning{}).
 		Updates(updateMap)
 
@@ -131,8 +131,8 @@ func (r *userKeyRepositoryImpl) UpdateUserKey(ctx context.Context, findModel ent
 	return userKeyModel.ToEntity(), err
 }
 
-func (r *userKeyRepositoryImpl) SoftDeleteUserKey(ctx context.Context, findModel entity.FindUserKey) error {
-	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, findModel)
+func (r *userKeyRepositoryImpl) SoftDeleteUserKey(ctx context.Context, getModel entity.GetUserKey) error {
+	getMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, getModel)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return err
@@ -140,7 +140,7 @@ func (r *userKeyRepositoryImpl) SoftDeleteUserKey(ctx context.Context, findModel
 
 	result := r.database.DB.
 		WithContext(ctx).
-		Where(findMap).
+		Where(getMap).
 		Delete(&model.UserKey{})
 
 	err = r.pgErrTl.Translate(result.Error)

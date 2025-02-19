@@ -7,3 +7,7 @@ import (
 type Transaction struct {
 	DB *gorm.DB
 }
+
+func NewTransaction(db *gorm.DB) *Transaction {
+	return &Transaction{DB: db}
+}

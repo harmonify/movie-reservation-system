@@ -15,7 +15,7 @@ type (
 		DeletedAt  sql.NullTime `json:"deleted_at"`
 	}
 
-	FindUserKey struct {
+	GetUserKey struct {
 		UserUUID  sql.NullString
 		PublicKey sql.NullString
 		// PrivateKey sql.NullString
