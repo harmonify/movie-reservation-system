@@ -33,7 +33,7 @@
 # delete projects as he only has the permissions of the junior developer role
 # which does not include the delete-project permission.
 
-package example.hierarchical
+package examples.hierarchical
 
 reachable_roles := graph.reachable(data.roles_graph, input.roles)
 

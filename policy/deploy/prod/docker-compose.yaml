@@ -9,11 +9,11 @@ services:
                 # "debug",
                 "--addr",
                 ":8181",
-                "/policies",
+                "/bundle.tar.gz",
             ]
         ports:
             - "8181:8181"
         networks:
             - core-net
         volumes:
-            - ./policies:/policies
+            - ../../.dist/bundle.tar.gz:/bundle.tar.gz:ro

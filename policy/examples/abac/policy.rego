@@ -21,7 +21,7 @@
 # when the policy was last evaluated. Try enabling Coverage and running evaluation
 # with different inputs.
 
-package example.abac
+package examples.abac
 
 default allow := false
 

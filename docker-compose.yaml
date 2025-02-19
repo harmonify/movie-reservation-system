@@ -4,7 +4,7 @@ include:
     - path: "./deploy/local/jaeger.docker-compose.yaml"
     - path: "./deploy/local/prometheus.docker-compose.yaml"
     - path: "./deploy/local/grafana.docker-compose.yaml"
-    - path: "./policy/docker-compose.yaml"
+    - path: "./policy/deploy/local/docker-compose.yaml"
     - path: "./user-service/deploy/local/run/docker-compose.yaml"
     - path: "./movie-service/deploy/local/run/docker-compose.yaml"
     - path: "./movie-search-service/deploy/local/run/docker-compose.yaml"

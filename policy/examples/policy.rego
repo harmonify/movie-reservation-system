@@ -1,4 +1,4 @@
-package example
+package examples
 
 import rego.v1
 
