@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
+	"log"
 	"path"
 	"runtime"
 
@@ -24,7 +24,7 @@ import (
 
 func main() {
 	if err := newMinimalApp().Start(context.Background()); err != nil {
-		os.Exit(1)
+		log.Fatal(err)
 	}
 }
 
@@ -94,7 +94,7 @@ func newMinimalApp() *fx.App {
 			lc.Append(fx.Hook{
 				OnStart: func(ctx context.Context) error {
 					logger.Info("Application started")
-					if err := run(ctx, s); err != nil {
+					if err := run(ctx, logger, s); err != nil {
 						logger.Error(err.Error(), zap.Stack("stack"))
 						return err
 					}
@@ -109,9 +109,10 @@ func newMinimalApp() *fx.App {
 	)
 }
 
-func run(ctx context.Context, s entityseeder.UserSeeder) error {
+func run(ctx context.Context, logger logger.Logger, s entityseeder.UserSeeder) error {
 	u, err := s.CreateAdmin(ctx)
 	if err != nil {
+		logger.Error(err.Error(), zap.Stack("stack"))
 		return err
 	}
 	fmt.Println("===============================================================")

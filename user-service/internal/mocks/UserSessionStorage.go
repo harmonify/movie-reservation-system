@@ -26,29 +26,29 @@ func (_m *UserSessionStorage) EXPECT() *UserSessionStorage_Expecter {
 	return &UserSessionStorage_Expecter{mock: &_m.Mock}
 }
 
-// FindSession provides a mock function with given fields: ctx, findModel
-func (_m *UserSessionStorage) FindSession(ctx context.Context, findModel entity.FindUserSession) (*entity.UserSession, error) {
-	ret := _m.Called(ctx, findModel)
+// GetSession provides a mock function with given fields: ctx, getModel
+func (_m *UserSessionStorage) GetSession(ctx context.Context, getModel entity.GetUserSession) (*entity.UserSession, error) {
+	ret := _m.Called(ctx, getModel)
 
 	if len(ret) == 0 {
-		panic("no return value specified for FindSession")
+		panic("no return value specified for GetSession")
 	}
 
 	var r0 *entity.UserSession
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, entity.FindUserSession) (*entity.UserSession, error)); ok {
-		return rf(ctx, findModel)
+	if rf, ok := ret.Get(0).(func(context.Context, entity.GetUserSession) (*entity.UserSession, error)); ok {
+		return rf(ctx, getModel)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, entity.FindUserSession) *entity.UserSession); ok {
-		r0 = rf(ctx, findModel)
+	if rf, ok := ret.Get(0).(func(context.Context, entity.GetUserSession) *entity.UserSession); ok {
+		r0 = rf(ctx, getModel)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*entity.UserSession)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, entity.FindUserSession) error); ok {
-		r1 = rf(ctx, findModel)
+	if rf, ok := ret.Get(1).(func(context.Context, entity.GetUserSession) error); ok {
+		r1 = rf(ctx, getModel)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -56,31 +56,31 @@ func (_m *UserSessionStorage) FindSession(ctx context.Context, findModel entity.
 	return r0, r1
 }
 
-// UserSessionStorage_FindSession_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindSession'
-type UserSessionStorage_FindSession_Call struct {
+// UserSessionStorage_GetSession_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSession'
+type UserSessionStorage_GetSession_Call struct {
 	*mock.Call
 }
 
-// FindSession is a helper method to define mock.On call
+// GetSession is a helper method to define mock.On call
 //   - ctx context.Context
-//   - findModel entity.FindUserSession
-func (_e *UserSessionStorage_Expecter) FindSession(ctx interface{}, findModel interface{}) *UserSessionStorage_FindSession_Call {
-	return &UserSessionStorage_FindSession_Call{Call: _e.mock.On("FindSession", ctx, findModel)}
+//   - getModel entity.GetUserSession
+func (_e *UserSessionStorage_Expecter) GetSession(ctx interface{}, getModel interface{}) *UserSessionStorage_GetSession_Call {
+	return &UserSessionStorage_GetSession_Call{Call: _e.mock.On("GetSession", ctx, getModel)}
 }
 
-func (_c *UserSessionStorage_FindSession_Call) Run(run func(ctx context.Context, findModel entity.FindUserSession)) *UserSessionStorage_FindSession_Call {
+func (_c *UserSessionStorage_GetSession_Call) Run(run func(ctx context.Context, getModel entity.GetUserSession)) *UserSessionStorage_GetSession_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(entity.FindUserSession))
+		run(args[0].(context.Context), args[1].(entity.GetUserSession))
 	})
 	return _c
 }
 
-func (_c *UserSessionStorage_FindSession_Call) Return(_a0 *entity.UserSession, _a1 error) *UserSessionStorage_FindSession_Call {
+func (_c *UserSessionStorage_GetSession_Call) Return(_a0 *entity.UserSession, _a1 error) *UserSessionStorage_GetSession_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *UserSessionStorage_FindSession_Call) RunAndReturn(run func(context.Context, entity.FindUserSession) (*entity.UserSession, error)) *UserSessionStorage_FindSession_Call {
+func (_c *UserSessionStorage_GetSession_Call) RunAndReturn(run func(context.Context, entity.GetUserSession) (*entity.UserSession, error)) *UserSessionStorage_GetSession_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -238,17 +238,17 @@ func (_c *UserSessionStorage_SaveSession_Call) RunAndReturn(run func(context.Con
 	return _c
 }
 
-// SoftDeleteSession provides a mock function with given fields: ctx, findModel
-func (_m *UserSessionStorage) SoftDeleteSession(ctx context.Context, findModel entity.FindUserSession) error {
-	ret := _m.Called(ctx, findModel)
+// SoftDeleteSession provides a mock function with given fields: ctx, getModel
+func (_m *UserSessionStorage) SoftDeleteSession(ctx context.Context, getModel entity.GetUserSession) error {
+	ret := _m.Called(ctx, getModel)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SoftDeleteSession")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, entity.FindUserSession) error); ok {
-		r0 = rf(ctx, findModel)
+	if rf, ok := ret.Get(0).(func(context.Context, entity.GetUserSession) error); ok {
+		r0 = rf(ctx, getModel)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -263,14 +263,14 @@ type UserSessionStorage_SoftDeleteSession_Call struct {
 
 // SoftDeleteSession is a helper method to define mock.On call
 //   - ctx context.Context
-//   - findModel entity.FindUserSession
-func (_e *UserSessionStorage_Expecter) SoftDeleteSession(ctx interface{}, findModel interface{}) *UserSessionStorage_SoftDeleteSession_Call {
-	return &UserSessionStorage_SoftDeleteSession_Call{Call: _e.mock.On("SoftDeleteSession", ctx, findModel)}
+//   - getModel entity.GetUserSession
+func (_e *UserSessionStorage_Expecter) SoftDeleteSession(ctx interface{}, getModel interface{}) *UserSessionStorage_SoftDeleteSession_Call {
+	return &UserSessionStorage_SoftDeleteSession_Call{Call: _e.mock.On("SoftDeleteSession", ctx, getModel)}
 }
 
-func (_c *UserSessionStorage_SoftDeleteSession_Call) Run(run func(ctx context.Context, findModel entity.FindUserSession)) *UserSessionStorage_SoftDeleteSession_Call {
+func (_c *UserSessionStorage_SoftDeleteSession_Call) Run(run func(ctx context.Context, getModel entity.GetUserSession)) *UserSessionStorage_SoftDeleteSession_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(entity.FindUserSession))
+		run(args[0].(context.Context), args[1].(entity.GetUserSession))
 	})
 	return _c
 }
@@ -280,7 +280,7 @@ func (_c *UserSessionStorage_SoftDeleteSession_Call) Return(_a0 error) *UserSess
 	return _c
 }
 
-func (_c *UserSessionStorage_SoftDeleteSession_Call) RunAndReturn(run func(context.Context, entity.FindUserSession) error) *UserSessionStorage_SoftDeleteSession_Call {
+func (_c *UserSessionStorage_SoftDeleteSession_Call) RunAndReturn(run func(context.Context, entity.GetUserSession) error) *UserSessionStorage_SoftDeleteSession_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -1,5 +1,5 @@
 -- +migrate Up
-CREATE TABLE IF NOT EXISTS public.roles (
+CREATE TABLE public.roles (
     id SERIAL PRIMARY KEY NOT NULL,
     name VARCHAR(255) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -8,14 +8,14 @@ CREATE TABLE IF NOT EXISTS public.roles (
 );
 
 INSERT INTO
-    public.roles (name)
+    public.roles (id, name)
 VALUES
-    ('admin');
+    (1, 'admin');
 
 INSERT INTO
-    public.roles (name)
+    public.roles (id, name)
 VALUES
-    ('user');
+    (2, 'user');
 
 -- +migrate Down
 DROP TABLE IF EXISTS public.roles;

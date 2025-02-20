@@ -147,9 +147,9 @@ func (s *authServiceImpl) Register(ctx context.Context, p RegisterParam) error {
 		}
 
 		// Grant user role
-		_, err = s.userRoleStorage.WithTx(tx).SaveUserRole(ctx, entity.SaveUserRole{
+		_, err = s.userRoleStorage.WithTx(tx).SaveUserRoles(ctx, entity.SaveUserRoles{
 			UserUUID: user.UUID,
-			RoleName: entity.RoleUser,
+			RoleID:   []uint{entity.RoleUser.Value()},
 		})
 		if err != nil {
 			s.logger.WithCtx(ctx).Error("Failed to grant user role", zap.Error(err))

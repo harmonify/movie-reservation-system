@@ -45,19 +45,19 @@ type (
 		SaveOutbox(ctx context.Context, createModel entity.SaveUserOutbox) (*entity.UserOutbox, error)
 	}
 
-	RoleStorage interface {
-		WithTx(tx *database.Transaction) RoleStorage
-		GetRole(ctx context.Context, getModel entity.GetRole) (*entity.Role, error)
-		SaveRole(ctx context.Context, createModel entity.SaveRole) (*entity.Role, error)
-		UpdateRole(ctx context.Context, getModel entity.GetRole, updateModel entity.UpdateRole) (*entity.Role, error)
-		SoftDeleteRole(ctx context.Context, getModel entity.GetRole) error
-	}
+	// RoleStorage interface {
+	// 	WithTx(tx *database.Transaction) RoleStorage
+	// 	GetRole(ctx context.Context, getModel entity.GetRole) (*entity.Role, error)
+	// 	SaveRole(ctx context.Context, createModel entity.SaveRole) (*entity.Role, error)
+	// 	UpdateRole(ctx context.Context, getModel entity.GetRole, updateModel entity.UpdateRole) (*entity.Role, error)
+	// 	SoftDeleteRole(ctx context.Context, getModel entity.GetRole) error
+	// }
 
 	UserRoleStorage interface {
 		WithTx(tx *database.Transaction) UserRoleStorage
-		GetUserRole(ctx context.Context, getModel entity.GetUserRole) (*entity.UserRole, error)
-		SaveUserRole(ctx context.Context, createModel entity.SaveUserRole) (*entity.UserRole, error)
-		DeleteUserRole(ctx context.Context, getModel entity.GetUserRole) error
+		SearchUserRoles(ctx context.Context, searchModel entity.SearchUserRoles) ([]*entity.UserRole, error)
+		SaveUserRoles(ctx context.Context, createModel entity.SaveUserRoles) ([]*entity.UserRole, error)
+		SoftDeleteUserRoles(ctx context.Context, searchModel entity.SearchUserRoles) error
 	}
 
 	OtpCache interface {

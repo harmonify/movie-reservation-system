@@ -10,6 +10,7 @@ import (
 type UserWithRelations struct {
 	User            *entity.User
 	UserRaw         *entityfactory.UserRaw
+	UserRoles       []*entity.UserRole
 	UserKey         *entity.UserKey
 	UserSessions    []*entity.UserSession
 	UserSessionRaws []*entityfactory.UserSessionRaw

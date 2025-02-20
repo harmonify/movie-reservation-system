@@ -22,6 +22,7 @@ type UserSeederParam struct {
 	UserKeyFactory            entityfactory.UserKeyFactory
 	UserSessionFactory        entityfactory.UserSessionFactory
 	UserStorage               shared.UserStorage
+	UserRoleStorage           shared.UserRoleStorage
 	UserKeyStorage            shared.UserKeyStorage
 	UserSessionStorage        shared.UserSessionStorage
 }
@@ -33,6 +34,7 @@ type userSeederImpl struct {
 	userKeyFactory     entityfactory.UserKeyFactory
 	userSessionFactory entityfactory.UserSessionFactory
 	userStorage        shared.UserStorage
+	userRoleStorage    shared.UserRoleStorage
 	userKeyStorage     shared.UserKeyStorage
 	userSessionStorage shared.UserSessionStorage
 }
@@ -45,6 +47,7 @@ func NewUserSeeder(p UserSeederParam) entityseeder.UserSeeder {
 		userKeyFactory:     p.UserKeyFactory,
 		userSessionFactory: p.UserSessionFactory,
 		userStorage:        p.UserStorage,
+		userRoleStorage:    p.UserRoleStorage,
 		userKeyStorage:     p.UserKeyStorage,
 		userSessionStorage: p.UserSessionStorage,
 	}
@@ -56,51 +59,75 @@ func (s *userSeederImpl) CreateUser(ctx context.Context) (*entityseeder.UserWith
 	if err != nil {
 		return nil, err
 	}
-	newUser, err := s.userStorage.SaveUser(ctx, entity.SaveUser{
-		Username:    user.Username,
-		TraceID:     user.TraceID,
-		Password:    user.Password,
-		Email:       user.Email,
-		PhoneNumber: user.PhoneNumber,
-		FirstName:   user.FirstName,
-		LastName:    user.LastName,
-	})
-	if err != nil {
-		return nil, err
-	}
 
 	userKey := s.userKeyFactory.GenerateUserKey(user)
-	newUserKey, err := s.userKeyStorage.SaveUserKey(ctx, entity.SaveUserKey{
-		UserUUID:   newUser.UUID,
-		PublicKey:  userKey.PublicKey,
-		PrivateKey: userKey.PrivateKey,
-	})
-	if err != nil {
-		return nil, err
-	}
 
 	userSession, userSessionRaw, err := s.userSessionFactory.GenerateUserSession(user)
 	if err != nil {
 		return nil, err
 	}
 
-	nu, err := s.userSessionStorage.SaveSession(ctx, entity.SaveUserSession{
-		UserUUID:     newUser.UUID,
-		TraceID:      userSession.TraceID,
-		RefreshToken: userSession.RefreshToken,
-		ExpiredAt:    userSession.ExpiredAt,
-		IpAddress:    userSession.IpAddress,
-		UserAgent:    userSession.UserAgent,
+	var newUser *entity.User
+	var newUserRoles []*entity.UserRole
+	var newUserKey *entity.UserKey
+	var newUserSession *entity.UserSession
+
+	err = s.database.Transaction(func(tx *database.Transaction) error {
+		newUser, err = s.userStorage.WithTx(tx).SaveUser(ctx, entity.SaveUser{
+			Username:    user.Username,
+			TraceID:     user.TraceID,
+			Password:    user.Password,
+			Email:       user.Email,
+			PhoneNumber: user.PhoneNumber,
+			FirstName:   user.FirstName,
+			LastName:    user.LastName,
+		})
+		if err != nil {
+			return err
+		}
+
+		newUserRoles, err = s.userRoleStorage.WithTx(tx).SaveUserRoles(ctx, entity.SaveUserRoles{
+			UserUUID: newUser.UUID,
+			RoleID:   []uint{entity.RoleUser.Value()},
+		})
+		if err != nil {
+			return err
+		}
+
+		newUserKey, err = s.userKeyStorage.WithTx(tx).SaveUserKey(ctx, entity.SaveUserKey{
+			UserUUID:   newUser.UUID,
+			PublicKey:  userKey.PublicKey,
+			PrivateKey: userKey.PrivateKey,
+		})
+		if err != nil {
+			return err
+		}
+
+		newUserSession, err = s.userSessionStorage.WithTx(tx).SaveSession(ctx, entity.SaveUserSession{
+			UserUUID:     newUser.UUID,
+			TraceID:      userSession.TraceID,
+			RefreshToken: userSession.RefreshToken,
+			ExpiredAt:    userSession.ExpiredAt,
+			IpAddress:    userSession.IpAddress,
+			UserAgent:    userSession.UserAgent,
+		})
+		if err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	newUserSessions := []*entity.UserSession{nu}
+
+	newUserSessions := []*entity.UserSession{newUserSession}
 	newUserSessionRaws := []*entityfactory.UserSessionRaw{userSessionRaw}
 
 	return &entityseeder.UserWithRelations{
 		User:            newUser,
 		UserRaw:         userRaw,
+		UserRoles:       newUserRoles,
 		UserKey:         newUserKey,
 		UserSessions:    newUserSessions,
 		UserSessionRaws: newUserSessionRaws,
@@ -113,51 +140,75 @@ func (s *userSeederImpl) CreateAdmin(ctx context.Context) (*entityseeder.UserWit
 	if err != nil {
 		return nil, err
 	}
-	newUser, err := s.userStorage.SaveUser(ctx, entity.SaveUser{
-		Username:    user.Username,
-		TraceID:     user.TraceID,
-		Password:    user.Password,
-		Email:       user.Email,
-		PhoneNumber: user.PhoneNumber,
-		FirstName:   user.FirstName,
-		LastName:    user.LastName,
-	})
-	if err != nil {
-		return nil, err
-	}
 
 	userKey := s.userKeyFactory.GenerateUserKey(user)
-	newUserKey, err := s.userKeyStorage.SaveUserKey(ctx, entity.SaveUserKey{
-		UserUUID:   newUser.UUID,
-		PublicKey:  userKey.PublicKey,
-		PrivateKey: userKey.PrivateKey,
-	})
-	if err != nil {
-		return nil, err
-	}
 
 	userSession, userSessionRaw, err := s.userSessionFactory.GenerateUserSession(user)
 	if err != nil {
 		return nil, err
 	}
 
-	nu, err := s.userSessionStorage.SaveSession(ctx, entity.SaveUserSession{
-		UserUUID:     newUser.UUID,
-		TraceID:      userSession.TraceID,
-		RefreshToken: userSession.RefreshToken,
-		ExpiredAt:    userSession.ExpiredAt,
-		IpAddress:    userSession.IpAddress,
-		UserAgent:    userSession.UserAgent,
+	var newUser *entity.User
+	var newUserRoles []*entity.UserRole
+	var newUserKey *entity.UserKey
+	var newUserSession *entity.UserSession
+
+	err = s.database.Transaction(func(tx *database.Transaction) error {
+		newUser, err = s.userStorage.WithTx(tx).SaveUser(ctx, entity.SaveUser{
+			Username:    user.Username,
+			TraceID:     user.TraceID,
+			Password:    user.Password,
+			Email:       user.Email,
+			PhoneNumber: user.PhoneNumber,
+			FirstName:   user.FirstName,
+			LastName:    user.LastName,
+		})
+		if err != nil {
+			return err
+		}
+
+		newUserRoles, err = s.userRoleStorage.WithTx(tx).SaveUserRoles(ctx, entity.SaveUserRoles{
+			UserUUID: newUser.UUID,
+			RoleID:   []uint{entity.RoleAdmin.Value()},
+		})
+		if err != nil {
+			return err
+		}
+
+		newUserKey, err = s.userKeyStorage.WithTx(tx).SaveUserKey(ctx, entity.SaveUserKey{
+			UserUUID:   newUser.UUID,
+			PublicKey:  userKey.PublicKey,
+			PrivateKey: userKey.PrivateKey,
+		})
+		if err != nil {
+			return err
+		}
+
+		newUserSession, err = s.userSessionStorage.WithTx(tx).SaveSession(ctx, entity.SaveUserSession{
+			UserUUID:     newUser.UUID,
+			TraceID:      userSession.TraceID,
+			RefreshToken: userSession.RefreshToken,
+			ExpiredAt:    userSession.ExpiredAt,
+			IpAddress:    userSession.IpAddress,
+			UserAgent:    userSession.UserAgent,
+		})
+		if err != nil {
+			return err
+		}
+
+		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	newUserSessions := []*entity.UserSession{nu}
+
+	newUserSessions := []*entity.UserSession{newUserSession}
 	newUserSessionRaws := []*entityfactory.UserSessionRaw{userSessionRaw}
 
 	return &entityseeder.UserWithRelations{
 		User:            newUser,
 		UserRaw:         userRaw,
+		UserRoles:       newUserRoles,
 		UserKey:         newUserKey,
 		UserSessions:    newUserSessions,
 		UserSessionRaws: newUserSessionRaws,
@@ -185,6 +236,13 @@ func (s *userSeederImpl) DeleteUser(ctx context.Context, GetModel entity.GetUser
 		}
 
 		err = s.userKeyStorage.WithTx(tx).SoftDeleteUserKey(ctx, entity.GetUserKey{
+			UserUUID: sql.NullString{String: user.UUID, Valid: true},
+		})
+		if err != nil {
+			return err
+		}
+
+		err = s.userRoleStorage.WithTx(tx).SoftDeleteUserRoles(ctx, entity.SearchUserRoles{
 			UserUUID: sql.NullString{String: user.UUID, Valid: true},
 		})
 		if err != nil {

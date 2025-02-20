@@ -26,29 +26,29 @@ func (_m *UserKeyStorage) EXPECT() *UserKeyStorage_Expecter {
 	return &UserKeyStorage_Expecter{mock: &_m.Mock}
 }
 
-// FindUserKey provides a mock function with given fields: ctx, findModel
-func (_m *UserKeyStorage) FindUserKey(ctx context.Context, findModel entity.FindUserKey) (*entity.UserKey, error) {
-	ret := _m.Called(ctx, findModel)
+// GetUserKey provides a mock function with given fields: ctx, getModel
+func (_m *UserKeyStorage) GetUserKey(ctx context.Context, getModel entity.GetUserKey) (*entity.UserKey, error) {
+	ret := _m.Called(ctx, getModel)
 
 	if len(ret) == 0 {
-		panic("no return value specified for FindUserKey")
+		panic("no return value specified for GetUserKey")
 	}
 
 	var r0 *entity.UserKey
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, entity.FindUserKey) (*entity.UserKey, error)); ok {
-		return rf(ctx, findModel)
+	if rf, ok := ret.Get(0).(func(context.Context, entity.GetUserKey) (*entity.UserKey, error)); ok {
+		return rf(ctx, getModel)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, entity.FindUserKey) *entity.UserKey); ok {
-		r0 = rf(ctx, findModel)
+	if rf, ok := ret.Get(0).(func(context.Context, entity.GetUserKey) *entity.UserKey); ok {
+		r0 = rf(ctx, getModel)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*entity.UserKey)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, entity.FindUserKey) error); ok {
-		r1 = rf(ctx, findModel)
+	if rf, ok := ret.Get(1).(func(context.Context, entity.GetUserKey) error); ok {
+		r1 = rf(ctx, getModel)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -56,31 +56,31 @@ func (_m *UserKeyStorage) FindUserKey(ctx context.Context, findModel entity.Find
 	return r0, r1
 }
 
-// UserKeyStorage_FindUserKey_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindUserKey'
-type UserKeyStorage_FindUserKey_Call struct {
+// UserKeyStorage_GetUserKey_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserKey'
+type UserKeyStorage_GetUserKey_Call struct {
 	*mock.Call
 }
 
-// FindUserKey is a helper method to define mock.On call
+// GetUserKey is a helper method to define mock.On call
 //   - ctx context.Context
-//   - findModel entity.FindUserKey
-func (_e *UserKeyStorage_Expecter) FindUserKey(ctx interface{}, findModel interface{}) *UserKeyStorage_FindUserKey_Call {
-	return &UserKeyStorage_FindUserKey_Call{Call: _e.mock.On("FindUserKey", ctx, findModel)}
+//   - getModel entity.GetUserKey
+func (_e *UserKeyStorage_Expecter) GetUserKey(ctx interface{}, getModel interface{}) *UserKeyStorage_GetUserKey_Call {
+	return &UserKeyStorage_GetUserKey_Call{Call: _e.mock.On("GetUserKey", ctx, getModel)}
 }
 
-func (_c *UserKeyStorage_FindUserKey_Call) Run(run func(ctx context.Context, findModel entity.FindUserKey)) *UserKeyStorage_FindUserKey_Call {
+func (_c *UserKeyStorage_GetUserKey_Call) Run(run func(ctx context.Context, getModel entity.GetUserKey)) *UserKeyStorage_GetUserKey_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(entity.FindUserKey))
+		run(args[0].(context.Context), args[1].(entity.GetUserKey))
 	})
 	return _c
 }
 
-func (_c *UserKeyStorage_FindUserKey_Call) Return(_a0 *entity.UserKey, _a1 error) *UserKeyStorage_FindUserKey_Call {
+func (_c *UserKeyStorage_GetUserKey_Call) Return(_a0 *entity.UserKey, _a1 error) *UserKeyStorage_GetUserKey_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *UserKeyStorage_FindUserKey_Call) RunAndReturn(run func(context.Context, entity.FindUserKey) (*entity.UserKey, error)) *UserKeyStorage_FindUserKey_Call {
+func (_c *UserKeyStorage_GetUserKey_Call) RunAndReturn(run func(context.Context, entity.GetUserKey) (*entity.UserKey, error)) *UserKeyStorage_GetUserKey_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -144,17 +144,17 @@ func (_c *UserKeyStorage_SaveUserKey_Call) RunAndReturn(run func(context.Context
 	return _c
 }
 
-// SoftDeleteUserKey provides a mock function with given fields: ctx, findModel
-func (_m *UserKeyStorage) SoftDeleteUserKey(ctx context.Context, findModel entity.FindUserKey) error {
-	ret := _m.Called(ctx, findModel)
+// SoftDeleteUserKey provides a mock function with given fields: ctx, getModel
+func (_m *UserKeyStorage) SoftDeleteUserKey(ctx context.Context, getModel entity.GetUserKey) error {
+	ret := _m.Called(ctx, getModel)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SoftDeleteUserKey")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, entity.FindUserKey) error); ok {
-		r0 = rf(ctx, findModel)
+	if rf, ok := ret.Get(0).(func(context.Context, entity.GetUserKey) error); ok {
+		r0 = rf(ctx, getModel)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -169,14 +169,14 @@ type UserKeyStorage_SoftDeleteUserKey_Call struct {
 
 // SoftDeleteUserKey is a helper method to define mock.On call
 //   - ctx context.Context
-//   - findModel entity.FindUserKey
-func (_e *UserKeyStorage_Expecter) SoftDeleteUserKey(ctx interface{}, findModel interface{}) *UserKeyStorage_SoftDeleteUserKey_Call {
-	return &UserKeyStorage_SoftDeleteUserKey_Call{Call: _e.mock.On("SoftDeleteUserKey", ctx, findModel)}
+//   - getModel entity.GetUserKey
+func (_e *UserKeyStorage_Expecter) SoftDeleteUserKey(ctx interface{}, getModel interface{}) *UserKeyStorage_SoftDeleteUserKey_Call {
+	return &UserKeyStorage_SoftDeleteUserKey_Call{Call: _e.mock.On("SoftDeleteUserKey", ctx, getModel)}
 }
 
-func (_c *UserKeyStorage_SoftDeleteUserKey_Call) Run(run func(ctx context.Context, findModel entity.FindUserKey)) *UserKeyStorage_SoftDeleteUserKey_Call {
+func (_c *UserKeyStorage_SoftDeleteUserKey_Call) Run(run func(ctx context.Context, getModel entity.GetUserKey)) *UserKeyStorage_SoftDeleteUserKey_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(entity.FindUserKey))
+		run(args[0].(context.Context), args[1].(entity.GetUserKey))
 	})
 	return _c
 }
@@ -186,14 +186,14 @@ func (_c *UserKeyStorage_SoftDeleteUserKey_Call) Return(_a0 error) *UserKeyStora
 	return _c
 }
 
-func (_c *UserKeyStorage_SoftDeleteUserKey_Call) RunAndReturn(run func(context.Context, entity.FindUserKey) error) *UserKeyStorage_SoftDeleteUserKey_Call {
+func (_c *UserKeyStorage_SoftDeleteUserKey_Call) RunAndReturn(run func(context.Context, entity.GetUserKey) error) *UserKeyStorage_SoftDeleteUserKey_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// UpdateUserKey provides a mock function with given fields: ctx, findModel, updateModel
-func (_m *UserKeyStorage) UpdateUserKey(ctx context.Context, findModel entity.FindUserKey, updateModel entity.UpdateUserKey) (*entity.UserKey, error) {
-	ret := _m.Called(ctx, findModel, updateModel)
+// UpdateUserKey provides a mock function with given fields: ctx, getModel, updateModel
+func (_m *UserKeyStorage) UpdateUserKey(ctx context.Context, getModel entity.GetUserKey, updateModel entity.UpdateUserKey) (*entity.UserKey, error) {
+	ret := _m.Called(ctx, getModel, updateModel)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateUserKey")
@@ -201,19 +201,19 @@ func (_m *UserKeyStorage) UpdateUserKey(ctx context.Context, findModel entity.Fi
 
 	var r0 *entity.UserKey
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, entity.FindUserKey, entity.UpdateUserKey) (*entity.UserKey, error)); ok {
-		return rf(ctx, findModel, updateModel)
+	if rf, ok := ret.Get(0).(func(context.Context, entity.GetUserKey, entity.UpdateUserKey) (*entity.UserKey, error)); ok {
+		return rf(ctx, getModel, updateModel)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, entity.FindUserKey, entity.UpdateUserKey) *entity.UserKey); ok {
-		r0 = rf(ctx, findModel, updateModel)
+	if rf, ok := ret.Get(0).(func(context.Context, entity.GetUserKey, entity.UpdateUserKey) *entity.UserKey); ok {
+		r0 = rf(ctx, getModel, updateModel)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*entity.UserKey)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, entity.FindUserKey, entity.UpdateUserKey) error); ok {
-		r1 = rf(ctx, findModel, updateModel)
+	if rf, ok := ret.Get(1).(func(context.Context, entity.GetUserKey, entity.UpdateUserKey) error); ok {
+		r1 = rf(ctx, getModel, updateModel)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -228,15 +228,15 @@ type UserKeyStorage_UpdateUserKey_Call struct {
 
 // UpdateUserKey is a helper method to define mock.On call
 //   - ctx context.Context
-//   - findModel entity.FindUserKey
+//   - getModel entity.GetUserKey
 //   - updateModel entity.UpdateUserKey
-func (_e *UserKeyStorage_Expecter) UpdateUserKey(ctx interface{}, findModel interface{}, updateModel interface{}) *UserKeyStorage_UpdateUserKey_Call {
-	return &UserKeyStorage_UpdateUserKey_Call{Call: _e.mock.On("UpdateUserKey", ctx, findModel, updateModel)}
+func (_e *UserKeyStorage_Expecter) UpdateUserKey(ctx interface{}, getModel interface{}, updateModel interface{}) *UserKeyStorage_UpdateUserKey_Call {
+	return &UserKeyStorage_UpdateUserKey_Call{Call: _e.mock.On("UpdateUserKey", ctx, getModel, updateModel)}
 }
 
-func (_c *UserKeyStorage_UpdateUserKey_Call) Run(run func(ctx context.Context, findModel entity.FindUserKey, updateModel entity.UpdateUserKey)) *UserKeyStorage_UpdateUserKey_Call {
+func (_c *UserKeyStorage_UpdateUserKey_Call) Run(run func(ctx context.Context, getModel entity.GetUserKey, updateModel entity.UpdateUserKey)) *UserKeyStorage_UpdateUserKey_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(entity.FindUserKey), args[2].(entity.UpdateUserKey))
+		run(args[0].(context.Context), args[1].(entity.GetUserKey), args[2].(entity.UpdateUserKey))
 	})
 	return _c
 }
@@ -246,7 +246,7 @@ func (_c *UserKeyStorage_UpdateUserKey_Call) Return(_a0 *entity.UserKey, _a1 err
 	return _c
 }
 
-func (_c *UserKeyStorage_UpdateUserKey_Call) RunAndReturn(run func(context.Context, entity.FindUserKey, entity.UpdateUserKey) (*entity.UserKey, error)) *UserKeyStorage_UpdateUserKey_Call {
+func (_c *UserKeyStorage_UpdateUserKey_Call) RunAndReturn(run func(context.Context, entity.GetUserKey, entity.UpdateUserKey) (*entity.UserKey, error)) *UserKeyStorage_UpdateUserKey_Call {
 	_c.Call.Return(run)
 	return _c
 }

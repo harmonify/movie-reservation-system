@@ -18,8 +18,6 @@ type UserSession struct {
 	ExpiredAt    time.Time
 	IpAddress    sql.NullString
 	UserAgent    sql.NullString
-
-	User User `gorm:"foreignKey:UserUUID"`
 }
 
 func (m *UserSession) TableName() string {

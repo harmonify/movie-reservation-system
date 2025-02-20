@@ -24,8 +24,6 @@ type User struct {
 	CreatedAt             time.Time      `gorm:"autoCreateTime" faker:"-"`
 	UpdatedAt             time.Time      `gorm:"autoUpdateTime" faker:"-"`
 	DeletedAt             gorm.DeletedAt `gorm:"index" faker:"-"`
-
-	UserSessions []UserSession
 }
 
 func (m *User) TableName() string {
