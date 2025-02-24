@@ -57,8 +57,7 @@ type (
 	}
 
 	JWTBodyPayload struct {
-		UUID        string   `json:"uuid"`
-		Permissions []string `json:"permissions"`
+		UUID string `json:"uuid"`
 	}
 
 	JWTSignParam struct {
