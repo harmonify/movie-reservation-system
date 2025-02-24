@@ -18,12 +18,12 @@ func (e ErrorCode) String() string {
 
 // ErrorWithDetails is a custom error type that implements the error interface.
 type ErrorWithDetails struct {
-	Code     ErrorCode     `json:"code"`      // error code
-	HttpCode int           `json:"http_code"` // associated HTTP status code
-	GrpcCode codes.Code    `json:"grpc_code"` // associated gRPC status code
-	Message  string        `json:"message"`   // user-friendly message
-	Data     interface{}   `json:"data"`      // additional data
-	Errors   []error `json:"errors"`    // additional error messages, useful for clients
+	Code     ErrorCode   `json:"code"`      // error code
+	HttpCode int         `json:"http_code"` // associated HTTP status code
+	GrpcCode codes.Code  `json:"grpc_code"` // associated gRPC status code
+	Message  string      `json:"message"`   // user-friendly message
+	Data     interface{} `json:"data"`      // additional data
+	Errors   []error     `json:"errors"`    // additional error messages, useful for clients
 }
 
 // Error returns the user-friendly error message.
@@ -57,11 +57,11 @@ func (e ErrorWithDetails) WithErrors(errors ...error) *ErrorWithDetails {
 // Deprecated
 type ErrorWithStack struct {
 	*ErrorWithDetails
-	Original error    `json:"original"`
-	Source   string   `json:"source"`
-	Fn       string   `json:"fn"`
-	Line     int      `json:"line"`
-	Path     string   `json:"path"`
+	Original error  `json:"original"`
+	Source   string `json:"source"`
+	Fn       string `json:"fn"`
+	Line     int    `json:"line"`
+	Path     string `json:"path"`
 	Stack    string `json:"stack"`
 }
 
@@ -75,7 +75,7 @@ func NewErrorWithStack(err error, skip int) *ErrorWithStack {
 		target = DefaultError
 	}
 
-	source, fn, ln, path, stack := getSource(runtime.Caller(skip+1))
+	source, fn, ln, path, stack := getSource(runtime.Caller(skip + 1))
 
 	return &ErrorWithStack{
 		ErrorWithDetails: target,
@@ -129,7 +129,7 @@ func getSource(pc uintptr, file string, line int, ok bool) (source string, fn st
 func stackTrace(skip int) string {
 	var stacks []string
 	for {
-		pc, path, line, ok := runtime.Caller(skip+1)
+		pc, path, line, ok := runtime.Caller(skip + 1)
 		if !ok {
 			break
 		}

@@ -30,6 +30,13 @@ var (
 		Message:  "Please ensure you have filled all the required information correctly and try again. If the problem persists, please contact our technical support.",
 	}
 
+	InvalidRequestPathError = &ErrorWithDetails{
+		Code:     ErrorCode("INVALID_REQUEST_PATH_ERROR"),
+		HttpCode: http.StatusBadRequest,
+		GrpcCode: codes.InvalidArgument,
+		Message:  "Please ensure you have filled all the required information correctly and try again. If the problem persists, please contact our technical support.",
+	}
+
 	UnauthorizedError = &ErrorWithDetails{
 		Code:     ErrorCode("UNAUTHORIZED_ERROR"),
 		HttpCode: http.StatusUnauthorized,
