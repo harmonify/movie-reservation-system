@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.uber.org/fx"
@@ -45,7 +46,7 @@ type GrpcClientConfig struct {
 	Address string `validate:"required"`
 }
 
-func NewGrpcClient(p GrpcClientParam, cfg *GrpcClientConfig) (*GrpcClient, error) {
+func NewGrpcClient(p GrpcClientParam, cfg *GrpcClientConfig, opts ...grpc.DialOption) (*GrpcClient, error) {
 	if err := validator.New(validator.WithRequiredStructEnabled()).Struct(cfg); err != nil {
 		return nil, err
 	}
@@ -63,18 +64,23 @@ func NewGrpcClient(p GrpcClientParam, cfg *GrpcClientConfig) (*GrpcClient, error
 		grpc.WithDefaultServiceConfig(defaultServiceConfig),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		opentelemetry.DialOption(opentelemetry.Options{MetricsOptions: opentelemetry.MetricsOptions{MeterProvider: provider}}),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	// Add lifecycle hooks for the client connection
-	p.Lifecycle.Append(fx.StopHook(func(ctx context.Context) error {
-		p.Logger.Warn("Closing gRPC client connection...")
-		return conn.Close()
-	}))
-
-	p.Logger.Info(fmt.Sprintf("Connected to gRPC server at %s", cfg.Address))
+	p.Lifecycle.Append(fx.StartStopHook(
+		func(ctx context.Context) error {
+			// p.Logger.WithCtx(ctx).Info("Starting gRPC client connection...")
+			return nil
+		},
+		func(ctx context.Context) error {
+			p.Logger.WithCtx(ctx).Warn("Closing gRPC client connection...")
+			return conn.Close()
+		},
+	))
 
 	return &GrpcClient{
 		Conn: conn,
