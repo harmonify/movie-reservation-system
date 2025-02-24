@@ -6,9 +6,9 @@ import (
 	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	grpc_pkg "github.com/harmonify/movie-reservation-system/pkg/grpc"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
+	theater_proto "github.com/harmonify/movie-reservation-system/pkg/proto/theater"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/theater-service/internal/core/services"
-	theater_proto "github.com/harmonify/movie-reservation-system/theater-service/internal/driven/proto/theater"
 	"go.uber.org/fx"
 )
 

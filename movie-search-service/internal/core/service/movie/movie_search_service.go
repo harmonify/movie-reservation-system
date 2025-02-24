@@ -8,8 +8,8 @@ import (
 
 	"github.com/harmonify/movie-reservation-system/movie-search-service/internal/core/entity"
 	"github.com/harmonify/movie-reservation-system/movie-search-service/internal/core/shared"
-	theater_proto "github.com/harmonify/movie-reservation-system/movie-search-service/internal/driven/proto/theater"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
+	theater_proto "github.com/harmonify/movie-reservation-system/pkg/proto/theater"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util/validation"
 	"go.uber.org/fx"

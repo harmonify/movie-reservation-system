@@ -2,8 +2,8 @@ package grpc
 
 import (
 	"github.com/harmonify/movie-reservation-system/movie-search-service/internal/driven/config"
-	theater_proto "github.com/harmonify/movie-reservation-system/movie-search-service/internal/driven/proto/theater"
 	grpc_pkg "github.com/harmonify/movie-reservation-system/pkg/grpc"
+	theater_proto "github.com/harmonify/movie-reservation-system/pkg/proto/theater"
 	"go.uber.org/fx"
 )
 
