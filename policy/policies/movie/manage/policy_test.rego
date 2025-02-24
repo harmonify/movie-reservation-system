@@ -1,13 +1,13 @@
-package policies.movie_test
+package policies.movie.manage_test
 
 import rego.v1
 
 test_allow_admin if {
-	data.policies.movie.allow with input as allow_admin_test_data
+	data.policies.movie.manage.allow with input as allow_admin_test_data
 }
 
 test_deny_user if {
-	not data.policies.movie.allow with input as deny_user_test_data
+	not data.policies.movie.manage.allow with input as deny_user_test_data
 }
 
 deny_user_test_data := {"subject": {

@@ -1,4 +1,4 @@
-package policies.movie
+package policies.movie.manage
 
 import rego.v1
 
