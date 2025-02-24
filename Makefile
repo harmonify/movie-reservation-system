@@ -29,12 +29,8 @@ build-puml: ## ex: make build-puml darkmode=true
 	bin/export_puml.sh "$(darkmode)"
 
 .PHONY: build-proto
-build-proto: ## Generate protobuf code for Golang in specified output directory
-	@if [ -z "$(output)" ]; then \
-		echo "Example usage: make build-proto output=user-service/internal/driven/proto"; \
-		exit 1; \
-	fi
-	bin/gen_proto.sh "$(output)"
+build-proto: ## Generate protobuf code for Golang
+	bin/gen_proto.sh
 
 .PHONY: build-cli
 build-cli: ## Build MRS CLI
