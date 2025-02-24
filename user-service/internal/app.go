@@ -17,6 +17,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/service"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/config"
+	grpc_driver "github.com/harmonify/movie-reservation-system/user-service/internal/driver/grpc"
 	http_driver "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http"
 	kafka_driver "github.com/harmonify/movie-reservation-system/user-service/internal/driver/kafka"
 	"go.uber.org/fx"
@@ -116,6 +117,7 @@ func NewApp(p ...fx.Option) *fx.App {
 		// API (DRIVER)
 		http_driver.HttpModule,
 		kafka_driver.KafkaConsumerModule,
+		grpc_driver.GrpcModule,
 	}
 
 	// Override dependencies

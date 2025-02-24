@@ -18,6 +18,6 @@ type UserWithRelations struct {
 
 type UserSeeder interface {
 	CreateUser(ctx context.Context) (*UserWithRelations, error)
-	CreateAdmin(ctx context.Context) (*UserWithRelations, error)
-	DeleteUser(ctx context.Context, GetModel entity.GetUser) error
+	CreateAdmin(ctx context.Context, username string) (*UserWithRelations, error)
+	DeleteUser(ctx context.Context, getModel entity.GetUser) error
 }

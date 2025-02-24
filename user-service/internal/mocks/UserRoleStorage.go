@@ -86,23 +86,23 @@ func (_c *UserRoleStorage_SaveUserRoles_Call) RunAndReturn(run func(context.Cont
 }
 
 // SearchUserRoles provides a mock function with given fields: ctx, searchModel
-func (_m *UserRoleStorage) SearchUserRoles(ctx context.Context, searchModel entity.SearchUserRoles) ([]*entity.UserRole, error) {
+func (_m *UserRoleStorage) SearchUserRoles(ctx context.Context, searchModel entity.SearchUserRoles) ([]string, error) {
 	ret := _m.Called(ctx, searchModel)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SearchUserRoles")
 	}
 
-	var r0 []*entity.UserRole
+	var r0 []string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, entity.SearchUserRoles) ([]*entity.UserRole, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, entity.SearchUserRoles) ([]string, error)); ok {
 		return rf(ctx, searchModel)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, entity.SearchUserRoles) []*entity.UserRole); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, entity.SearchUserRoles) []string); ok {
 		r0 = rf(ctx, searchModel)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*entity.UserRole)
+			r0 = ret.Get(0).([]string)
 		}
 	}
 
@@ -134,12 +134,12 @@ func (_c *UserRoleStorage_SearchUserRoles_Call) Run(run func(ctx context.Context
 	return _c
 }
 
-func (_c *UserRoleStorage_SearchUserRoles_Call) Return(_a0 []*entity.UserRole, _a1 error) *UserRoleStorage_SearchUserRoles_Call {
+func (_c *UserRoleStorage_SearchUserRoles_Call) Return(_a0 []string, _a1 error) *UserRoleStorage_SearchUserRoles_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *UserRoleStorage_SearchUserRoles_Call) RunAndReturn(run func(context.Context, entity.SearchUserRoles) ([]*entity.UserRole, error)) *UserRoleStorage_SearchUserRoles_Call {
+func (_c *UserRoleStorage_SearchUserRoles_Call) RunAndReturn(run func(context.Context, entity.SearchUserRoles) ([]string, error)) *UserRoleStorage_SearchUserRoles_Call {
 	_c.Call.Return(run)
 	return _c
 }

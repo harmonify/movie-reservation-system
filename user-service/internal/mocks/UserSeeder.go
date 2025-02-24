@@ -24,9 +24,9 @@ func (_m *UserSeeder) EXPECT() *UserSeeder_Expecter {
 	return &UserSeeder_Expecter{mock: &_m.Mock}
 }
 
-// CreateAdmin provides a mock function with given fields: ctx
-func (_m *UserSeeder) CreateAdmin(ctx context.Context) (*entityseeder.UserWithRelations, error) {
-	ret := _m.Called(ctx)
+// CreateAdmin provides a mock function with given fields: ctx, username
+func (_m *UserSeeder) CreateAdmin(ctx context.Context, username string) (*entityseeder.UserWithRelations, error) {
+	ret := _m.Called(ctx, username)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateAdmin")
@@ -34,19 +34,19 @@ func (_m *UserSeeder) CreateAdmin(ctx context.Context) (*entityseeder.UserWithRe
 
 	var r0 *entityseeder.UserWithRelations
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (*entityseeder.UserWithRelations, error)); ok {
-		return rf(ctx)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*entityseeder.UserWithRelations, error)); ok {
+		return rf(ctx, username)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) *entityseeder.UserWithRelations); ok {
-		r0 = rf(ctx)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *entityseeder.UserWithRelations); ok {
+		r0 = rf(ctx, username)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*entityseeder.UserWithRelations)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, username)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -61,13 +61,14 @@ type UserSeeder_CreateAdmin_Call struct {
 
 // CreateAdmin is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *UserSeeder_Expecter) CreateAdmin(ctx interface{}) *UserSeeder_CreateAdmin_Call {
-	return &UserSeeder_CreateAdmin_Call{Call: _e.mock.On("CreateAdmin", ctx)}
+//   - username string
+func (_e *UserSeeder_Expecter) CreateAdmin(ctx interface{}, username interface{}) *UserSeeder_CreateAdmin_Call {
+	return &UserSeeder_CreateAdmin_Call{Call: _e.mock.On("CreateAdmin", ctx, username)}
 }
 
-func (_c *UserSeeder_CreateAdmin_Call) Run(run func(ctx context.Context)) *UserSeeder_CreateAdmin_Call {
+func (_c *UserSeeder_CreateAdmin_Call) Run(run func(ctx context.Context, username string)) *UserSeeder_CreateAdmin_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -77,7 +78,7 @@ func (_c *UserSeeder_CreateAdmin_Call) Return(_a0 *entityseeder.UserWithRelation
 	return _c
 }
 
-func (_c *UserSeeder_CreateAdmin_Call) RunAndReturn(run func(context.Context) (*entityseeder.UserWithRelations, error)) *UserSeeder_CreateAdmin_Call {
+func (_c *UserSeeder_CreateAdmin_Call) RunAndReturn(run func(context.Context, string) (*entityseeder.UserWithRelations, error)) *UserSeeder_CreateAdmin_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -140,9 +141,9 @@ func (_c *UserSeeder_CreateUser_Call) RunAndReturn(run func(context.Context) (*e
 	return _c
 }
 
-// DeleteUser provides a mock function with given fields: ctx, GetModel
-func (_m *UserSeeder) DeleteUser(ctx context.Context, GetModel entity.GetUser) error {
-	ret := _m.Called(ctx, GetModel)
+// DeleteUser provides a mock function with given fields: ctx, getModel
+func (_m *UserSeeder) DeleteUser(ctx context.Context, getModel entity.GetUser) error {
+	ret := _m.Called(ctx, getModel)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteUser")
@@ -150,7 +151,7 @@ func (_m *UserSeeder) DeleteUser(ctx context.Context, GetModel entity.GetUser) e
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, entity.GetUser) error); ok {
-		r0 = rf(ctx, GetModel)
+		r0 = rf(ctx, getModel)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -165,12 +166,12 @@ type UserSeeder_DeleteUser_Call struct {
 
 // DeleteUser is a helper method to define mock.On call
 //   - ctx context.Context
-//   - GetModel entity.GetUser
-func (_e *UserSeeder_Expecter) DeleteUser(ctx interface{}, GetModel interface{}) *UserSeeder_DeleteUser_Call {
-	return &UserSeeder_DeleteUser_Call{Call: _e.mock.On("DeleteUser", ctx, GetModel)}
+//   - getModel entity.GetUser
+func (_e *UserSeeder_Expecter) DeleteUser(ctx interface{}, getModel interface{}) *UserSeeder_DeleteUser_Call {
+	return &UserSeeder_DeleteUser_Call{Call: _e.mock.On("DeleteUser", ctx, getModel)}
 }
 
-func (_c *UserSeeder_DeleteUser_Call) Run(run func(ctx context.Context, GetModel entity.GetUser)) *UserSeeder_DeleteUser_Call {
+func (_c *UserSeeder_DeleteUser_Call) Run(run func(ctx context.Context, getModel entity.GetUser)) *UserSeeder_DeleteUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(entity.GetUser))
 	})

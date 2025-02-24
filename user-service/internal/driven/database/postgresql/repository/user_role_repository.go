@@ -52,32 +52,35 @@ func (r *userRoleRepositoryImpl) WithTx(tx *database.Transaction) shared.UserRol
 	)
 }
 
-func (r *userRoleRepositoryImpl) SearchUserRoles(ctx context.Context, searchModel entity.SearchUserRoles) ([]*entity.UserRole, error) {
+func (r *userRoleRepositoryImpl) SearchUserRoles(ctx context.Context, searchModel entity.SearchUserRoles) ([]string, error) {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	searchMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, searchModel)
-	if err != nil {
+	if searchModel.UserUUID == "" {
+		err := errors.New("user uuid is required")
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
 	}
 
-	var userRoleModels []*model.UserRole
-	result := r.database.DB.WithContext(ctx).Where(searchMap).Find(&userRoleModels)
-	err = r.pgErrTl.Translate(result.Error)
+	var userRoles []string
+	err := r.database.DB.
+		Raw(
+			`SELECT roles.name
+			FROM user_roles
+			JOIN roles ON user_roles.role_id = roles.id
+			WHERE user_roles.user_uuid = ?
+			AND user_roles.deleted_at IS NULL
+			AND roles.deleted_at IS NULL`,
+			searchModel.UserUUID,
+		).
+		Scan(&userRoles).
+		Error
 	if err != nil {
-		var terr *database.RecordNotFoundError
-		if errors.As(err, &terr) {
-			return make([]*entity.UserRole, 0), nil
-		}
-		return nil, err
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
+		return nil, error_pkg.InternalServerError
 	}
 
-	userRoleEntities := make([]*entity.UserRole, 0, len(userRoleModels))
-	for _, userRole := range userRoleModels {
-		userRoleEntities = append(userRoleEntities, userRole.ToEntity())
-	}
-
-	return userRoleEntities, err
+	return userRoles, nil
 }
 
 func (r *userRoleRepositoryImpl) SaveUserRoles(ctx context.Context, createModel entity.SaveUserRoles) ([]*entity.UserRole, error) {

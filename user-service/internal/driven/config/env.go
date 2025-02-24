@@ -33,7 +33,7 @@ type UserServiceConfig struct {
 	RedisPort string `mapstructure:"REDIS_PORT" validate:"required,numeric"`
 	RedisPass string `mapstructure:"REDIS_PASS" validate:"required"`
 
-	GrpcPort                   string `mapstructure:"GRPC_PORT" validate:"numeric"`
+	GrpcPort                   int    `mapstructure:"GRPC_PORT" validate:"numeric"`
 	GrpcNotificationServiceUrl string `mapstructure:"GRPC_NOTIFICATION_SERVICE_URL" validate:"required,url"`
 
 	KafkaBrokers               string `mapstructure:"KAFKA_BROKERS" validate:"required"`
@@ -48,4 +48,6 @@ type UserServiceConfig struct {
 	TracerType   string `mapstructure:"TRACER_TYPE" validate:"required,oneof=jaeger console nop"`
 	OtelEndpoint string `mapstructure:"OTEL_ENDPOINT" validate:"required"`
 	OtelInsecure bool   `mapstructure:"OTEL_INSECURE" validate:"required,boolean"`
+
+	OpaServerUrl string `mapstructure:"OPA_SERVER_URL" validate:"required,url"`
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/database"
 	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
+	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
 	"github.com/harmonify/movie-reservation-system/pkg/util/validation"
 	"github.com/harmonify/movie-reservation-system/user-service/internal"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
@@ -1188,11 +1189,10 @@ func (s *UserRestTestSuite) generateAccessToken(ctx context.Context, uuid string
 
 	// Generate access token
 	accessToken, err := s.tokenService.GenerateAccessToken(ctx, token_service.GenerateAccessTokenParam{
-		UUID:        user.UUID,
-		Username:    user.Username,
-		Email:       user.Email,
-		PhoneNumber: user.PhoneNumber,
-		PrivateKey:  userKey.PrivateKey,
+		PrivateKey: userKey.PrivateKey,
+		BodyPayload: jwt_util.JWTBodyPayload{
+			UUID: user.UUID,
+		},
 	})
 	if err != nil {
 		s.T().Fatal("Failed to generate access token", err)

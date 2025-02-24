@@ -8,14 +8,15 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/database"
 	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
+	user_proto "github.com/harmonify/movie-reservation-system/pkg/proto/user"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
+	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	otp_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/otp"
 	token_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/token"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/config"
-	user_proto "github.com/harmonify/movie-reservation-system/user-service/internal/driven/proto/user"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
@@ -38,7 +39,7 @@ type (
 		UserStorage        shared.UserStorage
 		UserKeyStorage     shared.UserKeyStorage
 		UserSessionStorage shared.UserSessionStorage
-		userRoleStorage    shared.UserRoleStorage
+		UserRoleStorage    shared.UserRoleStorage
 		OutboxStorage      shared.OutboxStorage
 		Util               *util.Util
 		Config             *config.UserServiceConfig
@@ -78,7 +79,7 @@ func NewAuthService(p AuthServiceParam) AuthServiceResult {
 			userSessionStorage: p.UserSessionStorage,
 			userKeyStorage:     p.UserKeyStorage,
 			outboxStorage:      p.OutboxStorage,
-			userRoleStorage:    p.userRoleStorage,
+			userRoleStorage:    p.UserRoleStorage,
 			util:               p.Util,
 			config:             p.Config,
 			tokenService:       p.TokenService,
@@ -232,11 +233,10 @@ func (s *authServiceImpl) Login(ctx context.Context, p LoginParam) (*LoginResult
 
 	// Generate and encrypt user session
 	accessToken, err := s.tokenService.GenerateAccessToken(ctx, token_service.GenerateAccessTokenParam{
-		UUID:        user.UUID,
-		Username:    user.Username,
-		Email:       user.Email,
-		PhoneNumber: user.PhoneNumber,
-		PrivateKey:  userKey.PrivateKey,
+		PrivateKey: userKey.PrivateKey,
+		BodyPayload: jwt_util.JWTBodyPayload{
+			UUID: user.UUID,
+		},
 	})
 	if err != nil {
 		s.logger.WithCtx(ctx).Error("Failed to generate access token", zap.Error(err))
@@ -301,11 +301,10 @@ func (s *authServiceImpl) GetToken(ctx context.Context, p GetTokenParam) (*GetTo
 
 	// Generate access token
 	accessToken, err := s.tokenService.GenerateAccessToken(ctx, token_service.GenerateAccessTokenParam{
-		UUID:        user.UUID,
-		Username:    user.Username,
-		Email:       user.Email,
-		PhoneNumber: user.PhoneNumber,
-		PrivateKey:  userKey.PrivateKey,
+		PrivateKey: userKey.PrivateKey,
+		BodyPayload: jwt_util.JWTBodyPayload{
+			UUID: user.UUID,
+		},
 	})
 	if err != nil {
 		s.logger.WithCtx(ctx).Error("Failed to generate access token", zap.Error(err))

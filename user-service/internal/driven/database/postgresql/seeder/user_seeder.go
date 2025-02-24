@@ -135,11 +135,13 @@ func (s *userSeederImpl) CreateUser(ctx context.Context) (*entityseeder.UserWith
 }
 
 // CreateAdmin creates an admin user in the database
-func (s *userSeederImpl) CreateAdmin(ctx context.Context) (*entityseeder.UserWithRelations, error) {
+func (s *userSeederImpl) CreateAdmin(ctx context.Context, username string) (*entityseeder.UserWithRelations, error) {
 	user, userRaw, err := s.userFactory.GenerateUserV2()
 	if err != nil {
 		return nil, err
 	}
+
+	user.Username = username
 
 	userKey := s.userKeyFactory.GenerateUserKey(user)
 
@@ -163,6 +165,20 @@ func (s *userSeederImpl) CreateAdmin(ctx context.Context) (*entityseeder.UserWit
 			FirstName:   user.FirstName,
 			LastName:    user.LastName,
 		})
+		if err != nil {
+			return err
+		}
+
+		newUser, err = s.userStorage.WithTx(tx).UpdateUser(
+			ctx,
+			entity.GetUser{
+				UUID: sql.NullString{String: newUser.UUID, Valid: true},
+			},
+			entity.UpdateUser{
+				IsEmailVerified:       sql.NullBool{Bool: user.IsEmailVerified, Valid: true},
+				IsPhoneNumberVerified: sql.NullBool{Bool: user.IsPhoneNumberVerified, Valid: true},
+			},
+		)
 		if err != nil {
 			return err
 		}
@@ -218,8 +234,8 @@ func (s *userSeederImpl) CreateAdmin(ctx context.Context) (*entityseeder.UserWit
 // DeleteUser deletes a user from the database
 // Including the user's keys and sessions
 // This function is idempotent, meaning that it will not return an error if the user does not exist
-func (s *userSeederImpl) DeleteUser(ctx context.Context, GetModel entity.GetUser) error {
-	user, err := s.userStorage.GetUser(ctx, GetModel)
+func (s *userSeederImpl) DeleteUser(ctx context.Context, getModel entity.GetUser) error {
+	user, err := s.userStorage.GetUser(ctx, getModel)
 	if err != nil {
 		return err
 	}
@@ -243,7 +259,7 @@ func (s *userSeederImpl) DeleteUser(ctx context.Context, GetModel entity.GetUser
 		}
 
 		err = s.userRoleStorage.WithTx(tx).SoftDeleteUserRoles(ctx, entity.SearchUserRoles{
-			UserUUID: sql.NullString{String: user.UUID, Valid: true},
+			UserUUID: user.UUID,
 		})
 		if err != nil {
 			return err

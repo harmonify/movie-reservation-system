@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"path"
 	"runtime"
 
@@ -94,7 +95,7 @@ func newMinimalApp() *fx.App {
 			lc.Append(fx.Hook{
 				OnStart: func(ctx context.Context) error {
 					logger.Info("Application started")
-					if err := run(ctx, logger, s); err != nil {
+					if err := run(ctx, logger, s, os.Args...); err != nil {
 						logger.Error(err.Error(), zap.Stack("stack"))
 						return err
 					}
@@ -109,8 +110,13 @@ func newMinimalApp() *fx.App {
 	)
 }
 
-func run(ctx context.Context, logger logger.Logger, s entityseeder.UserSeeder) error {
-	u, err := s.CreateAdmin(ctx)
+func run(ctx context.Context, logger logger.Logger, s entityseeder.UserSeeder, args ...string) error {
+	username := args[1]
+	if username == "" {
+		return fmt.Errorf("username is required")
+	}
+
+	u, err := s.CreateAdmin(ctx, username)
 	if err != nil {
 		logger.Error(err.Error(), zap.Stack("stack"))
 		return err

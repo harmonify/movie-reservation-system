@@ -15,9 +15,7 @@ type UserRole struct {
 }
 
 type SearchUserRoles struct {
-	ID       sql.NullInt32
-	UserUUID sql.NullString
-	RoleID   sql.NullInt32
+	UserUUID string
 }
 
 type SaveUserRoles struct {

@@ -20,10 +20,10 @@ type UserService interface {
 
 type UserServiceParam struct {
 	fx.In
-
-	Logger      logger.Logger
-	Tracer      tracer.Tracer
-	UserStorage shared.UserStorage
+	logger.Logger
+	tracer.Tracer
+	shared.UserStorage
+	shared.UserRoleStorage
 }
 
 type UserServiceResult struct {
@@ -33,17 +33,19 @@ type UserServiceResult struct {
 }
 
 type userServiceImpl struct {
-	logger      logger.Logger
-	tracer      tracer.Tracer
-	userStorage shared.UserStorage
+	logger          logger.Logger
+	tracer          tracer.Tracer
+	userStorage     shared.UserStorage
+	userRoleStorage shared.UserRoleStorage
 }
 
 func NewUserService(p UserServiceParam) UserServiceResult {
 	return UserServiceResult{
 		UserService: &userServiceImpl{
-			logger:      p.Logger,
-			tracer:      p.Tracer,
-			userStorage: p.UserStorage,
+			logger:          p.Logger,
+			tracer:          p.Tracer,
+			userStorage:     p.UserStorage,
+			userRoleStorage: p.UserRoleStorage,
 		},
 	}
 }
@@ -65,6 +67,14 @@ func (s *userServiceImpl) GetUser(ctx context.Context, p GetUserParam) (*GetUser
 		deletedAt = &user.DeletedAt.Time
 	}
 
+	roles, err := s.userRoleStorage.SearchUserRoles(ctx, entity.SearchUserRoles{
+		UserUUID: p.UUID,
+	})
+	if err != nil {
+		s.logger.WithCtx(ctx).Error("failed to search user roles", zap.Error(err))
+		return nil, err
+	}
+
 	return &GetUserResult{
 		UUID:                  p.UUID,
 		Username:              user.Username,
@@ -77,6 +87,7 @@ func (s *userServiceImpl) GetUser(ctx context.Context, p GetUserParam) (*GetUser
 		CreatedAt:             user.CreatedAt,
 		UpdatedAt:             user.UpdatedAt,
 		DeletedAt:             deletedAt,
+		Roles:                 roles,
 	}, err
 
 }

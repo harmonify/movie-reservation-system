@@ -55,7 +55,7 @@ type (
 
 	UserRoleStorage interface {
 		WithTx(tx *database.Transaction) UserRoleStorage
-		SearchUserRoles(ctx context.Context, searchModel entity.SearchUserRoles) ([]*entity.UserRole, error)
+		SearchUserRoles(ctx context.Context, searchModel entity.SearchUserRoles) ([]string, error)
 		SaveUserRoles(ctx context.Context, createModel entity.SaveUserRoles) ([]*entity.UserRole, error)
 		SoftDeleteUserRoles(ctx context.Context, searchModel entity.SearchUserRoles) error
 	}
