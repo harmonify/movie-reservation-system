@@ -1,6 +1,8 @@
 package movie_rest
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/harmonify/movie-reservation-system/movie-search-service/internal/core/entity"
 	movie_service "github.com/harmonify/movie-reservation-system/movie-search-service/internal/core/service/movie"
@@ -12,7 +14,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"github.com/harmonify/movie-reservation-system/pkg/util/validation"
 
-	// "github.com/harmonify/movie-reservation-system/pkg/ratelimiter"
+	"github.com/harmonify/movie-reservation-system/pkg/ratelimiter"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
 	"go.uber.org/fx"
@@ -75,12 +77,21 @@ func (h *movieRestHandlerImpl) Register(g *gin.RouterGroup) error {
 	h.logger.Debug("searchMovieCap", zap.Int("searchMovieCap", int(searchMovieCap)))
 
 	g.GET(
-		"/movie",
-		// h.middleware.Auth.AuthenticateUser,
-		// h.middleware.RateLimiter.LimitByUUID(&ratelimiter.RateLimiterConfig{
-		// 	Capacity:   searchMovieCap,
-		// 	RefillRate: 3 * time.Second,
-		// }),
+		"/admin/movies",
+		h.middleware.Auth.AuthenticateUser,
+		h.middleware.RateLimiter.LimitByUUID(&ratelimiter.RateLimiterConfig{
+			Capacity:   searchMovieCap,
+			RefillRate: 3 * time.Second,
+		}),
+		h.searchMovies,
+	)
+
+	g.GET(
+		"/movies",
+		h.middleware.RateLimiter.LimitByIP(&ratelimiter.RateLimiterConfig{
+			Capacity:   searchMovieCap,
+			RefillRate: 3 * time.Second,
+		}),
 		h.searchMovies,
 	)
 

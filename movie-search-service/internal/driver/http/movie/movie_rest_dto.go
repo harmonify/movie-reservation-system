@@ -15,5 +15,5 @@ type (
 		Keyword         string `json:"keyword" form:"keyword"`
 	}
 
-	CustomerGetMovieResponse []entity.Movie
+	CustomerGetMovieResponse []*entity.SearchMovieResult
 )
