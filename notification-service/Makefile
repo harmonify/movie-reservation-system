@@ -7,6 +7,10 @@ ifeq ($(OS), Windows_NT)
 	EXT :=.exe
 endif
 
+.PHONY: help
+help: ## Display this help
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+
 .PHONY: setup
 setup: ## Setup the project
 	echo "Copying .env.example"
@@ -35,7 +39,7 @@ start: ## Run server in normal mode
 
 .PHONY: start-dev
 start-dev: ## Run server in development mode (will restart if any changes)
-	air -c .air.toml
+	mkdir -pv .dist && (air -c .air.toml | zap-pretty)
 
 .PHONY: test
 test: ## Run test
@@ -63,35 +67,3 @@ lint-fix: ## Run lint and fix
 .PHONY: mockery
 mock: ## Run lint and fix
 	mockery
-
-.PHONY: migration\:postgresql\:create
-migration\:postgresql\:create: ## Create new migration file
-	@if [ -z "$(name)" ]; then \
-		echo "Usage: make migration:postgresql:create name=your-migration-name"; \
-		exit 1; \
-	fi
-	@ENV=$$(grep '^ENV=' .env | cut -d '=' -f2); \
-    echo "Detected ENV: $$ENV"; \
-	godotenv -f .env sql-migrate new -config=./cmd/database/postgresql/migration-config.yml -env=$$ENV $(name)
-
-.PHONY: migration\:postgresql\:up
-migration\:postgresql\:up: ## Run migrations up
-	@ENV=$$(grep '^ENV=' .env | cut -d '=' -f2); \
-	godotenv -f .env sql-migrate up -config=./cmd/database/postgresql/migration-config.yml -env=$$ENV
-
-.PHONY: migration\:postgresql\:down
-migration\:postgresql\:down: ## Run migrations down
-	@ENV=$$(grep '^ENV=' .env | cut -d '=' -f2); \
-	godotenv -f .env sql-migrate down -config=./cmd/database/postgresql/migration-config.yml -env=$$ENV
-
-.PHONY: debezium\:register-postgresql-source-connector
-debezium\:register-postgresql-source-connector: ## Register PostgreSQL source connector
-	curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @./deploy/local/run/config/postgresql-source-connector.json
-
-.PHONY: debezium\:deregister-postgresql-source-connector
-debezium\:deregister-postgresql-source-connector: ## Deregister PostgreSQL source connector
-	curl -i -X DELETE -H "Accept:application/json" -H "Content-Type:application/json" http://localhost:8083/connectors/users-connector
-
-.PHONY: debezium\:register-elasticsearch-sink-connector
-debezium\:register-elasticsearch-sink-connector: ## Register Elasticsearch sink connector
-	curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @./deploy/local/run/config/elasticsearch-sink-connector.json
