@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/exporters/prometheus"
@@ -61,6 +62,9 @@ func NewGrpcServer(
 		grpc.MaxConcurrentStreams(100),
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		opentelemetry.ServerOption(opentelemetry.Options{MetricsOptions: opentelemetry.MetricsOptions{MeterProvider: provider}}),
+		grpc.ChainUnaryInterceptor(
+			grpc_recovery.UnaryServerInterceptor(),
+		),
 	)
 
 	g := &GrpcServer{
