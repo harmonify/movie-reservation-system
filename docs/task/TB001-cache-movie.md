@@ -5,7 +5,3 @@ Cache informations about movies, its showtimes, available seat count, and availa
 Don't forget to implement the cache invalidation process.
 
 ## Technical Requirements
-
-## Implementation
-
-### Changes
