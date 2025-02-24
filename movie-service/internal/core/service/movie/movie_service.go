@@ -52,7 +52,6 @@ func (s *adminMovieServiceImpl) SearchMovies(ctx context.Context, p *SearchMovie
 		IncludeUpcoming: p.IncludeUpcoming,
 	})
 	if err != nil {
-		s.logger.WithCtx(ctx).Error("failed to get active movies", zap.Error(err), zap.String("theater_id", p.TheaterID), zap.Bool("include_upcoming", p.IncludeUpcoming))
 		return nil, err
 	}
 

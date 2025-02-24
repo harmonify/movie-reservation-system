@@ -45,7 +45,6 @@ type authHttpMiddlewareImpl struct {
 	jwtUtil           jwt_util.JwtUtil
 	authServiceClient auth_proto.AuthServiceClient
 
-	policyId          string
 	defaultMiddleware gin.HandlerFunc
 }
 
@@ -57,10 +56,9 @@ func NewAuthHttpMiddleware(p AuthHttpMiddlewareParam) AuthHttpMiddlewareResult {
 		responseBuilder:   p.HttpResponseBuilder,
 		jwtUtil:           p.JwtUtil,
 		authServiceClient: p.AuthServiceClient,
-		policyId:          "",
 	}
 
-	m.defaultMiddleware = m.build()
+	m.defaultMiddleware = m.build(nil)
 
 	return AuthHttpMiddlewareResult{
 		AuthHttpMiddleware: m,
@@ -71,12 +69,11 @@ func (a *authHttpMiddlewareImpl) Default() gin.HandlerFunc {
 	return a.defaultMiddleware
 }
 
-func (a authHttpMiddlewareImpl) WithPolicy(policy string) gin.HandlerFunc {
-	a.policyId = policy
-	return a.build()
+func (a authHttpMiddlewareImpl) WithPolicy(policyId string) gin.HandlerFunc {
+	return a.build(&policyId)
 }
 
-func (a *authHttpMiddlewareImpl) build() gin.HandlerFunc {
+func (a *authHttpMiddlewareImpl) build(policyId *string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, span := a.tracer.StartSpanWithCaller(c.Request.Context())
 		defer span.End()
@@ -92,7 +89,7 @@ func (a *authHttpMiddlewareImpl) build() gin.HandlerFunc {
 
 		res, err := a.authServiceClient.Auth(ctx, &auth_proto.AuthRequest{
 			AccessToken: accessToken,
-			PolicyId:    &a.policyId,
+			PolicyId:    policyId,
 		})
 		if err != nil {
 			terr, valid := a.errorMapper.FromGrpcError(err)

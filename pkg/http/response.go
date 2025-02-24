@@ -49,6 +49,12 @@ func (r *httpResponseImpl) Send(c *gin.Context, data interface{}, err error) {
 	detailedError, _ := r.errorMapper.FromError(err)
 	code, response := r.Build(ctx, http.StatusOK, data, detailedError)
 	r.logResponse(ctx, code, response, detailedError)
+
+	// If aborted or already written, do not write response
+	if c.IsAborted() || c.Writer.Written() {
+		return
+	}
+
 	c.JSON(code, response)
 }
 
@@ -59,6 +65,12 @@ func (r *httpResponseImpl) SendWithResponseCode(c *gin.Context, successHttpCode 
 	detailedError, _ := r.errorMapper.FromError(err)
 	code, response := r.Build(ctx, successHttpCode, data, detailedError)
 	r.logResponse(ctx, code, response, detailedError)
+
+	// If aborted or already written, do not write response
+	if c.IsAborted() || c.Writer.Written() {
+		return
+	}
+
 	c.JSON(code, response)
 }
 

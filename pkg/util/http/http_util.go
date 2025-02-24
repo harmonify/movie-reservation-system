@@ -5,6 +5,7 @@ import (
 
 	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
+	auth_proto "github.com/harmonify/movie-reservation-system/pkg/proto/auth"
 	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
 )
 
@@ -38,7 +39,14 @@ func (h *httpUtilImpl) GetUserInfo(r *http.Request) (*jwt_util.JWTBodyPayload, e
 
 	fUserInfo, ok := userInfo.(*jwt_util.JWTBodyPayload)
 	if !ok {
-		return nil, error_pkg.UnauthorizedError
+		// Forward compability
+		pUserInfo, ok := userInfo.(*auth_proto.UserInfo)
+		if !ok || pUserInfo == nil {
+			return nil, error_pkg.UnauthorizedError
+		}
+		fUserInfo = &jwt_util.JWTBodyPayload{
+			UUID: pUserInfo.GetUuid(),
+		}
 	}
 
 	return fUserInfo, nil

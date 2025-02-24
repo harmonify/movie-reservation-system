@@ -77,6 +77,7 @@ func (h *adminMovieRestHandlerImpl) Register(g *gin.RouterGroup) error {
 
 	amg.GET(
 		"",
+		h.middleware.Trace.ExtractTraceContext,
 		h.middleware.AuthV2.WithPolicy("policies.movie.manage.allow"),
 		h.middleware.RateLimiter.LimitByUUID(&ratelimiter.RateLimiterConfig{
 			Capacity:   getMovieCap,

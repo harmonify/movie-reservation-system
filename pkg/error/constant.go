@@ -100,6 +100,8 @@ var (
 		Message:  "You have exceeded the allowed rate limit for this operation. Please try again later.",
 	}
 
+	// BadGatewayError is used when the server is currently unable to handle the request
+	// due to third-party services being unavailable.
 	BadGatewayError = &ErrorWithDetails{
 		Code:     ErrorCode("BAD_GATEWAY_ERROR"),
 		HttpCode: http.StatusBadGateway,
@@ -107,10 +109,30 @@ var (
 		Message:  "The server is currently unable to handle the request. Please try again later.",
 	}
 
+	// ServiceUnavailableError is used when the server is currently unable to handle the request
+	// due to internal services being unavailable, i.e. database connection error, another service is down, etc.
 	ServiceUnavailableError = &ErrorWithDetails{
 		Code:     ErrorCode("SERVICE_UNAVAILABLE_ERROR"),
 		HttpCode: http.StatusServiceUnavailable,
 		GrpcCode: codes.Unavailable,
+		Message:  "The server is currently unable to handle the request. Please try again later.",
+	}
+
+	// ServiceTimeoutError is used when the server is currently unable to handle the request
+	// due to internal services being timeout, i.e. database connection timeout, another service is timeout, etc.
+	ServiceTimeoutError = &ErrorWithDetails{
+		Code:     ErrorCode("SERVICE_TIMEOUT_ERROR"),
+		HttpCode: http.StatusServiceUnavailable,
+		GrpcCode: codes.DeadlineExceeded,
+		Message:  "The server is currently unable to handle the request. Please try again later.",
+	}
+
+	// ServiceOverloadedError is used when the server is currently unable to handle the request
+	// due to internal services being overloaded, i.e. database connection overload, another service is overload, etc.
+	ServiceOverloadedError = &ErrorWithDetails{
+		Code:     ErrorCode("SERVICE_OVERLOADED_ERROR"),
+		HttpCode: http.StatusServiceUnavailable,
+		GrpcCode: codes.ResourceExhausted,
 		Message:  "The server is currently unable to handle the request. Please try again later.",
 	}
 )

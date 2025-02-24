@@ -15,7 +15,7 @@ type Tracer interface {
 	// Start creates a span and a context.Context containing the newly-created span.
 	Start(ctx context.Context, spanName string) (context.Context, trace.Span)
 	// Starts a span with the name of the caller function.
-	StartSpanWithCaller(ctx context.Context) (context.Context, trace.Span)
+	StartSpanWithCaller(ctx context.Context, skip... int) (context.Context, trace.Span)
 	// Injects the current trace context into the provided carrier (e.g., Kafka headers, HTTP request headers).
 	Inject(ctx context.Context, carrier propagation.TextMapCarrier)
 	// Extracts the trace context from the provided carrier and returns a new context with the extracted trace information.

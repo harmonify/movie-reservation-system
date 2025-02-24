@@ -191,6 +191,12 @@ func (r *httpResponseV2Impl) Send(c *gin.Context) {
 	ctx, _ := r.tracer.StartSpanWithCaller(c.Request.Context())
 	response := r.build()
 	r.logResponse(ctx, response)
+
+	// If aborted or already written, do not write response
+	if c.IsAborted() || c.Writer.Written() {
+		return
+	}
+
 	c.JSON(response.HttpCode, response.Body)
 }
 

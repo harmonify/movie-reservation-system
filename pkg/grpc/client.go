@@ -59,13 +59,14 @@ func NewGrpcClient(p GrpcClientParam, cfg *GrpcClientConfig, opts ...grpc.DialOp
 	provider := metric.NewMeterProvider(metric.WithReader(exporter))
 
 	// Create a connection with timeout and other options
-	conn, err := grpc.NewClient(
-		cfg.Address,
+	finalOpts := []grpc.DialOption{
 		grpc.WithDefaultServiceConfig(defaultServiceConfig),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		opentelemetry.DialOption(opentelemetry.Options{MetricsOptions: opentelemetry.MetricsOptions{MeterProvider: provider}}),
 		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
-	)
+	}
+	finalOpts = append(finalOpts, opts...)
+	conn, err := grpc.NewClient(cfg.Address, finalOpts...)
 	if err != nil {
 		return nil, err
 	}
