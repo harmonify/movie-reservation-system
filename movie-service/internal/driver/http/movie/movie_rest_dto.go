@@ -2,12 +2,10 @@ package movie_rest
 
 import (
 	"time"
-
-	"github.com/harmonify/movie-reservation-system/movie-service/internal/core/entity"
 )
 
 type (
-	AdminGetMovieRequestQuery struct {
+	AdminSearchMovieRequestQuery struct {
 		TheaterID       string    `json:"theater_id" form:"theater_id" validate:"required,alphanumunicode"`
 		IncludeUpcoming bool      `json:"include_upcoming" form:"include_upcoming" validate:"boolean"`
 		Genre           string    `json:"genre"`
@@ -19,7 +17,9 @@ type (
 		PageSize        int64     `json:"page_size" form:"page_size" validate:"required,numeric"`
 	}
 
-	AdminGetMovieResponse []*entity.SearchMovieResult
+	AdminGetMovieByIDRequestQuery struct {
+		TheaterID string `json:"theater_id" form:"theater_id" validate:"required,alphanumunicode"`
+	}
 
 	AdminPostMovieResponse struct {
 		MovieID string `json:"movie_id"`

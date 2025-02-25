@@ -94,6 +94,11 @@ func (h *adminMovieRestHandlerImpl) Register(g *gin.RouterGroup) error {
 		}),
 		h.postMovie,
 	)
+	amg.GET(
+		":movieId",
+		h.middleware.AuthV2.WithPolicy("policies.movie.manage.allow"),
+		h.getMovieByID,
+	)
 	amg.PUT(
 		":movieId",
 		h.middleware.AuthV2.WithPolicy("policies.movie.manage.allow"),
@@ -123,14 +128,16 @@ func (h *adminMovieRestHandlerImpl) Version() string {
 func (h *adminMovieRestHandlerImpl) searchMovies(c *gin.Context) {
 	var (
 		err   error
-		query AdminGetMovieRequestQuery
+		query AdminSearchMovieRequestQuery
 	)
 
 	ctx, span := h.tracer.StartSpanWithCaller(c.Request.Context())
 	defer span.End()
 
+	response := h.responseBuilder.New().WithCtx(ctx)
+
 	if err := h.validator.ValidateRequestQuery(c, &query); err != nil {
-		h.responseBuilder.New().WithCtx(ctx).WithError(err).Send(c)
+		response.WithCtx(ctx).WithError(err).Send(c)
 		return
 	}
 
@@ -148,10 +155,44 @@ func (h *adminMovieRestHandlerImpl) searchMovies(c *gin.Context) {
 		PageSize:        query.PageSize,
 	})
 
-	response := h.responseBuilder.New().WithCtx(ctx)
-
 	if err == nil {
 		response = response.WithResult(data.Data).WithMetadataFromStruct(data.Meta)
+	} else {
+		response = response.WithError(err)
+	}
+
+	response.Send(c)
+}
+
+func (h *adminMovieRestHandlerImpl) getMovieByID(c *gin.Context) {
+	var (
+		err   error
+		query AdminGetMovieByIDRequestQuery
+	)
+
+	ctx, span := h.tracer.StartSpanWithCaller(c.Request.Context())
+	defer span.End()
+
+	response := h.responseBuilder.New().WithCtx(ctx)
+
+	movieId := c.Param("movieId")
+	if movieId == "" {
+		response.WithError(error_pkg.InvalidRequestPathError).Send(c)
+		return
+	}
+
+	if err := h.validator.ValidateRequestQuery(c, &query); err != nil {
+		response.WithError(err).Send(c)
+		return
+	}
+
+	data, err := h.adminMovieService.GetMovieByID(ctx, &movie_service.GetMovieByIDParam{
+		TheaterID: query.TheaterID,
+		MovieID:   movieId,
+	})
+
+	if err == nil {
+		response = response.WithResult(data)
 	} else {
 		response = response.WithError(err)
 	}
@@ -168,14 +209,16 @@ func (h *adminMovieRestHandlerImpl) postMovie(c *gin.Context) {
 	ctx, span := h.tracer.StartSpanWithCaller(c.Request.Context())
 	defer span.End()
 
+	response := h.responseBuilder.New().WithCtx(ctx)
+
 	if err = h.validator.ValidateRequestBody(c, &body); err != nil {
-		h.responseBuilder.New().WithCtx(ctx).WithError(err).Send(c)
+		response.WithError(err).Send(c)
 		return
 	}
 
 	id, err := h.adminMovieService.SaveMovie(ctx, &body)
 
-	h.responseBuilder.New().WithCtx(ctx).WithError(err).WithResult(&AdminPostMovieResponse{
+	response.WithError(err).WithResult(&AdminPostMovieResponse{
 		MovieID: id,
 	}).Send(c)
 }
@@ -189,20 +232,22 @@ func (h *adminMovieRestHandlerImpl) putMovie(c *gin.Context) {
 	ctx, span := h.tracer.StartSpanWithCaller(c.Request.Context())
 	defer span.End()
 
+	response := h.responseBuilder.New().WithCtx(ctx)
+
 	if err = h.validator.ValidateRequestBody(c, &body); err != nil {
-		h.responseBuilder.New().WithCtx(ctx).WithError(err).Send(c)
+		response.WithError(err).Send(c)
 		return
 	}
 
 	movieId := c.Param("movieId")
 	if movieId == "" {
-		h.responseBuilder.New().WithCtx(ctx).WithError(error_pkg.InvalidRequestPathError).Send(c)
+		response.WithError(error_pkg.InvalidRequestPathError).Send(c)
 		return
 	}
 
 	err = h.adminMovieService.UpdateMovie(ctx, movieId, &body)
 
-	h.responseBuilder.New().WithCtx(ctx).WithError(err).Send(c)
+	response.WithError(err).Send(c)
 }
 
 func (h *adminMovieRestHandlerImpl) deleteMovie(c *gin.Context) {
@@ -213,13 +258,15 @@ func (h *adminMovieRestHandlerImpl) deleteMovie(c *gin.Context) {
 	ctx, span := h.tracer.StartSpanWithCaller(c.Request.Context())
 	defer span.End()
 
+	response := h.responseBuilder.New().WithCtx(ctx)
+
 	movieId := c.Param("movieId")
 	if movieId == "" {
-		h.responseBuilder.New().WithCtx(ctx).WithError(error_pkg.InvalidRequestPathError).Send(c)
+		response.WithError(error_pkg.InvalidRequestPathError).Send(c)
 		return
 	}
 
 	err = h.adminMovieService.SoftDeleteMovie(ctx, movieId)
 
-	h.responseBuilder.New().WithCtx(ctx).WithError(err).Send(c)
+	response.WithError(err).Send(c)
 }

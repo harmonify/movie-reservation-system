@@ -225,6 +225,39 @@ func (r *movieMongoRepository) SearchMovies(ctx context.Context, searchModel *en
 	}, nil
 }
 
+func (r *movieMongoRepository) GetMovieByID(ctx context.Context, movieId string) (*entity.Movie, error) {
+	ctx, span := r.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
+	movieOid, err := bson.ObjectIDFromHex(movieId)
+	if err != nil {
+		r.logger.WithCtx(ctx).Error("failed to convert movie id to object id", zap.Error(err))
+		return nil, error_pkg.InternalServerError
+	}
+
+	res := r.movieCollection.FindOne(ctx, bson.D{
+		{
+			Key:   "_id",
+			Value: movieOid,
+		},
+	})
+	if err := res.Err(); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, error_pkg.NotFoundError
+		}
+		r.logger.WithCtx(ctx).Error("failed to find movie", zap.Error(err))
+		return nil, error_pkg.InternalServerError
+	}
+
+	var movie entity.Movie
+	if err := res.Decode(&movie); err != nil {
+		r.logger.WithCtx(ctx).Error("failed to decode movie", zap.Error(err))
+		return nil, error_pkg.InternalServerError
+	}
+
+	return &movie, nil
+}
+
 func (r *movieMongoRepository) SaveMovie(ctx context.Context, saveModel *entity.SaveMovie) (string, error) {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()

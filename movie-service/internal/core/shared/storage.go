@@ -9,6 +9,7 @@ import (
 type (
 	MovieStorage interface {
 		SearchMovies(ctx context.Context, searchModel *entity.SearchMovie) (*SearchMovieResult, error)
+		GetMovieByID(ctx context.Context, movieId string) (*entity.Movie, error)
 		SaveMovie(ctx context.Context, saveModel *entity.SaveMovie) (id string, err error)
 		UpdateMovie(ctx context.Context, movieId string, updateModel *entity.UpdateMovie) error
 		SoftDeleteMovie(ctx context.Context, movieId string) error

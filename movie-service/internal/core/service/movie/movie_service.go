@@ -14,6 +14,7 @@ import (
 
 type AdminMovieService interface {
 	SearchMovies(ctx context.Context, p *SearchMovieParam) (*SearchMovieResult, error)
+	GetMovieByID(ctx context.Context, p *GetMovieByIDParam) (*GetMovieByIDResult, error)
 	SaveMovie(ctx context.Context, saveModel *entity.SaveMovie) (string, error)
 	UpdateMovie(ctx context.Context, movieId string, updateModel *entity.UpdateMovie) error
 	SoftDeleteMovie(ctx context.Context, movieId string) error
@@ -84,6 +85,29 @@ func (s *adminMovieServiceImpl) SearchMovies(ctx context.Context, p *SearchMovie
 			TotalCount:  movieResults.Meta.TotalCount,
 			HasNextPage: movieResults.Meta.HasNextPage,
 		},
+	}, nil
+}
+
+func (s *adminMovieServiceImpl) GetMovieByID(ctx context.Context, p *GetMovieByIDParam) (*GetMovieByIDResult, error) {
+	ctx, span := s.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
+	movie, err := s.movieStorage.GetMovieByID(ctx, p.MovieID)
+	if err != nil {
+		return nil, err
+	}
+
+	activeShowtimes, err := s.theaterService.GetActiveShowtimes(ctx, &theater_proto.GetActiveShowtimesRequest{
+		TheaterId: p.TheaterID,
+		MovieId:   movie.MovieID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &GetMovieByIDResult{
+		Movie:     movie,
+		Showtimes: activeShowtimes.GetShowtimes(),
 	}, nil
 }
 
