@@ -8,14 +8,15 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/database"
 	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
+	user_proto "github.com/harmonify/movie-reservation-system/pkg/proto/user"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
+	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	otp_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/otp"
 	token_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/token"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/config"
-	user_proto "github.com/harmonify/movie-reservation-system/user-service/internal/driven/proto/user"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
@@ -38,7 +39,7 @@ type (
 		UserStorage        shared.UserStorage
 		UserKeyStorage     shared.UserKeyStorage
 		UserSessionStorage shared.UserSessionStorage
-		RbacStorage        shared.RbacStorage
+		UserRoleStorage    shared.UserRoleStorage
 		OutboxStorage      shared.OutboxStorage
 		Util               *util.Util
 		Config             *config.UserServiceConfig
@@ -59,7 +60,7 @@ type (
 		userStorage        shared.UserStorage
 		userKeyStorage     shared.UserKeyStorage
 		userSessionStorage shared.UserSessionStorage
-		rbacStorage        shared.RbacStorage
+		userRoleStorage    shared.UserRoleStorage
 		outboxStorage      shared.OutboxStorage
 		util               *util.Util
 		config             *config.UserServiceConfig
@@ -78,7 +79,7 @@ func NewAuthService(p AuthServiceParam) AuthServiceResult {
 			userSessionStorage: p.UserSessionStorage,
 			userKeyStorage:     p.UserKeyStorage,
 			outboxStorage:      p.OutboxStorage,
-			rbacStorage:        p.RbacStorage,
+			userRoleStorage:    p.UserRoleStorage,
 			util:               p.Util,
 			config:             p.Config,
 			tokenService:       p.TokenService,
@@ -147,9 +148,9 @@ func (s *authServiceImpl) Register(ctx context.Context, p RegisterParam) error {
 		}
 
 		// Grant user role
-		_, err = s.rbacStorage.WithTx(tx).GrantRole(ctx, shared.GrantRoleParam{
-			UUID: user.UUID,
-			Role: shared.RoleUser,
+		_, err = s.userRoleStorage.WithTx(tx).SaveUserRoles(ctx, entity.SaveUserRoles{
+			UserUUID: user.UUID,
+			RoleID:   []uint{entity.RoleUser.Value()},
 		})
 		if err != nil {
 			s.logger.WithCtx(ctx).Error("Failed to grant user role", zap.Error(err))
@@ -202,7 +203,7 @@ func (s *authServiceImpl) Login(ctx context.Context, p LoginParam) (*LoginResult
 	}
 
 	// Get user record
-	user, err := s.userStorage.FindUser(ctx, entity.FindUser{Username: sql.NullString{String: p.Username, Valid: true}})
+	user, err := s.userStorage.GetUser(ctx, entity.GetUser{Username: sql.NullString{String: p.Username, Valid: true}})
 	if err != nil {
 		var terr *database.RecordNotFoundError
 		if errors.As(err, &terr) {
@@ -212,7 +213,7 @@ func (s *authServiceImpl) Login(ctx context.Context, p LoginParam) (*LoginResult
 		return nil, err
 	}
 	// Get user key record
-	userKey, err := s.userKeyStorage.FindUserKey(ctx, entity.FindUserKey{
+	userKey, err := s.userKeyStorage.GetUserKey(ctx, entity.GetUserKey{
 		UserUUID: sql.NullString{String: user.UUID, Valid: true},
 	})
 	if err != nil {
@@ -232,11 +233,10 @@ func (s *authServiceImpl) Login(ctx context.Context, p LoginParam) (*LoginResult
 
 	// Generate and encrypt user session
 	accessToken, err := s.tokenService.GenerateAccessToken(ctx, token_service.GenerateAccessTokenParam{
-		UUID:        user.UUID,
-		Username:    user.Username,
-		Email:       user.Email,
-		PhoneNumber: user.PhoneNumber,
-		PrivateKey:  userKey.PrivateKey,
+		PrivateKey: userKey.PrivateKey,
+		BodyPayload: jwt_util.JWTBodyPayload{
+			UUID: user.UUID,
+		},
 	})
 	if err != nil {
 		s.logger.WithCtx(ctx).Error("Failed to generate access token", zap.Error(err))
@@ -284,14 +284,14 @@ func (s *authServiceImpl) GetToken(ctx context.Context, p GetTokenParam) (*GetTo
 	}
 
 	// Get user record
-	user, err := s.userStorage.FindUser(ctx, entity.FindUser{UUID: sql.NullString{String: verifyResult.User.UserUUID, Valid: true}})
+	user, err := s.userStorage.GetUser(ctx, entity.GetUser{UUID: sql.NullString{String: verifyResult.User.UserUUID, Valid: true}})
 	if err != nil {
 		s.logger.WithCtx(ctx).Error("Failed to get user", zap.Error(err))
 		return nil, err
 	}
 
 	// Get user key record
-	userKey, err := s.userKeyStorage.FindUserKey(ctx, entity.FindUserKey{
+	userKey, err := s.userKeyStorage.GetUserKey(ctx, entity.GetUserKey{
 		UserUUID: sql.NullString{String: user.UUID, Valid: true},
 	})
 	if err != nil {
@@ -301,11 +301,10 @@ func (s *authServiceImpl) GetToken(ctx context.Context, p GetTokenParam) (*GetTo
 
 	// Generate access token
 	accessToken, err := s.tokenService.GenerateAccessToken(ctx, token_service.GenerateAccessTokenParam{
-		UUID:        user.UUID,
-		Username:    user.Username,
-		Email:       user.Email,
-		PhoneNumber: user.PhoneNumber,
-		PrivateKey:  userKey.PrivateKey,
+		PrivateKey: userKey.PrivateKey,
+		BodyPayload: jwt_util.JWTBodyPayload{
+			UUID: user.UUID,
+		},
 	})
 	if err != nil {
 		s.logger.WithCtx(ctx).Error("Failed to generate access token", zap.Error(err))

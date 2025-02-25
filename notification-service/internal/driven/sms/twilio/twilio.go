@@ -82,11 +82,11 @@ func (s *twilioSmsProviderImpl) Send(ctx context.Context, message shared.SmsMess
 
 	res, err := s.client.Api.CreateMessage(params)
 	if err != nil {
-		s.logger.Error("Failed to send SMS message", zap.Error(err), zap.Any("params", params))
+		s.logger.WithCtx(ctx).Error("Failed to send SMS message", zap.Error(err), zap.Any("params", params))
 		return "", fmt.Errorf("error sending SMS message: %v", err)
 	}
 
-	s.logger.Info("Successfully send a message", zap.Any("response", res), zap.Any("params", params))
+	s.logger.WithCtx(ctx).Info("Successfully send a message", zap.Any("response", res), zap.Any("params", params))
 	return *res.Sid, nil
 
 }
@@ -114,12 +114,12 @@ func (s *twilioSmsProviderImpl) BulkSend(ctx context.Context, message shared.Bul
 
 		resp, err := s.client.Api.CreateMessage(params)
 		if err != nil {
-			s.logger.Error("Failed to send SMS message", zap.Error(err), zap.Any("params", params))
+			s.logger.WithCtx(ctx).Error("Failed to send SMS message", zap.Error(err), zap.Any("params", params))
 			finalErr = errors.Join(finalErr, fmt.Errorf("error sending SMS message: %v", err))
 			continue
 		}
 
-		s.logger.Info("Successfully send a message", zap.Any("response", resp), zap.Any("params", params))
+		s.logger.WithCtx(ctx).Info("Successfully send a message", zap.Any("response", resp), zap.Any("params", params))
 		message_ids = append(message_ids, *resp.Sid)
 	}
 

@@ -1,7 +1,7 @@
 package http_pkg
 
 const (
-	HttpCookiePrefix = "mvs_"
+	HttpCookiePrefix = "mrs_"
 )
 
 type HttpContextKey string

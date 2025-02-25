@@ -1,24 +1,29 @@
+# Confluent Platform images config reference: https://docs.confluent.io/platform/7.8/installation/docker/config-reference.html#confluent-ak-configuration
 services:
-    # Config reference: https://kafka.apache.org/documentation/#brokerconfigs
+    # Kafka config reference: https://kafka.apache.org/documentation/#brokerconfigs
     kafka:
+        # image: confluentinc/cp-kafka:7.8.1
         image: apache/kafka:3.9.0
         expose:
             - 9092
+            - 29092
         ports:
             - "9092:9092"
         environment:
             KAFKA_NODE_ID: 1
-            KAFKA_PROCESS_ROLES: broker,controller
-            KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092,CONTROLLER://localhost:9093
-            KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
-            KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
             KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,INTERNAL:PLAINTEXT
-            KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
-            KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+            KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
             KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-            KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-            KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
             KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+            KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+            KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+            KAFKA_JMX_PORT: 9101
+            KAFKA_JMX_HOSTNAME: localhost
+            KAFKA_PROCESS_ROLES: "broker,controller"
+            KAFKA_CONTROLLER_QUORUM_VOTERS: "1@localhost:9093"
+            KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092,CONTROLLER://localhost:9093
+            KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+            KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
             KAFKA_NUM_PARTITIONS: 3
             KAFKA_LOG_DIRS: /data
             KAFKA_RESTART_ATTEMPTS: "10"
@@ -37,10 +42,143 @@ services:
             timeout: 10s
             retries: 5
 
-    kafka-exporter:
-        image: danielqsj/kafka-exporter:latest
+    schema-registry:
+        image: confluentinc/cp-schema-registry:7.8.1
+        ports:
+            - "8081:8081"
+        depends_on:
+            - kafka
+        networks:
+            - core-net
         environment:
-            KAFKA_BROKERS: "kafka:9092"
+            SCHEMA_REGISTRY_HOST_NAME: schema-registry
+            SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: "kafka:29092"
+            SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+
+    connect:
+        image: "harmonify/movie-reservation-system-connect:latest"
+        expose:
+            - "8083"
+        build:
+            context: ../../build/connect
+        depends_on:
+            kafka:
+                condition: service_healthy
+            user-service-postgres:
+                condition: service_healthy
+            movie-service-mongodb:
+                condition: service_healthy
+            movie-search-service-elasticsearch:
+                condition: service_healthy
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        ports:
+            - "8083:8083"
+        networks:
+            - core-net
+            - user-service-net
+            - movie-service-net
+            - movie-search-service-net
+        environment:
+            # Main config
+            CONNECT_BOOTSTRAP_SERVERS: "kafka:29092"
+            CONNECT_GROUP_ID: connect
+            # Run the replication factor of 1 for development since we only have 1 broker
+            CONNECT_REPLICATION_FACTOR: 1
+            CONNECT_CONFIG_STORAGE_TOPIC: private.connect_configs.v1
+            CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+            CONNECT_OFFSET_STORAGE_TOPIC: private.connect_offsets.v1
+            CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+            CONNECT_STATUS_STORAGE_TOPIC: private.connect_statuses.v1
+            CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+            CONNECT_OFFSET_FLUSH_INTERVAL_MS: 10000
+            CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+            # Confluent Schema Registry for Kafka Connect
+            CONNECT_VALUE_CONVERTER: io.confluent.connect.protobuf.ProtobufConverter
+            CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "true"
+            CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+            # CONNECT_VALUE_CONVERTER_BASIC_AUTH_CREDENTIALS_SOURCE: $BASIC_AUTH_CREDENTIALS_SOURCE
+            # CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_BASIC_AUTH_USER_INFO: $SCHEMA_REGISTRY_BASIC_AUTH_USER_INFO
+            # Additional config
+            CONNECT_REST_ADVERTISED_HOST_NAME: connect
+            CONNECT_REST_PORT: 8083
+            CONNECT_LISTENERS: http://connect:8083
+            CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
+            CONNECT_LOG4J_ROOT_LOGLEVEL: INFO
+            CONNECT_LOG4J_LOGGERS: "org.apache.kafka.connect.runtime.rest=WARN,org.reflections=ERROR,org.apache.kafka.connect.runtime.WorkerSourceTask=TRACE"
+
+    connector-registrar:
+        image: "harmonify/movie-reservation-system-connector-registrar:latest"
+        build:
+            context: ../../connector-registrar
+            dockerfile: ./build/Dockerfile
+        networks:
+            - core-net
+            - user-service-net
+            - movie-service-net
+            - movie-search-service-net
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        depends_on:
+            kafka:
+                condition: service_healthy
+            connect:
+                condition: service_healthy
+            user-service-postgres:
+                condition: service_healthy
+            movie-service-mongodb:
+                condition: service_healthy
+            # movie-service-mongodb-init:
+            #     condition: service_completed_successfully
+            movie-search-service-elasticsearch:
+                condition: service_healthy
+        environment:
+            - CONNECT_URL=http://connect:8083
+            - SCHEMA_REGISTRY_URL=http://schema-registry:8081
+            # TODO: handle DLQ
+            # Versioning feature: ID is appended at the end of the connector name.
+            # When the ID is changed:
+            # - The source connector will be restarted to read from the beginning of the source system. This behavior varies between the source connectors. Generally, the source connector will initially perform a snapshot of the latest state of the source system and then catch up by streaming the source system operation logs since the last snapshot. For Debezium PostgreSQL source connector, it streams the WAL logs after initial snapshot. For Official MongoDB source connector, it streams the oplog after initial snapshot.
+            # - The source connector will write to a new topic (with new id suffix). If configured, the source connector will also delete the old connectors.
+            # - The sink connector will be restarted to read from the earliest offset in the Kafka topic.
+            # - The sink connector will write to a new index (with new id suffix). If configured, the sink connector will also delete the old index.
+            # The ID is used to handle the following scenarios:
+            # - Where data structure frequently changes, i.e. during development and testing.
+            # - When we want to reprocess the data from the beginning, i.e. for rebuilding the read model / search index
+            # Notes:
+            # - For development and testing environment, we could use UUID or ULID as the ID, since we don't need to manage the ID.
+            # - After development and testing, we change the ID to v + major version number, i.e. v1, v2, v3, etc. (depending on the versioning strategy).
+            - USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_CONNECTOR_ID=v1
+            - USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_CONNECTOR_NAME=user-service-outbox-postgresql-source-connector
+            - USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_DB_HOST=user-service-postgres
+            - USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_DB_PORT=5432
+            - USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_DB_USER=root
+            - USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_DB_PASSWORD=root
+            - USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_DB_NAME=mrs-user-service
+            - USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_DB_SCHEMA=public
+            - USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_DB_TABLE=user_outbox
+            - USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_RUN_MIGRATION=true
+            - USER_SERVICE_OUTBOX_POSTGRESQL_SOURCE_DELETE_OLD_CONNECTORS=true
+            - MOVIE_SERVICE_MOVIES_MONGODB_SOURCE_CONNECTOR_ID=01JMC8DA23Y19K2G9FRGW1NVST
+            - MOVIE_SERVICE_MOVIES_MONGODB_SOURCE_CONNECTOR_NAME=movie-service-movies-mongodb-source-connector
+            - MOVIE_SERVICE_MOVIES_MONGODB_SOURCE_MONGO_CONNECTION_STRING=mongodb://root:root@host.docker.internal:27017/?replicaSet=rs0
+            - MOVIE_SERVICE_MOVIES_MONGODB_SOURCE_MONGO_DATABASE_NAME=mrs-movie-service
+            - MOVIE_SERVICE_MOVIES_MONGODB_SOURCE_MONGO_COLLECTION_NAME=movies
+            - MOVIE_SERVICE_MOVIES_MONGODB_SOURCE_RUN_MIGRATION=true
+            - MOVIE_SERVICE_MOVIES_MONGODB_SOURCE_DELETE_OLD_CONNECTORS=true
+            - MOVIE_SEARCH_SERVICE_MOVIES_ELASTICSEARCH_SINK_CONNECTOR_ID=01JMC8EGY65H5S2N3G2E4B9S2Z
+            - MOVIE_SEARCH_SERVICE_MOVIES_ELASTICSEARCH_SINK_CONNECTOR_NAME=movie-search-service-elasticsearch-sink-connector
+            - MOVIE_SEARCH_SERVICE_MOVIES_ELASTICSEARCH_SINK_ELASTICSEARCH_CONNECTION_URL=http://movie-search-service-elasticsearch:9200
+            - MOVIE_SEARCH_SERVICE_MOVIES_ELASTICSEARCH_SINK_ELASTICSEARCH_USERNAME=elastic
+            - MOVIE_SEARCH_SERVICE_MOVIES_ELASTICSEARCH_SINK_ELASTICSEARCH_PASSWORD=elastic
+            - MOVIE_SEARCH_SERVICE_MOVIES_ELASTICSEARCH_SINK_RUN_MIGRATION=true
+            - MOVIE_SEARCH_SERVICE_MOVIES_ELASTICSEARCH_SINK_DELETE_OLD_CONNECTORS=true
+            - MOVIE_SEARCH_SERVICE_MOVIES_ELASTICSEARCH_SINK_DELETE_OLD_INDEX=true
+
+    kafka-exporter:
+        image: danielqsj/kafka-exporter:v1.8.0
+        environment:
+            KAFKA_BROKERS: "kafka:29092"
         ports:
             - "9307:9308"
         depends_on:
@@ -60,5 +198,40 @@ services:
         depends_on:
             kafka:
                 condition: service_healthy
+        networks:
+            - core-net
+
+    ksqldb-server:
+        image: confluentinc/cp-ksqldb-server:7.8.1
+        depends_on:
+            kafka:
+                condition: service_healthy
+            connect:
+                condition: service_started
+        ports:
+            - "8088:8088"
+        environment:
+            KSQL_CONFIG_DIR: "/etc/ksql"
+            KSQL_BOOTSTRAP_SERVERS: "kafka:29092"
+            KSQL_HOST_NAME: ksqldb-server
+            KSQL_LISTENERS: "http://0.0.0.0:8088"
+            KSQL_CACHE_MAX_BYTES_BUFFERING: 0
+            KSQL_KSQL_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+            KSQL_KSQL_CONNECT_URL: "http://connect:8083"
+            KSQL_KSQL_LOGGING_PROCESSING_TOPIC_REPLICATION_FACTOR: 1
+            KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
+            KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
+        networks:
+            - core-net
+
+    ksqldb-cli:
+        image: confluentinc/cp-ksqldb-cli:7.8.1
+        depends_on:
+            ksqldb-server:
+                condition: service_started
+        entrypoint: /bin/sh
+        # command: -c "sleep 10; ksql http://ksqldb-server:8088"
+        tty: true
+        stdin_open: true
         networks:
             - core-net

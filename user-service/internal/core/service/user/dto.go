@@ -20,7 +20,8 @@ type (
 		IsPhoneNumberVerified bool       `json:"is_phone_number_verified"`
 		CreatedAt             time.Time  `json:"created_at"`
 		UpdatedAt             time.Time  `json:"updated_at"`
-		DeletedAt             *time.Time `json:"deleted_at"`
+		DeletedAt             *time.Time `json:"deleted_at,omitempty"`
+		Roles                 []string   `json:"roles"`
 	}
 
 	UpdateUserParam struct {

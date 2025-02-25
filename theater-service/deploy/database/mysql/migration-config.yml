@@ -1,0 +1,6 @@
+dev:
+    dialect: mysql
+    datasource: ${DB_USER}:${DB_PASSWORD}@tcp(${DB_HOST}:${DB_PORT})/${DB_DATABASE}?charset=utf8&parseTime=True&loc=Local
+    dir: deploy/database/mysql/migration
+    table: migrations
+    pool: 1

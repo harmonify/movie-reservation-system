@@ -1,7 +1,0 @@
-syntax = "proto3";
-
-package harmonify.movie_reservation_system.shared;
-
-message Response {
-    bool success = 1;
-}

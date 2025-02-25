@@ -106,12 +106,7 @@ func (s *tokenServiceImpl) GenerateAccessToken(ctx context.Context, p GenerateAc
 	accessToken, err := s.util.JWTUtil.JWTSign(ctx, jwt_util.JWTSignParam{
 		ExpInSeconds: s.AccessTokenDuration,
 		PrivateKey:   []byte(decryptedPrivateKey),
-		BodyPayload: jwt_util.JWTBodyPayload{
-			UUID: p.UUID,
-			// Username:    p.Username,
-			// Email:       p.Email,
-			// PhoneNumber: p.PhoneNumber,
-		},
+		BodyPayload:  p.BodyPayload,
 	})
 	if err != nil {
 		s.logger.WithCtx(ctx).Error("Failed to sign JWT", zap.Error(err))
@@ -156,7 +151,7 @@ func (s *tokenServiceImpl) VerifyRefreshToken(ctx context.Context, p VerifyRefre
 		return nil, err
 	}
 
-	session, err := s.userSessionStorage.FindSession(ctx, entity.FindUserSession{
+	session, err := s.userSessionStorage.GetSession(ctx, entity.GetUserSession{
 		RefreshToken: sql.NullString{String: hashedRefreshToken, Valid: true},
 	})
 	if err != nil {

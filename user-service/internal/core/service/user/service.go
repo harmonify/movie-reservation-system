@@ -20,10 +20,10 @@ type UserService interface {
 
 type UserServiceParam struct {
 	fx.In
-
-	Logger      logger.Logger
-	Tracer      tracer.Tracer
-	UserStorage shared.UserStorage
+	logger.Logger
+	tracer.Tracer
+	shared.UserStorage
+	shared.UserRoleStorage
 }
 
 type UserServiceResult struct {
@@ -33,17 +33,19 @@ type UserServiceResult struct {
 }
 
 type userServiceImpl struct {
-	logger      logger.Logger
-	tracer      tracer.Tracer
-	userStorage shared.UserStorage
+	logger          logger.Logger
+	tracer          tracer.Tracer
+	userStorage     shared.UserStorage
+	userRoleStorage shared.UserRoleStorage
 }
 
 func NewUserService(p UserServiceParam) UserServiceResult {
 	return UserServiceResult{
 		UserService: &userServiceImpl{
-			logger:      p.Logger,
-			tracer:      p.Tracer,
-			userStorage: p.UserStorage,
+			logger:          p.Logger,
+			tracer:          p.Tracer,
+			userStorage:     p.UserStorage,
+			userRoleStorage: p.UserRoleStorage,
 		},
 	}
 }
@@ -52,17 +54,25 @@ func (s *userServiceImpl) GetUser(ctx context.Context, p GetUserParam) (*GetUser
 	ctx, span := s.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	user, err := s.userStorage.FindUser(ctx, entity.FindUser{
+	user, err := s.userStorage.GetUser(ctx, entity.GetUser{
 		UUID: sql.NullString{String: p.UUID, Valid: true},
 	})
 	if err != nil {
-		s.logger.WithCtx(ctx).Error("failed to find user", zap.Error(err))
+		s.logger.WithCtx(ctx).Error("failed to get user", zap.Error(err))
 		return nil, err
 	}
 
 	var deletedAt *time.Time
 	if user.DeletedAt.Valid {
 		deletedAt = &user.DeletedAt.Time
+	}
+
+	roles, err := s.userRoleStorage.SearchUserRoles(ctx, entity.SearchUserRoles{
+		UserUUID: p.UUID,
+	})
+	if err != nil {
+		s.logger.WithCtx(ctx).Error("failed to search user roles", zap.Error(err))
+		return nil, err
 	}
 
 	return &GetUserResult{
@@ -77,6 +87,7 @@ func (s *userServiceImpl) GetUser(ctx context.Context, p GetUserParam) (*GetUser
 		CreatedAt:             user.CreatedAt,
 		UpdatedAt:             user.UpdatedAt,
 		DeletedAt:             deletedAt,
+		Roles:                 roles,
 	}, err
 
 }
@@ -87,7 +98,7 @@ func (s *userServiceImpl) UpdateUser(ctx context.Context, p UpdateUserParam) (*U
 
 	user, err := s.userStorage.UpdateUser(
 		ctx,
-		entity.FindUser{
+		entity.GetUser{
 			UUID: sql.NullString{String: p.UUID, Valid: true},
 		},
 		entity.UpdateUser{

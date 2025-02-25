@@ -17,16 +17,18 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/database"
 	test_interface "github.com/harmonify/movie-reservation-system/pkg/test/interface"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
+	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
 	"github.com/harmonify/movie-reservation-system/pkg/util/validation"
 	"github.com/harmonify/movie-reservation-system/user-service/internal"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	entityfactory "github.com/harmonify/movie-reservation-system/user-service/internal/core/entity/factory"
+	entityseeder "github.com/harmonify/movie-reservation-system/user-service/internal/core/entity/seeder"
 	token_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/token"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/seeder"
 	http_driver "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http"
 	user_rest "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/user"
-	"github.com/harmonify/movie-reservation-system/user-service/mocks"
+	"github.com/harmonify/movie-reservation-system/user-service/internal/mocks"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"github.com/tidwall/gjson"
@@ -52,7 +54,7 @@ type UserRestTestSuite struct {
 	userStorage              shared.UserStorage
 	userKeyStorage           shared.UserKeyStorage
 	userFactory              entityfactory.UserFactory
-	userSeeder               seeder.UserSeeder
+	userSeeder               entityseeder.UserSeeder
 	notificationProviderMock *mocks.NotificationProvider
 }
 
@@ -73,7 +75,7 @@ func (s *UserRestTestSuite) SetupSuite() {
 			otpCacheV2 shared.OtpCacheV2,
 			userStorage shared.UserStorage,
 			userKeyStorage shared.UserKeyStorage,
-			userSeeder seeder.UserSeeder,
+			userSeeder entityseeder.UserSeeder,
 			userFactory entityfactory.UserFactory,
 		) {
 			s.database = database
@@ -108,7 +110,7 @@ func (s *UserRestTestSuite) TestUserRest_GetUser() {
 	testUser, err := s.userSeeder.CreateUser(ctx)
 	s.Require().Nil(err, "Failed to create test user before call")
 	defer func() {
-		if err := s.userSeeder.DeleteUser(ctx, entity.FindUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}}); err != nil {
+		if err := s.userSeeder.DeleteUser(ctx, entity.GetUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}}); err != nil {
 			s.T().Fatal("Failed to delete test user after call")
 		}
 	}()
@@ -247,7 +249,7 @@ func (s *UserRestTestSuite) TestUserRest_PatchUser() {
 	testUser, err := s.userSeeder.CreateUser(ctx)
 	s.Require().Nil(err, "Failed to create test user before call")
 	defer func() {
-		if err := s.userSeeder.DeleteUser(ctx, entity.FindUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}}); err != nil {
+		if err := s.userSeeder.DeleteUser(ctx, entity.GetUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}}); err != nil {
 			s.T().Fatal("Failed to delete test user after call")
 		}
 	}()
@@ -460,7 +462,7 @@ func (s *UserRestTestSuite) TestUserRest_SendVerificationEmail() {
 	testUser, err := s.userSeeder.CreateUser(ctx)
 	s.Require().Nil(err, "Failed to create test user before call")
 	defer func() {
-		if err := s.userSeeder.DeleteUser(ctx, entity.FindUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}}); err != nil {
+		if err := s.userSeeder.DeleteUser(ctx, entity.GetUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}}); err != nil {
 			s.T().Fatal("Failed to delete test user after call")
 		}
 	}()
@@ -627,7 +629,7 @@ func (s *UserRestTestSuite) TestUserRest_VerifyEmail() {
 	testUser, err := s.userSeeder.CreateUser(ctx)
 	s.Require().Nil(err, "Failed to create test user before call")
 	defer func() {
-		if err := s.userSeeder.DeleteUser(ctx, entity.FindUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}}); err != nil {
+		if err := s.userSeeder.DeleteUser(ctx, entity.GetUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}}); err != nil {
 			s.T().Fatal("Failed to delete test user after call")
 		}
 	}()
@@ -818,7 +820,7 @@ func (s *UserRestTestSuite) TestUserRest_SendPhoneNumberOtp() {
 	testUser, err := s.userSeeder.CreateUser(ctx)
 	s.Require().Nil(err, "Failed to create test user before call")
 	defer func() {
-		if err := s.userSeeder.DeleteUser(ctx, entity.FindUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}}); err != nil {
+		if err := s.userSeeder.DeleteUser(ctx, entity.GetUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}}); err != nil {
 			s.T().Fatal("Failed to delete test user after call")
 		}
 	}()
@@ -982,7 +984,7 @@ func (s *UserRestTestSuite) TestUserRest_VerifyPhoneNumber() {
 	testUser, err := s.userSeeder.CreateUser(ctx)
 	s.Require().Nil(err, "Failed to create test user before call")
 	defer func() {
-		if err := s.userSeeder.DeleteUser(ctx, entity.FindUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}}); err != nil {
+		if err := s.userSeeder.DeleteUser(ctx, entity.GetUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}}); err != nil {
 			s.T().Fatal("Failed to delete test user after call")
 		}
 	}()
@@ -1170,28 +1172,27 @@ func (s *UserRestTestSuite) TestUserRest_VerifyPhoneNumber() {
 
 func (s *UserRestTestSuite) generateAccessToken(ctx context.Context, uuid string) string {
 	// Get user record
-	user, err := s.userStorage.FindUser(ctx, entity.FindUser{UUID: sql.NullString{String: uuid, Valid: true}})
+	user, err := s.userStorage.GetUser(ctx, entity.GetUser{UUID: sql.NullString{String: uuid, Valid: true}})
 	if err != nil {
-		s.T().Fatal("Failed to get user", err)
+		s.T().Fatal("Failed to Get user", err)
 		return ""
 	}
 
 	// Get user key record
-	userKey, err := s.userKeyStorage.FindUserKey(ctx, entity.FindUserKey{
+	userKey, err := s.userKeyStorage.GetUserKey(ctx, entity.GetUserKey{
 		UserUUID: sql.NullString{String: user.UUID, Valid: true},
 	})
 	if err != nil {
-		s.T().Fatal("Failed to get user key", err)
+		s.T().Fatal("Failed to Get user key", err)
 		return ""
 	}
 
 	// Generate access token
 	accessToken, err := s.tokenService.GenerateAccessToken(ctx, token_service.GenerateAccessTokenParam{
-		UUID:        user.UUID,
-		Username:    user.Username,
-		Email:       user.Email,
-		PhoneNumber: user.PhoneNumber,
-		PrivateKey:  userKey.PrivateKey,
+		PrivateKey: userKey.PrivateKey,
+		BodyPayload: jwt_util.JWTBodyPayload{
+			UUID: user.UUID,
+		},
 	})
 	if err != nil {
 		s.T().Fatal("Failed to generate access token", err)
@@ -1213,9 +1214,9 @@ func (s *UserRestTestSuite) generateEmailVerificationCode(ctx context.Context, u
 		return ""
 	}
 
-	user, err := s.userStorage.FindUser(ctx, entity.FindUser{UUID: sql.NullString{String: uuid, Valid: true}})
+	user, err := s.userStorage.GetUser(ctx, entity.GetUser{UUID: sql.NullString{String: uuid, Valid: true}})
 	if err != nil {
-		s.T().Fatal("Failed to get user", err)
+		s.T().Fatal("Failed to Get user", err)
 		return ""
 	}
 
@@ -1235,9 +1236,9 @@ func (s *UserRestTestSuite) generatePhoneNumberVerificationOtp(ctx context.Conte
 		return ""
 	}
 
-	user, err := s.userStorage.FindUser(ctx, entity.FindUser{UUID: sql.NullString{String: uuid, Valid: true}})
+	user, err := s.userStorage.GetUser(ctx, entity.GetUser{UUID: sql.NullString{String: uuid, Valid: true}})
 	if err != nil {
-		s.T().Fatal("Failed to get user", err)
+		s.T().Fatal("Failed to Get user", err)
 		return ""
 	}
 

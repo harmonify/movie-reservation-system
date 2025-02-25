@@ -1,6 +1,6 @@
 services:
     prometheus:
-        image: prom/prometheus:latest
+        image: prom/prometheus:v3.1.0
         volumes:
             - ./.data/prometheus:/prometheus # Persistent storage
             - ./config/prometheus.yaml:/etc/prometheus/prometheus.yml:ro

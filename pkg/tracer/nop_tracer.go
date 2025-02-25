@@ -28,7 +28,7 @@ func (t *nopTracerImpl) Start(ctx context.Context, spanName string) (context.Con
 	return t.tracer.Start(ctx, spanName)
 }
 
-func (t *nopTracerImpl) StartSpanWithCaller(ctx context.Context) (context.Context, trace.Span) {
+func (t *nopTracerImpl) StartSpanWithCaller(ctx context.Context, skip... int) (context.Context, trace.Span) {
 	pc, _, _, _ := runtime.Caller(1)
 	callerName := runtime.FuncForPC(pc).Name()
 	return t.tracer.Start(ctx, callerName)

@@ -36,7 +36,7 @@ func (r *TestRoute) Handle(ctx context.Context, event *kafka.Event) error {
 	if err := proto.Unmarshal(event.Value, val); err != nil {
 		return kafka.ErrMalformedMessage
 	}
-	r.logger.Debug(
+	r.logger.WithCtx(ctx).Debug(
 		fmt.Sprintf(
 			"Message claimed: topic = %s, timestamp = %v, trace_id = %s, key = %s, value = %s",
 			event.Topic,

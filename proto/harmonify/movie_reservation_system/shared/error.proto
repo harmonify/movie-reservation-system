@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package harmonify.movie_reservation_system.shared;
+
+message Error {
+    string code = 1;
+    string message = 2;
+    int32 httpCode = 3;
+    int32 grpcCode = 4;
+}

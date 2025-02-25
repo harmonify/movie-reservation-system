@@ -113,7 +113,7 @@ func (m *rateLimiterHttpMiddlewareImpl) LimitBy(cfg *ratelimiter.RateLimiterConf
 		defer span.End()
 
 		id := f(c)
-		m.logger.Debug("limit by", zap.String("id", id), zap.Any("config", cfg))
+		m.logger.WithCtx(ctx).Debug("limit by", zap.String("id", id), zap.Any("config", cfg))
 
 		if c.IsAborted() {
 			return

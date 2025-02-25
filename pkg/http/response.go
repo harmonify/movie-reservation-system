@@ -23,7 +23,7 @@ type HttpResponse interface {
 	// Build returns http response code and body
 	// You typically don't need to call this function directly
 	// Instead, use Send or SendWithResponseCode
-	Build(ctx context.Context, successHttpCode int, data interface{}, err *error_pkg.ErrorWithDetails) (responseHttpCode int, responseBody *Response)
+	Build(ctx context.Context, successHttpCode int, data interface{}, err *error_pkg.ErrorWithDetails) (responseHttpCode int, responseBody *ResponseBodySchema)
 }
 
 type httpResponseImpl struct {
@@ -49,6 +49,12 @@ func (r *httpResponseImpl) Send(c *gin.Context, data interface{}, err error) {
 	detailedError, _ := r.errorMapper.FromError(err)
 	code, response := r.Build(ctx, http.StatusOK, data, detailedError)
 	r.logResponse(ctx, code, response, detailedError)
+
+	// If aborted or already written, do not write response
+	if c.IsAborted() || c.Writer.Written() {
+		return
+	}
+
 	c.JSON(code, response)
 }
 
@@ -59,33 +65,38 @@ func (r *httpResponseImpl) SendWithResponseCode(c *gin.Context, successHttpCode 
 	detailedError, _ := r.errorMapper.FromError(err)
 	code, response := r.Build(ctx, successHttpCode, data, detailedError)
 	r.logResponse(ctx, code, response, detailedError)
+
+	// If aborted or already written, do not write response
+	if c.IsAborted() || c.Writer.Written() {
+		return
+	}
+
 	c.JSON(code, response)
 }
 
-func (r *httpResponseImpl) Build(ctx context.Context, successHttpCode int, data interface{}, err *error_pkg.ErrorWithDetails) (int, *Response) {
+func (r *httpResponseImpl) Build(ctx context.Context, successHttpCode int, data interface{}, err *error_pkg.ErrorWithDetails) (int, *ResponseBodySchema) {
 	_, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
 	var (
-		traceId     = span.SpanContext().TraceID().String()
-		errMetaData interface{}
-		metadata    interface{}
+		traceId  = span.SpanContext().TraceID().String()
+		metadata interface{}
 	)
 
-	response := &Response{
+	response := &ResponseBodySchema{
 		Success:  true,
 		TraceId:  traceId,
-		Error:    r.structUtil.SetNonPrimitiveDefaultValue(ctx, errMetaData),
-		Metadata: r.structUtil.SetNonPrimitiveDefaultValue(ctx, metadata),
-		Result:   r.structUtil.SetNonPrimitiveDefaultValue(ctx, data),
+		Error:    &ResponseBodyErrorSchema{},
+		Metadata: r.structUtil.SetOrDefault(ctx, metadata),
+		Result:   r.structUtil.SetOrDefault(ctx, data),
 	}
 
 	if err != nil {
 		response.Success = false
-		response.Error = ErrorResponse{
+		response.Error = &ResponseBodyErrorSchema{
 			Code:    err.Code.String(),
 			Message: err.Message,
-			Errors:  r.structUtil.SetNonPrimitiveDefaultValue(ctx, err.Errors),
+			Errors:  err.Errors,
 		}
 		return err.HttpCode, response
 	}
@@ -93,7 +104,7 @@ func (r *httpResponseImpl) Build(ctx context.Context, successHttpCode int, data 
 	return successHttpCode, response
 }
 
-func (r *httpResponseImpl) logResponse(ctx context.Context, httpCode int, response *Response, detailedError *error_pkg.ErrorWithDetails) {
+func (r *httpResponseImpl) logResponse(ctx context.Context, httpCode int, response *ResponseBodySchema, detailedError *error_pkg.ErrorWithDetails) {
 	span := trace.SpanFromContext(ctx)
 
 	fields := []zap.Field{}

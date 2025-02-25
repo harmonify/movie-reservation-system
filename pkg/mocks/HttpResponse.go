@@ -27,7 +27,7 @@ func (_m *HttpResponse) EXPECT() *HttpResponse_Expecter {
 }
 
 // Build provides a mock function with given fields: ctx, successHttpCode, data, err
-func (_m *HttpResponse) Build(ctx context.Context, successHttpCode int, data interface{}, err *error_pkg.ErrorWithDetails) (int, *http_pkg.Response) {
+func (_m *HttpResponse) Build(ctx context.Context, successHttpCode int, data interface{}, err *error_pkg.ErrorWithDetails) (int, *http_pkg.ResponseBodySchema) {
 	ret := _m.Called(ctx, successHttpCode, data, err)
 
 	if len(ret) == 0 {
@@ -35,8 +35,8 @@ func (_m *HttpResponse) Build(ctx context.Context, successHttpCode int, data int
 	}
 
 	var r0 int
-	var r1 *http_pkg.Response
-	if rf, ok := ret.Get(0).(func(context.Context, int, interface{}, *error_pkg.ErrorWithDetails) (int, *http_pkg.Response)); ok {
+	var r1 *http_pkg.ResponseBodySchema
+	if rf, ok := ret.Get(0).(func(context.Context, int, interface{}, *error_pkg.ErrorWithDetails) (int, *http_pkg.ResponseBodySchema)); ok {
 		return rf(ctx, successHttpCode, data, err)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, int, interface{}, *error_pkg.ErrorWithDetails) int); ok {
@@ -45,11 +45,11 @@ func (_m *HttpResponse) Build(ctx context.Context, successHttpCode int, data int
 		r0 = ret.Get(0).(int)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int, interface{}, *error_pkg.ErrorWithDetails) *http_pkg.Response); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, int, interface{}, *error_pkg.ErrorWithDetails) *http_pkg.ResponseBodySchema); ok {
 		r1 = rf(ctx, successHttpCode, data, err)
 	} else {
 		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(*http_pkg.Response)
+			r1 = ret.Get(1).(*http_pkg.ResponseBodySchema)
 		}
 	}
 
@@ -77,12 +77,12 @@ func (_c *HttpResponse_Build_Call) Run(run func(ctx context.Context, successHttp
 	return _c
 }
 
-func (_c *HttpResponse_Build_Call) Return(responseHttpCode int, responseBody *http_pkg.Response) *HttpResponse_Build_Call {
+func (_c *HttpResponse_Build_Call) Return(responseHttpCode int, responseBody *http_pkg.ResponseBodySchema) *HttpResponse_Build_Call {
 	_c.Call.Return(responseHttpCode, responseBody)
 	return _c
 }
 
-func (_c *HttpResponse_Build_Call) RunAndReturn(run func(context.Context, int, interface{}, *error_pkg.ErrorWithDetails) (int, *http_pkg.Response)) *HttpResponse_Build_Call {
+func (_c *HttpResponse_Build_Call) RunAndReturn(run func(context.Context, int, interface{}, *error_pkg.ErrorWithDetails) (int, *http_pkg.ResponseBodySchema)) *HttpResponse_Build_Call {
 	_c.Call.Return(run)
 	return _c
 }

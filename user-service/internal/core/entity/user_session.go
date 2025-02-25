@@ -20,7 +20,7 @@ type (
 		DeletedAt    sql.NullTime   `json:"deleted_at"`
 	}
 
-	FindUserSession struct {
+	GetUserSession struct {
 		ID           uint64
 		UserUUID     sql.NullString
 		RefreshToken sql.NullString

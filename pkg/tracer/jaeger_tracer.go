@@ -89,13 +89,13 @@ func (t *jaegerTracerImpl) Start(ctx context.Context, spanName string) (context.
 	return t.defaultTracer.Start(ctx, spanName)
 }
 
-func (s *jaegerTracerImpl) StartSpanWithCaller(ctx context.Context) (context.Context, trace.Span) {
-	pc, _, _, _ := runtime.Caller(1)
+func (s *jaegerTracerImpl) StartSpanWithCaller(ctx context.Context, skip ...int) (context.Context, trace.Span) {
+	finalSkip := 1
+	if len(skip) > 0 && skip[0] > 0 {
+		finalSkip = skip[0]
+	}
+	pc, _, _, _ := runtime.Caller(finalSkip)
 	callerName := runtime.FuncForPC(pc).Name()
-
-	// segments := strings.Split(callerName, ".")
-	// spanName := segments[len(segments)-1]
-
 	ctx, span := s.Start(ctx, callerName)
 	return ctx, span
 }

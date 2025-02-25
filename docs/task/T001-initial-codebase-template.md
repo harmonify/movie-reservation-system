@@ -15,9 +15,3 @@ Build minimal codebase template on user service that will serve as a template fo
     - [x] Tracing: Jaeger (Agent + Collector + Query) + Cassandra
     - [x] Metric: Prometheus
     - [x] Dashboard: Grafana
-
-## Implementation
-
-### Changes
-
-

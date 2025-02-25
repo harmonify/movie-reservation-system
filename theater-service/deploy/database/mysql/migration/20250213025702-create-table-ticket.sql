@@ -1,0 +1,18 @@
+-- +migrate Up
+CREATE TABLE ticket (
+    ticket_id BINARY(16) PRIMARY KEY NOT NULL DEFAULT (UUID_TO_BIN(UUID())),
+    trace_id VARCHAR(255) NOT NULL,
+    theater_id VARCHAR(255) NOT NULL,
+    room_id VARCHAR(255) NOT NULL,
+    seat_id VARCHAR(255) NOT NULL,
+    movie_id VARCHAR(255) NOT NULL,
+    showtime_id VARCHAR(255) NOT NULL,
+    reservation_id VARCHAR(255) NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP
+);
+
+-- +migrate Down
+DROP TABLE ticket;

@@ -31,21 +31,11 @@ func NewHttpValidator(
 
 func (v *HttpValidatorImpl) ValidateRequestBody(c *gin.Context, schema interface{}) error {
 	if err := c.ShouldBind(schema); err != nil {
-		vErr := error_pkg.InvalidRequestBodyError
-		var data []error
-		data = v.structValidator.ConstructValidationErrorFields(err)
-		data = append(data, &validation.ValidationError{
-			Field:   "",
-			Message: err.Error(),
-		})
-		vErr.Errors = data
-		return vErr
+		return error_pkg.InvalidRequestQueryError.WithErrors(v.structValidator.ConstructValidationErrorFields(err)...)
 	}
 
-	if err, validationErrs := v.structValidator.Validate(schema); err != nil && len(validationErrs) > 0 {
-		vErr := error_pkg.InvalidRequestBodyError
-		vErr.Errors = validationErrs
-		return vErr
+	if _, validationErrs := v.structValidator.Validate(schema); len(validationErrs) > 0 {
+		return error_pkg.InvalidRequestQueryError.WithErrors(validationErrs...)
 	}
 
 	return nil
@@ -53,21 +43,11 @@ func (v *HttpValidatorImpl) ValidateRequestBody(c *gin.Context, schema interface
 
 func (v *HttpValidatorImpl) ValidateRequestQuery(c *gin.Context, schema interface{}) error {
 	if err := c.ShouldBindQuery(schema); err != nil {
-		vErr := error_pkg.InvalidRequestBodyError
-		var data []error
-		data = v.structValidator.ConstructValidationErrorFields(err)
-		data = append(data, &validation.ValidationError{
-			Field:   "",
-			Message: err.Error(),
-		})
-		vErr.Errors = data
-		return vErr
+		return error_pkg.InvalidRequestQueryError.WithErrors(v.structValidator.ConstructValidationErrorFields(err)...)
 	}
 
-	if err, validationErrs := v.structValidator.Validate(schema); err != nil && len(validationErrs) > 0 {
-		vErr := error_pkg.InvalidRequestBodyError
-		vErr.Errors = validationErrs
-		return vErr
+	if _, validationErrs := v.structValidator.Validate(schema); len(validationErrs) > 0 {
+		return error_pkg.InvalidRequestQueryError.WithErrors(validationErrs...)
 	}
 
 	return nil

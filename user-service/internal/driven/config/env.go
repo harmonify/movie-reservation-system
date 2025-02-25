@@ -19,21 +19,21 @@ type UserServiceConfig struct {
 
 	FrontEndUrl string `mapstructure:"FRONTEND_URL"`
 
-	DbHost                string `mapstructure:"PG_HOST"`
-	DbPort                int    `mapstructure:"PG_PORT" validate:"min=1,max=65535"`
-	DbUser                string `mapstructure:"PG_USER"`
-	DbPassword            string `mapstructure:"PG_PASSWORD"`
-	DbName                string `mapstructure:"PG_DATABASE"`
-	DbMigration           bool   `mapstructure:"PG_AUTO_MIGRATION" validate:"boolean"`
-	DbMaxIdleConn         int    `mapstructure:"PG_MAX_IDLE_CONN"`
-	DbMaxOpenConn         int    `mapstructure:"PG_MAX_OPEN_CONN"`
-	DbMaxLifetimeInMinute int    `mapstructure:"PG_MAX_LIFETIME_IN_MINUTE"`
+	DbType                string `mapstructure:"DB_TYPE" validate:"required,oneof=postgresql mysql"`
+	DbHost                string `mapstructure:"DB_HOST"`
+	DbPort                int    `mapstructure:"DB_PORT" validate:"min=1,max=65535"`
+	DbUser                string `mapstructure:"DB_USER"`
+	DbPassword            string `mapstructure:"DB_PASSWORD"`
+	DbName                string `mapstructure:"DB_DATABASE"`
+	DbMaxIdleConn         int    `mapstructure:"DB_MAX_IDLE_CONN"`
+	DbMaxOpenConn         int    `mapstructure:"DB_MAX_OPEN_CONN"`
+	DbMaxLifetimeInMinute int    `mapstructure:"DB_MAX_LIFETIME_IN_MINUTE"`
 
-	RedisHost string `mapstructure:"REDIS_HOST"`
-	RedisPort string `mapstructure:"REDIS_PORT"`
-	RedisPass string `mapstructure:"REDIS_PASS"`
+	RedisHost string `mapstructure:"REDIS_HOST" validate:"required"`
+	RedisPort string `mapstructure:"REDIS_PORT" validate:"required,numeric"`
+	RedisPass string `mapstructure:"REDIS_PASS" validate:"required"`
 
-	GrpcPort                   string `mapstructure:"GRPC_PORT" validate:"numeric"`
+	GrpcPort                   int    `mapstructure:"GRPC_PORT" validate:"numeric"`
 	GrpcNotificationServiceUrl string `mapstructure:"GRPC_NOTIFICATION_SERVICE_URL" validate:"required,url"`
 
 	KafkaBrokers               string `mapstructure:"KAFKA_BROKERS" validate:"required"`
@@ -48,4 +48,6 @@ type UserServiceConfig struct {
 	TracerType   string `mapstructure:"TRACER_TYPE" validate:"required,oneof=jaeger console nop"`
 	OtelEndpoint string `mapstructure:"OTEL_ENDPOINT" validate:"required"`
 	OtelInsecure bool   `mapstructure:"OTEL_INSECURE" validate:"required,boolean"`
+
+	OpaServerUrl string `mapstructure:"OPA_SERVER_URL" validate:"required,url"`
 }

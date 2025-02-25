@@ -63,8 +63,12 @@ func (t *consoleTracerImpl) Start(ctx context.Context, spanName string) (context
 	return t.tracer.Start(ctx, spanName)
 }
 
-func (t *consoleTracerImpl) StartSpanWithCaller(ctx context.Context) (context.Context, trace.Span) {
-	pc, _, _, _ := runtime.Caller(1)
+func (t *consoleTracerImpl) StartSpanWithCaller(ctx context.Context, skip ...int) (context.Context, trace.Span) {
+	finalSkip := 1
+	if len(skip) > 0 && skip[0] > 0 {
+		finalSkip = skip[0]
+	}
+	pc, _, _, _ := runtime.Caller(finalSkip)
 	callerName := runtime.FuncForPC(pc).Name()
 	return t.tracer.Start(ctx, callerName)
 }

@@ -150,8 +150,8 @@ paths:
                             description: Refresh token cookie
                             schema:
                                 type: string
-                                description: "Set cookie with the name 'mvs_token', value of random 32 bytes length in base64, Max-Age of 30 days, Domain of the application host, Path of /user/token, Secure, and HttpOnly"
-                                example: "mvs_token=f0HDMhxvS9kI9pDUq2tbCg076to3ktAgXBVUSjOLSMM=; Max-Age=2592000; Domain=localhost; Path=/user/token; Secure; HttpOnly;"
+                                description: "Set cookie with the name 'mrs_token', value of random 32 bytes length in base64, Max-Age of 30 days, Domain of the application host, Path of /user/token, Secure, and HttpOnly"
+                                example: "mrs_token=f0HDMhxvS9kI9pDUq2tbCg076to3ktAgXBVUSjOLSMM=; Max-Age=2592000; Domain=localhost; Path=/user/token; Secure; HttpOnly;"
 
     /v1/register/verify:
         get:

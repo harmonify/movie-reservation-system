@@ -4,9 +4,9 @@ import (
 	"context"
 
 	grpc_pkg "github.com/harmonify/movie-reservation-system/pkg/grpc"
+	notification_proto "github.com/harmonify/movie-reservation-system/pkg/proto/notification"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/config"
-	notification_proto "github.com/harmonify/movie-reservation-system/user-service/internal/driven/proto/notification"
 	"go.uber.org/fx"
 )
 

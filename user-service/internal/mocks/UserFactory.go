@@ -88,6 +88,72 @@ func (_c *UserFactory_GenerateUser_Call) RunAndReturn(run func() (*entity.User, 
 	return _c
 }
 
+// GenerateUserV2 provides a mock function with given fields:
+func (_m *UserFactory) GenerateUserV2() (*entity.User, *entityfactory.UserRaw, error) {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for GenerateUserV2")
+	}
+
+	var r0 *entity.User
+	var r1 *entityfactory.UserRaw
+	var r2 error
+	if rf, ok := ret.Get(0).(func() (*entity.User, *entityfactory.UserRaw, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() *entity.User); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*entity.User)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func() *entityfactory.UserRaw); ok {
+		r1 = rf()
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*entityfactory.UserRaw)
+		}
+	}
+
+	if rf, ok := ret.Get(2).(func() error); ok {
+		r2 = rf()
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
+// UserFactory_GenerateUserV2_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GenerateUserV2'
+type UserFactory_GenerateUserV2_Call struct {
+	*mock.Call
+}
+
+// GenerateUserV2 is a helper method to define mock.On call
+func (_e *UserFactory_Expecter) GenerateUserV2() *UserFactory_GenerateUserV2_Call {
+	return &UserFactory_GenerateUserV2_Call{Call: _e.mock.On("GenerateUserV2")}
+}
+
+func (_c *UserFactory_GenerateUserV2_Call) Run(run func()) *UserFactory_GenerateUserV2_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *UserFactory_GenerateUserV2_Call) Return(user *entity.User, raw *entityfactory.UserRaw, err error) *UserFactory_GenerateUserV2_Call {
+	_c.Call.Return(user, raw, err)
+	return _c
+}
+
+func (_c *UserFactory_GenerateUserV2_Call) RunAndReturn(run func() (*entity.User, *entityfactory.UserRaw, error)) *UserFactory_GenerateUserV2_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewUserFactory creates a new instance of UserFactory. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewUserFactory(t interface {

@@ -3,6 +3,7 @@ package token_service
 import (
 	"time"
 
+	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 )
 
@@ -13,11 +14,8 @@ type (
 	}
 
 	GenerateAccessTokenParam struct {
-		UUID        string
-		Username    string
-		Email       string
-		PhoneNumber string
 		PrivateKey  string
+		BodyPayload jwt_util.JWTBodyPayload
 	}
 
 	GenerateAccessTokenResult struct {

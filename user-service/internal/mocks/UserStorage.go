@@ -26,29 +26,29 @@ func (_m *UserStorage) EXPECT() *UserStorage_Expecter {
 	return &UserStorage_Expecter{mock: &_m.Mock}
 }
 
-// FindUser provides a mock function with given fields: ctx, findModel
-func (_m *UserStorage) FindUser(ctx context.Context, findModel entity.FindUser) (*entity.User, error) {
-	ret := _m.Called(ctx, findModel)
+// GetUser provides a mock function with given fields: ctx, getModel
+func (_m *UserStorage) GetUser(ctx context.Context, getModel entity.GetUser) (*entity.User, error) {
+	ret := _m.Called(ctx, getModel)
 
 	if len(ret) == 0 {
-		panic("no return value specified for FindUser")
+		panic("no return value specified for GetUser")
 	}
 
 	var r0 *entity.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, entity.FindUser) (*entity.User, error)); ok {
-		return rf(ctx, findModel)
+	if rf, ok := ret.Get(0).(func(context.Context, entity.GetUser) (*entity.User, error)); ok {
+		return rf(ctx, getModel)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, entity.FindUser) *entity.User); ok {
-		r0 = rf(ctx, findModel)
+	if rf, ok := ret.Get(0).(func(context.Context, entity.GetUser) *entity.User); ok {
+		r0 = rf(ctx, getModel)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*entity.User)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, entity.FindUser) error); ok {
-		r1 = rf(ctx, findModel)
+	if rf, ok := ret.Get(1).(func(context.Context, entity.GetUser) error); ok {
+		r1 = rf(ctx, getModel)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -56,46 +56,46 @@ func (_m *UserStorage) FindUser(ctx context.Context, findModel entity.FindUser) 
 	return r0, r1
 }
 
-// UserStorage_FindUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindUser'
-type UserStorage_FindUser_Call struct {
+// UserStorage_GetUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUser'
+type UserStorage_GetUser_Call struct {
 	*mock.Call
 }
 
-// FindUser is a helper method to define mock.On call
+// GetUser is a helper method to define mock.On call
 //   - ctx context.Context
-//   - findModel entity.FindUser
-func (_e *UserStorage_Expecter) FindUser(ctx interface{}, findModel interface{}) *UserStorage_FindUser_Call {
-	return &UserStorage_FindUser_Call{Call: _e.mock.On("FindUser", ctx, findModel)}
+//   - getModel entity.GetUser
+func (_e *UserStorage_Expecter) GetUser(ctx interface{}, getModel interface{}) *UserStorage_GetUser_Call {
+	return &UserStorage_GetUser_Call{Call: _e.mock.On("GetUser", ctx, getModel)}
 }
 
-func (_c *UserStorage_FindUser_Call) Run(run func(ctx context.Context, findModel entity.FindUser)) *UserStorage_FindUser_Call {
+func (_c *UserStorage_GetUser_Call) Run(run func(ctx context.Context, getModel entity.GetUser)) *UserStorage_GetUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(entity.FindUser))
+		run(args[0].(context.Context), args[1].(entity.GetUser))
 	})
 	return _c
 }
 
-func (_c *UserStorage_FindUser_Call) Return(_a0 *entity.User, _a1 error) *UserStorage_FindUser_Call {
+func (_c *UserStorage_GetUser_Call) Return(_a0 *entity.User, _a1 error) *UserStorage_GetUser_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *UserStorage_FindUser_Call) RunAndReturn(run func(context.Context, entity.FindUser) (*entity.User, error)) *UserStorage_FindUser_Call {
+func (_c *UserStorage_GetUser_Call) RunAndReturn(run func(context.Context, entity.GetUser) (*entity.User, error)) *UserStorage_GetUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// FindUserWithResult provides a mock function with given fields: ctx, findModel, resultModel
-func (_m *UserStorage) FindUserWithResult(ctx context.Context, findModel entity.FindUser, resultModel interface{}) error {
-	ret := _m.Called(ctx, findModel, resultModel)
+// GetUserWithResult provides a mock function with given fields: ctx, getModel, resultModel
+func (_m *UserStorage) GetUserWithResult(ctx context.Context, getModel entity.GetUser, resultModel interface{}) error {
+	ret := _m.Called(ctx, getModel, resultModel)
 
 	if len(ret) == 0 {
-		panic("no return value specified for FindUserWithResult")
+		panic("no return value specified for GetUserWithResult")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, entity.FindUser, interface{}) error); ok {
-		r0 = rf(ctx, findModel, resultModel)
+	if rf, ok := ret.Get(0).(func(context.Context, entity.GetUser, interface{}) error); ok {
+		r0 = rf(ctx, getModel, resultModel)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -103,32 +103,32 @@ func (_m *UserStorage) FindUserWithResult(ctx context.Context, findModel entity.
 	return r0
 }
 
-// UserStorage_FindUserWithResult_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindUserWithResult'
-type UserStorage_FindUserWithResult_Call struct {
+// UserStorage_GetUserWithResult_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserWithResult'
+type UserStorage_GetUserWithResult_Call struct {
 	*mock.Call
 }
 
-// FindUserWithResult is a helper method to define mock.On call
+// GetUserWithResult is a helper method to define mock.On call
 //   - ctx context.Context
-//   - findModel entity.FindUser
+//   - getModel entity.GetUser
 //   - resultModel interface{}
-func (_e *UserStorage_Expecter) FindUserWithResult(ctx interface{}, findModel interface{}, resultModel interface{}) *UserStorage_FindUserWithResult_Call {
-	return &UserStorage_FindUserWithResult_Call{Call: _e.mock.On("FindUserWithResult", ctx, findModel, resultModel)}
+func (_e *UserStorage_Expecter) GetUserWithResult(ctx interface{}, getModel interface{}, resultModel interface{}) *UserStorage_GetUserWithResult_Call {
+	return &UserStorage_GetUserWithResult_Call{Call: _e.mock.On("GetUserWithResult", ctx, getModel, resultModel)}
 }
 
-func (_c *UserStorage_FindUserWithResult_Call) Run(run func(ctx context.Context, findModel entity.FindUser, resultModel interface{})) *UserStorage_FindUserWithResult_Call {
+func (_c *UserStorage_GetUserWithResult_Call) Run(run func(ctx context.Context, getModel entity.GetUser, resultModel interface{})) *UserStorage_GetUserWithResult_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(entity.FindUser), args[2].(interface{}))
+		run(args[0].(context.Context), args[1].(entity.GetUser), args[2].(interface{}))
 	})
 	return _c
 }
 
-func (_c *UserStorage_FindUserWithResult_Call) Return(_a0 error) *UserStorage_FindUserWithResult_Call {
+func (_c *UserStorage_GetUserWithResult_Call) Return(_a0 error) *UserStorage_GetUserWithResult_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *UserStorage_FindUserWithResult_Call) RunAndReturn(run func(context.Context, entity.FindUser, interface{}) error) *UserStorage_FindUserWithResult_Call {
+func (_c *UserStorage_GetUserWithResult_Call) RunAndReturn(run func(context.Context, entity.GetUser, interface{}) error) *UserStorage_GetUserWithResult_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -192,17 +192,17 @@ func (_c *UserStorage_SaveUser_Call) RunAndReturn(run func(context.Context, enti
 	return _c
 }
 
-// SoftDeleteUser provides a mock function with given fields: ctx, findModel
-func (_m *UserStorage) SoftDeleteUser(ctx context.Context, findModel entity.FindUser) error {
-	ret := _m.Called(ctx, findModel)
+// SoftDeleteUser provides a mock function with given fields: ctx, getModel
+func (_m *UserStorage) SoftDeleteUser(ctx context.Context, getModel entity.GetUser) error {
+	ret := _m.Called(ctx, getModel)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SoftDeleteUser")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, entity.FindUser) error); ok {
-		r0 = rf(ctx, findModel)
+	if rf, ok := ret.Get(0).(func(context.Context, entity.GetUser) error); ok {
+		r0 = rf(ctx, getModel)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -217,14 +217,14 @@ type UserStorage_SoftDeleteUser_Call struct {
 
 // SoftDeleteUser is a helper method to define mock.On call
 //   - ctx context.Context
-//   - findModel entity.FindUser
-func (_e *UserStorage_Expecter) SoftDeleteUser(ctx interface{}, findModel interface{}) *UserStorage_SoftDeleteUser_Call {
-	return &UserStorage_SoftDeleteUser_Call{Call: _e.mock.On("SoftDeleteUser", ctx, findModel)}
+//   - getModel entity.GetUser
+func (_e *UserStorage_Expecter) SoftDeleteUser(ctx interface{}, getModel interface{}) *UserStorage_SoftDeleteUser_Call {
+	return &UserStorage_SoftDeleteUser_Call{Call: _e.mock.On("SoftDeleteUser", ctx, getModel)}
 }
 
-func (_c *UserStorage_SoftDeleteUser_Call) Run(run func(ctx context.Context, findModel entity.FindUser)) *UserStorage_SoftDeleteUser_Call {
+func (_c *UserStorage_SoftDeleteUser_Call) Run(run func(ctx context.Context, getModel entity.GetUser)) *UserStorage_SoftDeleteUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(entity.FindUser))
+		run(args[0].(context.Context), args[1].(entity.GetUser))
 	})
 	return _c
 }
@@ -234,14 +234,14 @@ func (_c *UserStorage_SoftDeleteUser_Call) Return(_a0 error) *UserStorage_SoftDe
 	return _c
 }
 
-func (_c *UserStorage_SoftDeleteUser_Call) RunAndReturn(run func(context.Context, entity.FindUser) error) *UserStorage_SoftDeleteUser_Call {
+func (_c *UserStorage_SoftDeleteUser_Call) RunAndReturn(run func(context.Context, entity.GetUser) error) *UserStorage_SoftDeleteUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// UpdateUser provides a mock function with given fields: ctx, findModel, updateModel
-func (_m *UserStorage) UpdateUser(ctx context.Context, findModel entity.FindUser, updateModel entity.UpdateUser) (*entity.User, error) {
-	ret := _m.Called(ctx, findModel, updateModel)
+// UpdateUser provides a mock function with given fields: ctx, getModel, updateModel
+func (_m *UserStorage) UpdateUser(ctx context.Context, getModel entity.GetUser, updateModel entity.UpdateUser) (*entity.User, error) {
+	ret := _m.Called(ctx, getModel, updateModel)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateUser")
@@ -249,19 +249,19 @@ func (_m *UserStorage) UpdateUser(ctx context.Context, findModel entity.FindUser
 
 	var r0 *entity.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, entity.FindUser, entity.UpdateUser) (*entity.User, error)); ok {
-		return rf(ctx, findModel, updateModel)
+	if rf, ok := ret.Get(0).(func(context.Context, entity.GetUser, entity.UpdateUser) (*entity.User, error)); ok {
+		return rf(ctx, getModel, updateModel)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, entity.FindUser, entity.UpdateUser) *entity.User); ok {
-		r0 = rf(ctx, findModel, updateModel)
+	if rf, ok := ret.Get(0).(func(context.Context, entity.GetUser, entity.UpdateUser) *entity.User); ok {
+		r0 = rf(ctx, getModel, updateModel)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*entity.User)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, entity.FindUser, entity.UpdateUser) error); ok {
-		r1 = rf(ctx, findModel, updateModel)
+	if rf, ok := ret.Get(1).(func(context.Context, entity.GetUser, entity.UpdateUser) error); ok {
+		r1 = rf(ctx, getModel, updateModel)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -276,15 +276,15 @@ type UserStorage_UpdateUser_Call struct {
 
 // UpdateUser is a helper method to define mock.On call
 //   - ctx context.Context
-//   - findModel entity.FindUser
+//   - getModel entity.GetUser
 //   - updateModel entity.UpdateUser
-func (_e *UserStorage_Expecter) UpdateUser(ctx interface{}, findModel interface{}, updateModel interface{}) *UserStorage_UpdateUser_Call {
-	return &UserStorage_UpdateUser_Call{Call: _e.mock.On("UpdateUser", ctx, findModel, updateModel)}
+func (_e *UserStorage_Expecter) UpdateUser(ctx interface{}, getModel interface{}, updateModel interface{}) *UserStorage_UpdateUser_Call {
+	return &UserStorage_UpdateUser_Call{Call: _e.mock.On("UpdateUser", ctx, getModel, updateModel)}
 }
 
-func (_c *UserStorage_UpdateUser_Call) Run(run func(ctx context.Context, findModel entity.FindUser, updateModel entity.UpdateUser)) *UserStorage_UpdateUser_Call {
+func (_c *UserStorage_UpdateUser_Call) Run(run func(ctx context.Context, getModel entity.GetUser, updateModel entity.UpdateUser)) *UserStorage_UpdateUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(entity.FindUser), args[2].(entity.UpdateUser))
+		run(args[0].(context.Context), args[1].(entity.GetUser), args[2].(entity.UpdateUser))
 	})
 	return _c
 }
@@ -294,7 +294,7 @@ func (_c *UserStorage_UpdateUser_Call) Return(_a0 *entity.User, _a1 error) *User
 	return _c
 }
 
-func (_c *UserStorage_UpdateUser_Call) RunAndReturn(run func(context.Context, entity.FindUser, entity.UpdateUser) (*entity.User, error)) *UserStorage_UpdateUser_Call {
+func (_c *UserStorage_UpdateUser_Call) RunAndReturn(run func(context.Context, entity.GetUser, entity.UpdateUser) (*entity.User, error)) *UserStorage_UpdateUser_Call {
 	_c.Call.Return(run)
 	return _c
 }

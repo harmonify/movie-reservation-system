@@ -14,6 +14,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/user-service/internal"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	entityfactory "github.com/harmonify/movie-reservation-system/user-service/internal/core/entity/factory"
+	entityseeder "github.com/harmonify/movie-reservation-system/user-service/internal/core/entity/seeder"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/model"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/seeder"
@@ -38,17 +39,17 @@ type (
 		Error error
 	}
 
-	findUserTestConfig struct {
+	GetUserTestConfig struct {
 		Data *entity.User
-		Find *entity.FindUser
+		Get  *entity.GetUser
 	}
-	findUserTestExpectation struct {
+	GetUserTestExpectation struct {
 		Data  *entity.User
 		Error error
 	}
 
 	updateUserTestConfig struct {
-		Find   *entity.FindUser
+		Get    *entity.GetUser
 		Update *entity.UpdateUser
 	}
 	updateUserTestExpectation struct {
@@ -57,7 +58,7 @@ type (
 	}
 
 	softDeleteUserTestConfig struct {
-		Find entity.FindUser
+		Get entity.GetUser
 	}
 	softDeleteUserTestExpectation struct {
 		Error error
@@ -68,7 +69,7 @@ type UserRepositoryTestSuite struct {
 	suite.Suite
 	app         *fx.App
 	db          *database.Database
-	userSeeder  seeder.UserSeeder
+	userSeeder  entityseeder.UserSeeder
 	userStorage shared.UserStorage
 }
 
@@ -78,7 +79,7 @@ func (s *UserRepositoryTestSuite) SetupSuite() {
 		seeder.DrivenPostgresqlSeederModule,
 		fx.Invoke(func(
 			db *database.Database,
-			userSeeder seeder.UserSeeder,
+			userSeeder entityseeder.UserSeeder,
 			userStorage shared.UserStorage,
 		) {
 			s.db = db
@@ -124,7 +125,7 @@ func (s *UserRepositoryTestSuite) TestUserRepository_Basic() {
 
 	_ = s.db.DB.Unscoped().Delete(&model.User{}, "username IN (?)", []string{userSaveConfig.Username, userUpdateConfig.Username.String})
 
-	userBeforeSave, err := s.userStorage.FindUser(ctx, entity.FindUser{Username: sql.NullString{String: userSaveConfig.Username, Valid: true}})
+	userBeforeSave, err := s.userStorage.GetUser(ctx, entity.GetUser{Username: sql.NullString{String: userSaveConfig.Username, Valid: true}})
 	s.Require().Nil(userBeforeSave)
 	s.Require().Error(err)
 	s.Require().ErrorAs(err, &database.RecordNotFoundError{})
@@ -146,7 +147,7 @@ func (s *UserRepositoryTestSuite) TestUserRepository_Basic() {
 	s.Assert().Empty(newUser.DeletedAt.Time)
 	s.Require().False(newUser.DeletedAt.Valid)
 
-	userAfterSave, err := s.userStorage.FindUser(ctx, entity.FindUser{Username: sql.NullString{String: userSaveConfig.Username, Valid: true}})
+	userAfterSave, err := s.userStorage.GetUser(ctx, entity.GetUser{Username: sql.NullString{String: userSaveConfig.Username, Valid: true}})
 	s.Require().Nil(err)
 	s.Assert().Equal(newUser.Username, userAfterSave.Username)
 	s.Assert().Equal(newUser.Password, userAfterSave.Password)
@@ -162,7 +163,7 @@ func (s *UserRepositoryTestSuite) TestUserRepository_Basic() {
 
 	updatedUser, err := s.userStorage.UpdateUser(
 		ctx,
-		entity.FindUser{Username: sql.NullString{String: userSaveConfig.Username, Valid: true}},
+		entity.GetUser{Username: sql.NullString{String: userSaveConfig.Username, Valid: true}},
 		userUpdateConfig,
 	)
 	s.Require().Nil(err)
@@ -179,7 +180,7 @@ func (s *UserRepositoryTestSuite) TestUserRepository_Basic() {
 	s.Assert().Greater(updatedUser.UpdatedAt, newUser.UpdatedAt)
 	s.Assert().Equal(newUser.DeletedAt, updatedUser.DeletedAt)
 
-	userAfterUpdate, err := s.userStorage.FindUser(ctx, entity.FindUser{Username: sql.NullString{String: userUpdateConfig.Username.String, Valid: true}})
+	userAfterUpdate, err := s.userStorage.GetUser(ctx, entity.GetUser{Username: sql.NullString{String: userUpdateConfig.Username.String, Valid: true}})
 	s.Require().Nil(err)
 	s.Assert().Equal(updatedUser.UUID, userAfterUpdate.UUID)
 	s.Assert().Equal(updatedUser.Username, userAfterUpdate.Username)
@@ -194,10 +195,10 @@ func (s *UserRepositoryTestSuite) TestUserRepository_Basic() {
 	s.Assert().Equal(updatedUser.UpdatedAt, userAfterUpdate.UpdatedAt)
 	s.Assert().Equal(updatedUser.DeletedAt, userAfterUpdate.DeletedAt)
 
-	err = s.userStorage.SoftDeleteUser(ctx, entity.FindUser{Username: sql.NullString{String: userUpdateConfig.Username.String, Valid: true}})
+	err = s.userStorage.SoftDeleteUser(ctx, entity.GetUser{Username: sql.NullString{String: userUpdateConfig.Username.String, Valid: true}})
 	s.Require().Nil(err)
 
-	userAfterDelete, err := s.userStorage.FindUser(ctx, entity.FindUser{Username: sql.NullString{String: userUpdateConfig.Username.String, Valid: true}})
+	userAfterDelete, err := s.userStorage.GetUser(ctx, entity.GetUser{Username: sql.NullString{String: userUpdateConfig.Username.String, Valid: true}})
 	s.Require().Nil(userAfterDelete)
 	s.Require().Error(err)
 	s.Require().ErrorAs(err, &database.RecordNotFoundError{})
@@ -206,75 +207,75 @@ func (s *UserRepositoryTestSuite) TestUserRepository_Basic() {
 	db := s.db.DB.Unscoped()
 	err = s.userStorage.
 		WithTx(&database.Transaction{DB: db}).
-		SoftDeleteUser(ctx, entity.FindUser{UUID: sql.NullString{String: newUser.UUID, Valid: true}})
+		SoftDeleteUser(ctx, entity.GetUser{UUID: sql.NullString{String: newUser.UUID, Valid: true}})
 	s.Require().Nil(err, "Failed to teardown test user")
 }
 
-func (s *UserRepositoryTestSuite) TestUserRepository_FindUser() {
+func (s *UserRepositoryTestSuite) TestUserRepository_GetUser() {
 	testUser, err := s.userSeeder.CreateUser(context.Background())
 	s.Require().Nil(err, "Failed to setup test user")
 	defer func() {
-		err := s.userSeeder.DeleteUser(context.Background(), entity.FindUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}})
+		err := s.userSeeder.DeleteUser(context.Background(), entity.GetUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}})
 		s.Require().Nil(err, "Failed to teardown test user")
 	}()
 
-	testCases := []test_interface.TestCase[findUserTestConfig, findUserTestExpectation]{
+	testCases := []test_interface.TestCase[GetUserTestConfig, GetUserTestExpectation]{
 		{
-			Description: "Should be able to find user by UUID",
-			Config: findUserTestConfig{
-				Find: &entity.FindUser{
+			Description: "Should be able to Get user by UUID",
+			Config: GetUserTestConfig{
+				Get: &entity.GetUser{
 					UUID: sql.NullString{
 						String: testUser.User.UUID,
 						Valid:  true,
 					},
 				},
 			},
-			Expectation: findUserTestExpectation{
+			Expectation: GetUserTestExpectation{
 				Error: nil,
 				Data:  testUser.User,
 			},
 		},
 		{
-			Description: "Should be able to find user by email",
-			Config: findUserTestConfig{
-				Find: &entity.FindUser{
+			Description: "Should be able to Get user by email",
+			Config: GetUserTestConfig{
+				Get: &entity.GetUser{
 					Email: sql.NullString{
 						String: testUser.User.Email,
 						Valid:  true,
 					},
 				},
 			},
-			Expectation: findUserTestExpectation{
+			Expectation: GetUserTestExpectation{
 				Error: nil,
 				Data:  testUser.User,
 			},
 		},
 		{
-			Description: "Should be able to find user by username",
-			Config: findUserTestConfig{
-				Find: &entity.FindUser{
+			Description: "Should be able to Get user by username",
+			Config: GetUserTestConfig{
+				Get: &entity.GetUser{
 					Username: sql.NullString{
 						String: testUser.User.Username,
 						Valid:  true,
 					},
 				},
 			},
-			Expectation: findUserTestExpectation{
+			Expectation: GetUserTestExpectation{
 				Error: nil,
 				Data:  testUser.User,
 			},
 		},
 		{
-			Description: "Should be able to find user by phone number",
-			Config: findUserTestConfig{
-				Find: &entity.FindUser{
+			Description: "Should be able to Get user by phone number",
+			Config: GetUserTestConfig{
+				Get: &entity.GetUser{
 					PhoneNumber: sql.NullString{
 						String: testUser.User.PhoneNumber,
 						Valid:  true,
 					},
 				},
 			},
-			Expectation: findUserTestExpectation{
+			Expectation: GetUserTestExpectation{
 				Error: nil,
 				Data:  testUser.User,
 			},
@@ -289,7 +290,7 @@ func (s *UserRepositoryTestSuite) TestUserRepository_FindUser() {
 				testCase.BeforeCall(testCase.Config)
 			}
 
-			user, err := s.userStorage.FindUser(ctx, *testCase.Config.Find)
+			user, err := s.userStorage.GetUser(ctx, *testCase.Config.Get)
 
 			s.Require().Equal(testCase.Expectation.Error, err)
 

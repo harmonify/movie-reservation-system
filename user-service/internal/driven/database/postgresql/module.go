@@ -10,6 +10,7 @@ var (
 		"driven-postgresql",
 		fx.Provide(
 			repository.NewUserRepository,
+			repository.NewUserRoleRepository,
 			repository.NewUserKeyRepository,
 			repository.NewUserSessionRepository,
 			repository.NewOutboxRepository,

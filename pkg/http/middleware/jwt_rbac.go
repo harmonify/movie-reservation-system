@@ -14,7 +14,7 @@ import (
 
 type (
 	JwtRbacHttpMiddleware interface {
-		CheckPermission(*gin.Context)
+		CheckPermissions(func(userInfo *jwt_util.JWTBodyPayload) (authorized bool)) gin.HandlerFunc
 	}
 
 	JwtRbacHttpMiddlewareParam struct {
@@ -57,44 +57,39 @@ func NewJwtRbacHttpMiddleware(p JwtRbacHttpMiddlewareParam, cfg *JwtHttpMiddlewa
 	}, nil
 }
 
-func (h *jwtRbacHttpMiddlewareImpl) CheckPermission(c *gin.Context) {
-	ctx, span := h.tracer.StartSpanWithCaller(c.Request.Context())
-	defer span.End()
+func (h *jwtRbacHttpMiddlewareImpl) CheckPermissions(fn func(*jwt_util.JWTBodyPayload) bool) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx, span := h.tracer.StartSpanWithCaller(c.Request.Context())
+		defer span.End()
 
-	_userInfo := c.Request.Context().Value(http_pkg.UserInfoKey)
-	if _userInfo == nil {
-		h.logger.WithCtx(ctx).Error("failed to get user info from context")
-		h.response.Send(c, nil, error_pkg.InternalServerError)
-		c.Abort()
-		return
-	}
-
-	userInfo, ok := _userInfo.(*jwt_util.JWTBodyPayload)
-	if !ok {
-		h.logger.WithCtx(ctx).Error("invalid user info from context")
-		h.response.Send(c, nil, error_pkg.InternalServerError)
-		c.Abort()
-		return
-	}
-
-	var authorized bool
-	for _, permission := range userInfo.Permissions {
-		if permission.Domain == h.config.Domain && permission.Resource == c.Request.URL.Path && permission.Action == c.Request.Method {
-			authorized = true
-			break
+		_userInfo := c.Request.Context().Value(http_pkg.UserInfoKey)
+		if _userInfo == nil {
+			h.logger.WithCtx(ctx).Error("failed to get user info from context")
+			h.response.Send(c, nil, error_pkg.InternalServerError)
+			c.Abort()
+			return
 		}
-	}
 
-	if !authorized {
-		h.logger.WithCtx(ctx).Debug(
-			"user is forbidden to access this resource",
-			zap.String("user_uuid", userInfo.UUID),
-			zap.String("domain", h.config.Domain),
-			zap.String("resource", c.Request.URL.Path),
-			zap.String("action", c.Request.Method),
-		)
-		h.response.Send(c, nil, error_pkg.ForbiddenError)
-	}
+		userInfo, ok := _userInfo.(*jwt_util.JWTBodyPayload)
+		if !ok {
+			h.logger.WithCtx(ctx).Error("invalid user info from context")
+			h.response.Send(c, nil, error_pkg.InternalServerError)
+			c.Abort()
+			return
+		}
 
-	c.Next()
+		authorized := fn(userInfo)
+		if !authorized {
+			h.logger.WithCtx(ctx).Debug(
+				"user is forbidden to access this resource",
+				zap.String("user_uuid", userInfo.UUID),
+				zap.String("domain", h.config.Domain),
+				zap.String("resource", c.Request.URL.Path),
+				zap.String("action", c.Request.Method),
+			)
+			h.response.Send(c, nil, error_pkg.ForbiddenError)
+		}
+
+		c.Next()
+	}
 }

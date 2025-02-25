@@ -1,0 +1,14 @@
+-- +migrate Up
+CREATE TABLE IF NOT EXISTS public.user_roles (
+    id SERIAL PRIMARY KEY NOT NULL,
+    user_uuid UUID NOT NULL,
+    role_id INT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE NULL,
+    FOREIGN KEY (user_uuid) REFERENCES "users"(uuid) ON DELETE CASCADE,
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
+);
+
+-- +migrate Down
+DROP TABLE IF EXISTS public.user_roles;

@@ -3,9 +3,7 @@
 package mocks
 
 import (
-	context "context"
-
-	kafka "github.com/harmonify/movie-reservation-system/pkg/kafka"
+	message "github.com/ThreeDotsLabs/watermill/message"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -20,86 +18,6 @@ type Route_Expecter struct {
 
 func (_m *Route) EXPECT() *Route_Expecter {
 	return &Route_Expecter{mock: &_m.Mock}
-}
-
-// AddEventListener provides a mock function with given fields: listener
-func (_m *Route) AddEventListener(listener kafka.EventListener) {
-	_m.Called(listener)
-}
-
-// Route_AddEventListener_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddEventListener'
-type Route_AddEventListener_Call struct {
-	*mock.Call
-}
-
-// AddEventListener is a helper method to define mock.On call
-//   - listener kafka.EventListener
-func (_e *Route_Expecter) AddEventListener(listener interface{}) *Route_AddEventListener_Call {
-	return &Route_AddEventListener_Call{Call: _e.mock.On("AddEventListener", listener)}
-}
-
-func (_c *Route_AddEventListener_Call) Run(run func(listener kafka.EventListener)) *Route_AddEventListener_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(kafka.EventListener))
-	})
-	return _c
-}
-
-func (_c *Route_AddEventListener_Call) Return() *Route_AddEventListener_Call {
-	_c.Call.Return()
-	return _c
-}
-
-func (_c *Route_AddEventListener_Call) RunAndReturn(run func(kafka.EventListener)) *Route_AddEventListener_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Handle provides a mock function with given fields: ctx, event
-func (_m *Route) Handle(ctx context.Context, event *kafka.Event) error {
-	ret := _m.Called(ctx, event)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Handle")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *kafka.Event) error); ok {
-		r0 = rf(ctx, event)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// Route_Handle_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Handle'
-type Route_Handle_Call struct {
-	*mock.Call
-}
-
-// Handle is a helper method to define mock.On call
-//   - ctx context.Context
-//   - event *kafka.Event
-func (_e *Route_Expecter) Handle(ctx interface{}, event interface{}) *Route_Handle_Call {
-	return &Route_Handle_Call{Call: _e.mock.On("Handle", ctx, event)}
-}
-
-func (_c *Route_Handle_Call) Run(run func(ctx context.Context, event *kafka.Event)) *Route_Handle_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*kafka.Event))
-	})
-	return _c
-}
-
-func (_c *Route_Handle_Call) Return(_a0 error) *Route_Handle_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *Route_Handle_Call) RunAndReturn(run func(context.Context, *kafka.Event) error) *Route_Handle_Call {
-	_c.Call.Return(run)
-	return _c
 }
 
 // Identifier provides a mock function with given fields:
@@ -147,59 +65,49 @@ func (_c *Route_Identifier_Call) RunAndReturn(run func() string) *Route_Identifi
 	return _c
 }
 
-// Match provides a mock function with given fields: ctx, event
-func (_m *Route) Match(ctx context.Context, event *kafka.Event) (bool, error) {
-	ret := _m.Called(ctx, event)
+// Register provides a mock function with given fields: router, subscriber
+func (_m *Route) Register(router *message.Router, subscriber message.Subscriber) error {
+	ret := _m.Called(router, subscriber)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Match")
+		panic("no return value specified for Register")
 	}
 
-	var r0 bool
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *kafka.Event) (bool, error)); ok {
-		return rf(ctx, event)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *kafka.Event) bool); ok {
-		r0 = rf(ctx, event)
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*message.Router, message.Subscriber) error); ok {
+		r0 = rf(router, subscriber)
 	} else {
-		r0 = ret.Get(0).(bool)
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *kafka.Event) error); ok {
-		r1 = rf(ctx, event)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
-// Route_Match_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Match'
-type Route_Match_Call struct {
+// Route_Register_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Register'
+type Route_Register_Call struct {
 	*mock.Call
 }
 
-// Match is a helper method to define mock.On call
-//   - ctx context.Context
-//   - event *kafka.Event
-func (_e *Route_Expecter) Match(ctx interface{}, event interface{}) *Route_Match_Call {
-	return &Route_Match_Call{Call: _e.mock.On("Match", ctx, event)}
+// Register is a helper method to define mock.On call
+//   - router *message.Router
+//   - subscriber message.Subscriber
+func (_e *Route_Expecter) Register(router interface{}, subscriber interface{}) *Route_Register_Call {
+	return &Route_Register_Call{Call: _e.mock.On("Register", router, subscriber)}
 }
 
-func (_c *Route_Match_Call) Run(run func(ctx context.Context, event *kafka.Event)) *Route_Match_Call {
+func (_c *Route_Register_Call) Run(run func(router *message.Router, subscriber message.Subscriber)) *Route_Register_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*kafka.Event))
+		run(args[0].(*message.Router), args[1].(message.Subscriber))
 	})
 	return _c
 }
 
-func (_c *Route_Match_Call) Return(_a0 bool, _a1 error) *Route_Match_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *Route_Register_Call) Return(_a0 error) *Route_Register_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *Route_Match_Call) RunAndReturn(run func(context.Context, *kafka.Event) (bool, error)) *Route_Match_Call {
+func (_c *Route_Register_Call) RunAndReturn(run func(*message.Router, message.Subscriber) error) *Route_Register_Call {
 	_c.Call.Return(run)
 	return _c
 }

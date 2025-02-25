@@ -22,6 +22,7 @@ type DatabaseResult struct {
 
 type DatabaseConfig struct {
 	Env                   string `validate:"required,oneof=dev test prod"`
+	DbType                string `validate:"required,oneof=postgresql mysql"`
 	DbHost                string `validate:"required"`
 	DbPort                int    `validate:"required,min=1,max=65535"`
 	DbUser                string `validate:"required"`
@@ -33,11 +34,19 @@ type DatabaseConfig struct {
 }
 
 func NewDatabase(p DatabaseParam, cfg *DatabaseConfig) (DatabaseResult, error) {
-	if err := validator.New(validator.WithRequiredStructEnabled()).Struct(cfg); err != nil {
+	err := validator.New(validator.WithRequiredStructEnabled()).Struct(cfg)
+	if err != nil {
 		return DatabaseResult{}, err
 	}
 
-	db, err := NewPostgresqlDatabase(p, cfg)
+	var db *Database
+	switch cfg.DbType {
+	case "mysql":
+		db, err = NewMysqlDatabase(p, cfg)
+	default:
+		db, err = NewPostgresqlDatabase(p, cfg)
+	}
+
 	if err != nil {
 		return DatabaseResult{}, err
 	}
@@ -66,9 +75,7 @@ func (d *Database) WithTx(tx *Transaction) *Database {
 
 func (d *Database) Transaction(fc func(tx *Transaction) error) error {
 	err := d.DB.Transaction(func(_tx *gorm.DB) error {
-		tx := &Transaction{
-			DB: _tx,
-		}
+		tx := NewTransaction(_tx)
 		return fc(tx)
 	})
 

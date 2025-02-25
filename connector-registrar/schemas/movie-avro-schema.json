@@ -1,0 +1,375 @@
+{
+    "name": "ChangeStream",
+    "fields": [
+        {
+            "name": "_id",
+            "type": "string"
+        },
+        {
+            "name": "operationType",
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        {
+            "name": "fullDocument",
+            "type": "record",
+            "fields": [
+                {
+                    "name": "_id",
+                    "type": {
+                        "type": "record",
+                        "name": "ObjectId",
+                        "fields": [
+                            {
+                                "name": "oid",
+                                "type": "string",
+                                "doc": "Originally was the $oid field"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "trace_id",
+                    "type": "string"
+                },
+                {
+                    "name": "created_at",
+                    "type": {
+                        "type": "record",
+                        "name": "DateWrapper",
+                        "fields": [
+                            {
+                                "name": "date",
+                                "type": "string",
+                                "doc": "Originally was the $date field"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "updated_at",
+                    "type": "DateWrapper"
+                },
+                {
+                    "name": "title",
+                    "type": "string"
+                },
+                {
+                    "name": "description",
+                    "type": "string"
+                },
+                {
+                    "name": "genres",
+                    "type": {
+                        "type": "array",
+                        "items": "string"
+                    }
+                },
+                {
+                    "name": "poster_image_url",
+                    "type": "string"
+                },
+                {
+                    "name": "photo_urls",
+                    "type": {
+                        "type": "array",
+                        "items": "string"
+                    }
+                },
+                {
+                    "name": "trailer_url",
+                    "type": "string"
+                },
+                {
+                    "name": "runtime",
+                    "type": "long"
+                },
+                {
+                    "name": "release_date",
+                    "type": "string"
+                },
+                {
+                    "name": "parental_guidance",
+                    "type": {
+                        "type": "array",
+                        "items": {
+                            "type": "record",
+                            "name": "ParentalGuidance",
+                            "fields": [
+                                {
+                                    "name": "code",
+                                    "type": "string"
+                                },
+                                {
+                                    "name": "country_code",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "dub",
+                    "type": {
+                        "type": "record",
+                        "name": "Dub",
+                        "fields": [
+                            {
+                                "name": "name",
+                                "type": "string"
+                            },
+                            {
+                                "name": "code",
+                                "type": "string"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "available_subtitles",
+                    "type": {
+                        "type": "array",
+                        "items": {
+                            "type": "record",
+                            "name": "Subtitle",
+                            "fields": [
+                                {
+                                    "name": "name",
+                                    "type": "string"
+                                },
+                                {
+                                    "name": "code",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "cast",
+                    "type": {
+                        "type": "array",
+                        "items": {
+                            "type": "record",
+                            "name": "CastMember",
+                            "fields": [
+                                {
+                                    "name": "_id",
+                                    "type": "ObjectId"
+                                },
+                                {
+                                    "name": "trace_id",
+                                    "type": "string"
+                                },
+                                {
+                                    "name": "created_at",
+                                    "type": "DateWrapper"
+                                },
+                                {
+                                    "name": "updated_at",
+                                    "type": "DateWrapper"
+                                },
+                                {
+                                    "name": "name",
+                                    "type": "string"
+                                },
+                                {
+                                    "name": "picture_url",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "director",
+                    "type": {
+                        "type": "record",
+                        "name": "Director",
+                        "fields": [
+                            {
+                                "name": "_id",
+                                "type": "ObjectId"
+                            },
+                            {
+                                "name": "trace_id",
+                                "type": "string"
+                            },
+                            {
+                                "name": "created_at",
+                                "type": "DateWrapper"
+                            },
+                            {
+                                "name": "updated_at",
+                                "type": "DateWrapper"
+                            },
+                            {
+                                "name": "name",
+                                "type": "string"
+                            },
+                            {
+                                "name": "picture_url",
+                                "type": "string"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "writer",
+                    "type": {
+                        "type": "record",
+                        "name": "Writer",
+                        "fields": [
+                            {
+                                "name": "_id",
+                                "type": "ObjectId"
+                            },
+                            {
+                                "name": "trace_id",
+                                "type": "string"
+                            },
+                            {
+                                "name": "created_at",
+                                "type": "DateWrapper"
+                            },
+                            {
+                                "name": "updated_at",
+                                "type": "DateWrapper"
+                            },
+                            {
+                                "name": "name",
+                                "type": "string"
+                            },
+                            {
+                                "name": "picture_url",
+                                "type": "string"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "production_company",
+                    "type": "string"
+                }
+            ]
+        },
+        {
+            "name": "ns",
+            "type": [
+                {
+                    "name": "ns",
+                    "type": "record",
+                    "fields": [
+                        {
+                            "name": "db",
+                            "type": "string"
+                        },
+                        {
+                            "name": "coll",
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        }
+                    ]
+                },
+                "null"
+            ]
+        },
+        {
+            "name": "to",
+            "type": [
+                {
+                    "name": "to",
+                    "type": "record",
+                    "fields": [
+                        {
+                            "name": "db",
+                            "type": "string"
+                        },
+                        {
+                            "name": "coll",
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        }
+                    ]
+                },
+                "null"
+            ]
+        },
+        {
+            "name": "documentKey",
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        {
+            "name": "updateDescription",
+            "type": [
+                {
+                    "name": "updateDescription",
+                    "type": "record",
+                    "fields": [
+                        {
+                            "name": "updatedFields",
+                            "type": [
+                                "string",
+                                "null"
+                            ]
+                        },
+                        {
+                            "name": "removedFields",
+                            "type": [
+                                {
+                                    "type": "array",
+                                    "items": "string"
+                                },
+                                "null"
+                            ]
+                        }
+                    ]
+                },
+                "null"
+            ]
+        },
+        {
+            "name": "clusterTime",
+            "type": [
+                "string",
+                "null"
+            ]
+        },
+        {
+            "name": "txnNumber",
+            "type": [
+                "long",
+                "null"
+            ]
+        },
+        {
+            "name": "lsid",
+            "type": [
+                {
+                    "name": "lsid",
+                    "type": "record",
+                    "fields": [
+                        {
+                            "name": "id",
+                            "type": "string"
+                        },
+                        {
+                            "name": "uid",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "null"
+            ]
+        }
+    ]
+}

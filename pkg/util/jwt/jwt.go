@@ -57,12 +57,7 @@ type (
 	}
 
 	JWTBodyPayload struct {
-		UUID        string `json:"uuid"`
-		Permissions []struct {
-			Domain   string `json:"domain"`
-			Resource string `json:"resource"`
-			Action   string `json:"action"`
-		} `json:"permissions"`
+		UUID string `json:"uuid"`
 	}
 
 	JWTSignParam struct {

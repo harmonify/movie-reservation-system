@@ -40,7 +40,7 @@ func NewKafkaAdmin(lc fx.Lifecycle, cfg *KafkaAdminConfig, logger logger.Logger)
 
 	lc.Append(fx.Hook{
 		OnStop: func(ctx context.Context) error {
-			logger.Info("Closing Kafka admin")
+			logger.WithCtx(ctx).Info("Closing Kafka admin")
 			return client.Close()
 		},
 	})

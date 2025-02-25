@@ -2,11 +2,7 @@
 
 root="$(realpath "$(dirname "$(dirname "$0")")")"
 source_dir_path="$root/proto/harmonify/movie_reservation_system"
-output_dir_path="$1"
-if [[ -z "$1" ]]; then
-	echo "gen_proto.sh <output directory>"
-	exit 1
-fi
+output_dir_paths=("$root/pkg/proto")
 
 proto_files_path=("$source_dir_path"/**/*.proto)
 go_opt_args="--go_opt=paths=source_relative"
@@ -24,23 +20,27 @@ for proto_file_path in "${proto_files_path[@]}"; do
 done
 
 # clear
-mkdir -p "$output_dir_path"
 
-echo -e "Executing: protoc \n \
-	--proto_path="${source_dir_path}" \n \
-	--go_out="${output_dir_path}" \n \
-	--go-grpc_out="${output_dir_path}" \n \
-	"${go_opt_args// /}" \n \
-	"${go_grpc_opt_args// /}" \n \
-	"${proto_files_path[@]}""
-echo
+for output_dir_path in ${output_dir_paths[@]}; do
+	rm -rf "$output_dir_path"
+	mkdir -p "$output_dir_path"
 
-protoc \
-	--proto_path="${source_dir_path}" \
-	--go_out="${output_dir_path}" \
-	--go-grpc_out="${output_dir_path}" \
-	"${go_opt_args// /}" \
-	"${go_grpc_opt_args// /}" \
-	"${proto_files_path[@]}"
+	echo -e "Executing: protoc \n \
+		--proto_path="${source_dir_path}" \n \
+		--go_out="${output_dir_path}" \n \
+		--go-grpc_out="${output_dir_path}" \n \
+		"${go_opt_args// /}" \n \
+		"${go_grpc_opt_args// /}" \n \
+		"${proto_files_path[@]}""
+	echo
+	
+	protoc \
+		--proto_path="${source_dir_path}" \
+		--go_out="${output_dir_path}" \
+		--go-grpc_out="${output_dir_path}" \
+		"${go_opt_args// /}" \
+		"${go_grpc_opt_args// /}" \
+		"${proto_files_path[@]}"
 
-echo -e "\n\n"
+	echo -e "\n\n"
+done

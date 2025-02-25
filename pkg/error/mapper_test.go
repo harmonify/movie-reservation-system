@@ -87,7 +87,7 @@ func (s *ResponseTestSuite) TestErrorMapper_FromError() {
 			name: "error with stack",
 			errFactory: func() error {
 				err := errors.New("db crashed")
-				return error_pkg.NewErrorWithStack(err, error_pkg.ServiceUnavailableError)
+				return error_pkg.NewErrorWithStack(err, 1)
 			},
 			expectation: testExpectation{
 				Error: error_pkg.ServiceUnavailableError,

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	notification_proto "github.com/harmonify/movie-reservation-system/user-service/internal/driven/proto/notification"
+	notification_proto "github.com/harmonify/movie-reservation-system/pkg/proto/notification"
 )
 
 var (

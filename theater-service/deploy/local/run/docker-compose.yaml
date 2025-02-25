@@ -1,0 +1,20 @@
+services:
+    theater-service-mysql:
+        image: mysql:9
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE: mrs-theater-service
+            MYSQL_USER: theater_service
+            MYSQL_PASSWORD: secret
+        ports:
+            - "3306:3306"
+        networks:
+            - theater-service-net
+
+    theater-service-redis:
+        image: redis:7
+        command: ["redis-server", "--requirepass", "secret"]
+        ports:
+            - "6382:6379"
+        networks:
+            - theater-service-net

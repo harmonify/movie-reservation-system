@@ -18,7 +18,8 @@ type Redis struct {
 type RedisConfig struct {
 	RedisHost string `validate:"required"`
 	RedisPort string `validate:"required,min=1,max=65535"`
-	RedisPass string
+	RedisPass string `validate:"required"`
+	RedisDB   int    `validate:"min=0,max=15"`
 }
 
 func NewRedis(cfg *RedisConfig) (*Redis, error) {
@@ -29,6 +30,7 @@ func NewRedis(cfg *RedisConfig) (*Redis, error) {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     cfg.RedisHost + ":" + cfg.RedisPort,
 		Password: cfg.RedisPass,
+		DB:       cfg.RedisDB,
 	})
 	if err := redisotel.InstrumentTracing(rdb); err != nil {
 		return nil, err

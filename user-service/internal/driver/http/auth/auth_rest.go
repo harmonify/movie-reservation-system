@@ -17,6 +17,7 @@ import (
 	auth_service "github.com/harmonify/movie-reservation-system/user-service/internal/core/service/auth"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/config"
 	http_driver_shared "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http/shared"
+	"go.opentelemetry.io/otel/propagation"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -151,6 +152,9 @@ func (h *authRestHandlerImpl) postRegister(c *gin.Context) {
 func (h *authRestHandlerImpl) postLogin(c *gin.Context) {
 	ctx, span := h.tracer.StartSpanWithCaller(c.Request.Context())
 	defer span.End()
+
+	// Inject the current trace context into the HTTP response headers.
+	h.tracer.Inject(c.Request.Context(), propagation.HeaderCarrier(c.Writer.Header()))
 
 	params, ok := c.Request.Context().Value(http_pkg.ParsedBodyKey).(PostLoginReq)
 	if !ok {

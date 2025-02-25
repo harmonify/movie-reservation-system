@@ -1,0 +1,6 @@
+[
+    {
+        "dropIndexes": "movies",
+        "index": "movies_text_index"
+    }
+]

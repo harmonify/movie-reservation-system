@@ -25,7 +25,7 @@ func (e *User) FullName() string {
 	return e.FirstName + " " + e.LastName
 }
 
-type FindUser struct {
+type GetUser struct {
 	UUID                  sql.NullString
 	Username              sql.NullString
 	Email                 sql.NullString

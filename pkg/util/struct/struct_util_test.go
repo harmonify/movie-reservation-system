@@ -74,7 +74,7 @@ func (s *StructUtilTestSuite) SetupSuite() {
 	}
 }
 
-func (s *StructUtilTestSuite) TestStructUtilSuite_SetNonPrimitiveDefaultValue() {
+func (s *StructUtilTestSuite) TestStructUtilSuite_SetOrDefault() {
 	var data interface{}
 	nonEmptyPrimitive := "hello"
 	emptyPrimitive := ""
@@ -215,7 +215,7 @@ func (s *StructUtilTestSuite) TestStructUtilSuite_SetNonPrimitiveDefaultValue() 
 				testCase.BeforeCall(testCase.Config)
 			}
 
-			result := s.structUtil.SetNonPrimitiveDefaultValue(ctx, testCase.Config.Data)
+			result := s.structUtil.SetOrDefault(ctx, testCase.Config.Data)
 
 			if testCase.AfterCall != nil {
 				testCase.AfterCall()

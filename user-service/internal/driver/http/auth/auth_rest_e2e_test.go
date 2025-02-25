@@ -22,6 +22,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/user-service/internal"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/entity"
 	entityfactory "github.com/harmonify/movie-reservation-system/user-service/internal/core/entity/factory"
+	entityseeder "github.com/harmonify/movie-reservation-system/user-service/internal/core/entity/seeder"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/core/shared"
 	"github.com/harmonify/movie-reservation-system/user-service/internal/driven/database/postgresql/seeder"
 	http_driver "github.com/harmonify/movie-reservation-system/user-service/internal/driver/http"
@@ -49,7 +50,7 @@ type AuthRestTestSuite struct {
 	database    *database.Database
 	userStorage shared.UserStorage
 	userFactory entityfactory.UserFactory
-	userSeeder  seeder.UserSeeder
+	userSeeder  entityseeder.UserSeeder
 }
 
 func (s *AuthRestTestSuite) SetupSuite() {
@@ -67,7 +68,7 @@ func (s *AuthRestTestSuite) SetupSuite() {
 			database *database.Database,
 			userStorage shared.UserStorage,
 			userFactory entityfactory.UserFactory,
-			userSeeder seeder.UserSeeder,
+			userSeeder entityseeder.UserSeeder,
 		) {
 			s.httpServer = httpServer
 			s.otpCache = otpCache
@@ -122,12 +123,12 @@ func (s *AuthRestTestSuite) TestAuthRest_PostRegister() {
 
 		testCase := tc()
 		defer func() {
-			user, err := s.userStorage.FindUser(ctx, entity.FindUser{Username: sql.NullString{String: testCase.Config.RequestBody.Username, Valid: true}})
+			user, err := s.userStorage.GetUser(ctx, entity.GetUser{Username: sql.NullString{String: testCase.Config.RequestBody.Username, Valid: true}})
 			if err != nil {
-				s.T().Log("Failed to find test user after call")
+				s.T().Log("Failed to get test user after call")
 				return
 			}
-			if err := s.userSeeder.DeleteUser(ctx, entity.FindUser{Username: sql.NullString{String: testCase.Config.RequestBody.Username, Valid: true}}); err != nil {
+			if err := s.userSeeder.DeleteUser(ctx, entity.GetUser{Username: sql.NullString{String: testCase.Config.RequestBody.Username, Valid: true}}); err != nil {
 				s.T().Log("Failed to delete test user after call")
 				return
 			}
@@ -224,7 +225,7 @@ func (s *AuthRestTestSuite) TestAuthRest_PostLogin() {
 	testUser, err := s.userSeeder.CreateUser(ctx)
 	s.Require().NoError(err)
 	defer func() {
-		if err := s.userSeeder.DeleteUser(ctx, entity.FindUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}}); err != nil {
+		if err := s.userSeeder.DeleteUser(ctx, entity.GetUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}}); err != nil {
 			s.T().Log("Failed to delete test user before call")
 		}
 	}()
@@ -373,7 +374,7 @@ func (s *AuthRestTestSuite) TestAuthRest_GetToken() {
 	s.Require().NoError(err)
 	s.Require().Less(time.Now(), testUser.UserSessions[0].ExpiredAt)
 	defer func() {
-		if err := s.userSeeder.DeleteUser(ctx, entity.FindUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}}); err != nil {
+		if err := s.userSeeder.DeleteUser(ctx, entity.GetUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}}); err != nil {
 			s.T().Log("Failed to delete test user before call")
 		}
 	}()
@@ -485,7 +486,7 @@ func (s *AuthRestTestSuite) TestAuthRest_PostLogout() {
 	s.Require().NoError(err)
 	s.Require().Less(time.Now(), testUser.UserSessions[0].ExpiredAt)
 	defer func() {
-		if err := s.userSeeder.DeleteUser(ctx, entity.FindUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}}); err != nil {
+		if err := s.userSeeder.DeleteUser(ctx, entity.GetUser{UUID: sql.NullString{String: testUser.User.UUID, Valid: true}}); err != nil {
 			s.T().Log("Failed to delete test user before call")
 		}
 	}()

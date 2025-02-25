@@ -15,8 +15,6 @@ type UserKey struct {
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 	DeletedAt  gorm.DeletedAt `gorm:"index"`
-
-	User User `gorm:"foreignKey:UserUUID"`
 }
 
 func (m *UserKey) TableName() string {

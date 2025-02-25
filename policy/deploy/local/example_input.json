@@ -1,0 +1,15 @@
+{
+    "input": {
+        "method": "GET",
+        "path": [
+            "salary",
+            "alice"
+        ],
+        "subject": {
+            "user": "alice",
+            "groups": [
+                "user"
+            ]
+        }
+    }
+}
