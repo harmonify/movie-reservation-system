@@ -1,6 +1,6 @@
-# TB002 - Handling Transient Failures
+# T007 - Handling Transient Failures
 
-Integrate [failsafe-go](https://failsafe-go.dev/) library to handle transient failures.
+Integrate [failsafe-go](https://failsafe-go.dev/) library to handle transient failures when interacting with external services.
 
 ## Technical Requirements
 

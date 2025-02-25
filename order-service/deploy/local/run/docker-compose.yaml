@@ -1,23 +1,23 @@
 services:
-    reservation-service-postgres:
+    order-service-postgres:
         image: debezium/postgres:16-alpine
         restart: "on-failure:5"
         environment:
             POSTGRES_USER: root
             POSTGRES_PASSWORD: root
-            POSTGRES_DB: mrs-reservation-service
+            POSTGRES_DB: mrs-order-service
         ports:
             - 5433:5432
         volumes:
             - ./config/postgresql:/docker-entrypoint-initdb.d
             - ../../../.data/postgres:/data
         networks:
-            - reservation-service-net
+            - order-service-net
 
-    reservation-service-redis:
+    order-service-redis:
         image: redis:7
         command: ["redis-server", "--requirepass", "secret"]
         ports:
             - "6383:6379"
         networks:
-            - reservation-service-net
+            - order-service-net

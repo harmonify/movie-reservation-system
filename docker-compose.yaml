@@ -9,7 +9,8 @@ include:
     - path: "./movie-service/deploy/local/run/docker-compose.yaml"
     - path: "./movie-search-service/deploy/local/run/docker-compose.yaml"
     - path: "./theater-service/deploy/local/run/docker-compose.yaml"
-    - path: "./reservation-service/deploy/local/run/docker-compose.yaml"
+    - path: "./order-service/deploy/local/run/docker-compose.yaml"
+    - path: "./ticket-service/deploy/local/run/docker-compose.yaml"
 
 networks:
     core-net:
@@ -33,6 +34,9 @@ networks:
     theater-service-net:
         name: mrs-theater-service-net
         enable_ipv6: false
-    reservation-service-net:
-        name: mrs-reservation-service-net
+    order-service-net:
+        name: mrs-order-service-net
+        enable_ipv6: false
+    ticket-service-net:
+        name: mrs-ticket-service-net
         enable_ipv6: false
