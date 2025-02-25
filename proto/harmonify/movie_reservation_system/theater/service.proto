@@ -53,5 +53,3 @@ message GetAvailableSeatsResponse {
         string seat_column = 3;
     }
 }
-
-

@@ -7,19 +7,20 @@ ifeq ($(OS), Windows_NT)
 	EXT :=.exe
 endif
 
+.PHONY: help
+help: ## Display this help
+	@echo "Usage: make <target> [VARIABLE=value]..."
+	@echo ""
+	@echo "Available targets:"
+	@grep -E '^[a-zA-Z0-9\-\_\\:]+:.*?## .*$$' $(MAKEFILE_LIST) | \
+	  sed -e 's/\\:/:/g' | \
+	  sort | \
+	  awk -F': *## ' '{printf "  \033[36m%-30s \033[0m%s\n", $$1, $$2}'
+
 .PHONY: setup
 setup: ## Setup the project
 	echo "Copying .env.example"
 	cp .env.example .env
-	echo "Installing Air"
-	go install github.com/air-verse/air@latest
-	echo "Installing Mockery"
-	go install github.com/vektra/mockery/v2@v2.42.1
-	echo "Installing Migration Tools"
-	go install github.com/rubenv/sql-migrate/...@latest
-	echo "Installing Go Env"
-	go install github.com/joho/godotenv/cmd/godotenv@latest
-
 	echo "Setup Workspace"
 	go mod download
 	echo "Done"
@@ -83,15 +84,3 @@ migration\:mysql\:up: ## Run migrations up
 migration\:mysql\:down: ## Run migrations down
 	@ENV=$$(grep '^ENV=' .env | cut -d '=' -f2); \
 	godotenv -f .env sql-migrate down -config=./deploy/database/mysql/migration-config.yml -env=$$ENV
-
-.PHONY: debezium\:register-source-connector
-debezium\:register-source-connector: ## Register PostgreSQL source connector
-	curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @./deploy/local/run/confi-source-connector.json
-
-.PHONY: debezium\:deregister-source-connector
-debezium\:deregister-source-connector: ## Deregister PostgreSQL source connector
-	curl -i -X DELETE -H "Accept:application/json" -H "Content-Type:application/json" http://localhost:8083/connectors/users-connector
-
-.PHONY: debezium\:register-elasticsearch-sink-connector
-debezium\:register-elasticsearch-sink-connector: ## Register Elasticsearch sink connector
-	curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @./deploy/local/run/config/elasticsearch-sink-connector.json

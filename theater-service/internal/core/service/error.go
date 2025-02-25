@@ -1,4 +1,4 @@
-package services
+package service
 
 import (
 	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"

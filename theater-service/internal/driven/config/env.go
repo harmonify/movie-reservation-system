@@ -35,7 +35,8 @@ type TheaterServiceConfig struct {
 	RedisPort string `mapstructure:"REDIS_PORT" validate:"required,numeric"`
 	RedisPass string `mapstructure:"REDIS_PASS" validate:"required"`
 
-	GrpcPort int `mapstructure:"GRPC_PORT" validate:"required,numeric,min=1024,max=65535"`
+	GrpcPort           int    `mapstructure:"GRPC_PORT" validate:"required,numeric,min=1024,max=65535"`
+	GrpcAuthServiceUrl string `mapstructure:"GRPC_AUTH_SERVICE_URL" validate:"required,url"`
 
 	KafkaBrokers               string `mapstructure:"KAFKA_BROKERS" validate:"required"`
 	KafkaVersion               string `mapstructure:"KAFKA_VERSION" validate:"required"`
@@ -49,12 +50,4 @@ type TheaterServiceConfig struct {
 	TracerType   string `mapstructure:"TRACER_TYPE" validate:"required,oneof=jaeger console nop"`
 	OtelEndpoint string `mapstructure:"OTEL_ENDPOINT" validate:"required"`
 	OtelInsecure bool   `mapstructure:"OTEL_INSECURE" validate:"required,boolean"`
-
-	MailgunDefaultSender string `mapstructure:"MAILGUN_DEFAULT_SENDER" validate:"required"`
-	MailgunDomain        string `mapstructure:"MAILGUN_DOMAIN" validate:"required"`
-	MailgunApiKey        string `mapstructure:"MAILGUN_API_KEY" validate:"required"`
-
-	TwilioAccountSid string `mapstructure:"TWILIO_ACCOUNT_SID" validate:"required"`
-	TwilioAuthToken  string `mapstructure:"TWILIO_AUTH_TOKEN" validate:"required"`
-	TwilioServiceSID string `mapstructure:"TWILIO_SERVICE_SID" validate:"required"`
 }

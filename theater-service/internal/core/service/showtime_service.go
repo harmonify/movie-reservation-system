@@ -1,4 +1,4 @@
-package services
+package service
 
 import (
 	"context"
@@ -15,13 +15,12 @@ import (
 )
 
 type (
-	TheaterService interface {
+	ShowtimeService interface {
 		GetActiveMovies(ctx context.Context, req *theater_proto.GetActiveMoviesRequest) (*theater_proto.GetActiveMoviesResponse, error)
 		GetActiveShowtimes(ctx context.Context, req *theater_proto.GetActiveShowtimesRequest) (*theater_proto.GetActiveShowtimesResponse, error)
-		GetAvailableSeats(ctx context.Context, req *theater_proto.GetAvailableSeatsRequest) (*theater_proto.GetAvailableSeatsResponse, error)
 	}
 
-	TheaterServiceParam struct {
+	ShowtimeServiceParam struct {
 		fx.In
 		Logger          logger.Logger
 		Tracer          tracer.Tracer
@@ -31,13 +30,13 @@ type (
 		TicketStorage   shared.TicketStorage
 	}
 
-	TheaterServiceResult struct {
+	ShowtimeServiceResult struct {
 		fx.Out
 
-		TheaterService TheaterService
+		ShowtimeService ShowtimeService
 	}
 
-	theaterServiceImpl struct {
+	showtimeServiceImpl struct {
 		logger          logger.Logger
 		tracer          tracer.Tracer
 		theaterStorage  shared.TheaterStorage
@@ -47,8 +46,8 @@ type (
 	}
 )
 
-func NewTheaterService(p TheaterServiceParam) TheaterServiceResult {
-	s := &theaterServiceImpl{
+func NewShowtimeService(p ShowtimeServiceParam) ShowtimeServiceResult {
+	s := &showtimeServiceImpl{
 		logger:          p.Logger,
 		tracer:          p.Tracer,
 		theaterStorage:  p.TheaterStorage,
@@ -57,12 +56,12 @@ func NewTheaterService(p TheaterServiceParam) TheaterServiceResult {
 		ticketStorage:   p.TicketStorage,
 	}
 
-	return TheaterServiceResult{
-		TheaterService: s,
+	return ShowtimeServiceResult{
+		ShowtimeService: s,
 	}
 }
 
-func (s *theaterServiceImpl) GetActiveMovies(ctx context.Context, req *theater_proto.GetActiveMoviesRequest) (*theater_proto.GetActiveMoviesResponse, error) {
+func (s *showtimeServiceImpl) GetActiveMovies(ctx context.Context, req *theater_proto.GetActiveMoviesRequest) (*theater_proto.GetActiveMoviesResponse, error) {
 	ctx, span := s.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -79,14 +78,14 @@ func (s *theaterServiceImpl) GetActiveMovies(ctx context.Context, req *theater_p
 		findModel.StartTimeLte = sql.NullTime{Time: time.Now().Add(7 * 24 * time.Hour), Valid: true}
 	}
 
-	activeShowtimes, err := s.showtimeStorage.FindManyShowtimes(ctx, findModel)
+	res, err := s.showtimeStorage.FindManyShowtimes(ctx, findModel)
 	if err != nil {
 		s.logger.WithCtx(ctx).Error("Failed to get active showtimes", zap.Error(err))
 		return nil, err
 	}
 
 	activeMovies := make([]*theater_proto.GetActiveMoviesResponse_Movie, 0)
-	for _, showtime := range activeShowtimes {
+	for _, showtime := range res.Showtimes {
 		activeMovies = append(activeMovies, &theater_proto.GetActiveMoviesResponse_Movie{
 			MovieId: showtime.MovieID,
 		})
@@ -97,7 +96,7 @@ func (s *theaterServiceImpl) GetActiveMovies(ctx context.Context, req *theater_p
 	}, nil
 }
 
-func (s *theaterServiceImpl) GetActiveShowtimes(ctx context.Context, req *theater_proto.GetActiveShowtimesRequest) (*theater_proto.GetActiveShowtimesResponse, error) {
+func (s *showtimeServiceImpl) GetActiveShowtimes(ctx context.Context, req *theater_proto.GetActiveShowtimesRequest) (*theater_proto.GetActiveShowtimesResponse, error) {
 	ctx, span := s.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -111,7 +110,7 @@ func (s *theaterServiceImpl) GetActiveShowtimes(ctx context.Context, req *theate
 		return nil, MovieIDRequiredError
 	}
 
-	activeShowtimes, err := s.showtimeStorage.FindManyShowtimes(ctx, &entity.FindManyShowtimes{
+	res, err := s.showtimeStorage.FindManyShowtimes(ctx, &entity.FindManyShowtimes{
 		TheaterID:    sql.NullString{String: theaterId, Valid: true},
 		MovieID:      sql.NullString{String: movieId, Valid: true},
 		StartTimeGte: sql.NullTime{Time: time.Now(), Valid: true},
@@ -122,8 +121,8 @@ func (s *theaterServiceImpl) GetActiveShowtimes(ctx context.Context, req *theate
 		return nil, err
 	}
 
-	showtimeRoomIds := make([]string, 0, len(activeShowtimes))
-	for _, showtime := range activeShowtimes {
+	showtimeRoomIds := make([]string, 0, len(res.Showtimes))
+	for _, showtime := range res.Showtimes {
 		showtimeRoomIds = append(showtimeRoomIds, showtime.RoomID)
 	}
 
@@ -138,8 +137,8 @@ func (s *theaterServiceImpl) GetActiveShowtimes(ctx context.Context, req *theate
 		totalSeatsMap[t.RoomID] = t.Count
 	}
 
-	activeShowtimeIds := make([]string, 0, len(activeShowtimes))
-	for _, showtime := range activeShowtimes {
+	activeShowtimeIds := make([]string, 0, len(res.Showtimes))
+	for _, showtime := range res.Showtimes {
 		activeShowtimeIds = append(activeShowtimeIds, showtime.ShowtimeID)
 	}
 
@@ -154,8 +153,8 @@ func (s *theaterServiceImpl) GetActiveShowtimes(ctx context.Context, req *theate
 		showtimeSeatsMap[t.ShowtimeID] = t.Count
 	}
 
-	showtimes := make([]*theater_proto.GetActiveShowtimesResponse_Showtime, 0, len(activeShowtimes))
-	for _, showtime := range activeShowtimes {
+	showtimes := make([]*theater_proto.GetActiveShowtimesResponse_Showtime, 0, len(res.Showtimes))
+	for _, showtime := range res.Showtimes {
 		showtimes = append(showtimes, &theater_proto.GetActiveShowtimesResponse_Showtime{
 			ShowtimeId:     showtime.ShowtimeID,
 			StartTime:      uint32(showtime.StartTime.Unix()),
@@ -165,31 +164,5 @@ func (s *theaterServiceImpl) GetActiveShowtimes(ctx context.Context, req *theate
 
 	return &theater_proto.GetActiveShowtimesResponse{
 		Showtimes: showtimes,
-	}, nil
-}
-
-func (s *theaterServiceImpl) GetAvailableSeats(ctx context.Context, req *theater_proto.GetAvailableSeatsRequest) (*theater_proto.GetAvailableSeatsResponse, error) {
-	ctx, span := s.tracer.StartSpanWithCaller(ctx)
-	defer span.End()
-
-	availableSeats, err := s.seatStorage.FindShowtimeAvailableSeats(ctx, &entity.FindShowtimeAvailableSeats{
-		ShowtimeID: req.GetShowtimeId(),
-	})
-	if err != nil {
-		s.logger.WithCtx(ctx).Error("Failed to get available seats", zap.Error(err))
-		return nil, err
-	}
-
-	availableSeatRes := make([]*theater_proto.GetAvailableSeatsResponse_Seat, 0, len(availableSeats))
-	for _, seat := range availableSeats {
-		availableSeatRes = append(availableSeatRes, &theater_proto.GetAvailableSeatsResponse_Seat{
-			SeatId:     seat.SeatID,
-			SeatRow:    seat.SeatRow,
-			SeatColumn: seat.SeatColumn,
-		})
-	}
-
-	return &theater_proto.GetAvailableSeatsResponse{
-		Seats: availableSeatRes,
 	}, nil
 }

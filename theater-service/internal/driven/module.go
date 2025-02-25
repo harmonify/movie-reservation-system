@@ -6,6 +6,7 @@ import (
 
 	"github.com/harmonify/movie-reservation-system/theater-service/internal/driven/config"
 	"github.com/harmonify/movie-reservation-system/theater-service/internal/driven/database/mysql/repository"
+	"github.com/harmonify/movie-reservation-system/theater-service/internal/driven/grpc"
 	"go.uber.org/fx"
 )
 
@@ -20,5 +21,6 @@ var (
 			},
 		),
 		repository.DrivenMysqlRepositoryModule,
+		grpc.DrivenGrpcModule,
 	)
 )

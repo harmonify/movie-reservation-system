@@ -46,15 +46,24 @@ func (r *showtimeRepositoryImpl) WithTx(tx *database.Transaction) shared.Showtim
 	)
 }
 
-func (r *showtimeRepositoryImpl) SaveShowtime(ctx context.Context, create *entity.SaveShowtime) error {
+func (r *showtimeRepositoryImpl) SaveShowtime(ctx context.Context, create *entity.SaveShowtime) (*entity.SaveShowtimeResult, error) {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	result := r.database.DB.
-		WithContext(ctx).
-		Create(&create)
+	showtime := entity.NewShowtime(create)
 
-	return result.Error
+	err := r.database.DB.
+		WithContext(ctx).
+		Create(&showtime).
+		Error
+	if err != nil {
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
+		return nil, err
+	}
+
+	return &entity.SaveShowtimeResult{
+		ShowtimeID: showtime.ShowtimeID,
+	}, nil
 }
 
 func (r *showtimeRepositoryImpl) UpdateShowtime(ctx context.Context, find *entity.FindOneShowtime, update *entity.UpdateShowtime) error {
@@ -145,7 +154,7 @@ func (r *showtimeRepositoryImpl) FindOneShowtime(ctx context.Context, find *enti
 	return &showtime, nil
 }
 
-func (r *showtimeRepositoryImpl) FindManyShowtimes(ctx context.Context, find *entity.FindManyShowtimes) ([]*entity.Showtime, error) {
+func (r *showtimeRepositoryImpl) FindManyShowtimes(ctx context.Context, find *entity.FindManyShowtimes) (*entity.FindManyShowtimesResult, error) {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -174,5 +183,14 @@ func (r *showtimeRepositoryImpl) FindManyShowtimes(ctx context.Context, find *en
 		return nil, err
 	}
 
-	return showtimes, nil
+	var totalResults int64
+	result = query.Count(&totalResults)
+	if result.Error != nil {
+		r.logger.WithCtx(ctx).Error(result.Error.Error(), zap.Error(result.Error))
+		return nil, result.Error
+	}
+
+	return &entity.FindManyShowtimesResult{
+		Showtimes: showtimes,
+	}, nil
 }

@@ -13,6 +13,10 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	selectTheaterQuery = "theater.*, ST_X(location) AS longitude, ST_Y(location) AS latitude"
+)
+
 type theaterRepositoryImpl struct {
 	database *database.Database
 	tracer   tracer.Tracer
@@ -46,15 +50,25 @@ func (r *theaterRepositoryImpl) WithTx(tx *database.Transaction) shared.TheaterS
 	)
 }
 
-func (r *theaterRepositoryImpl) SaveTheater(ctx context.Context, create *entity.SaveTheater) error {
+func (r *theaterRepositoryImpl) SaveTheater(ctx context.Context, create *entity.SaveTheater) (*entity.SaveTheaterResult, error) {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
+	theater := entity.NewTheater(create)
+
 	result := r.database.DB.
 		WithContext(ctx).
-		Create(&create)
+		Create(&theater)
 
-	return result.Error
+	err := result.Error
+	if err != nil {
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
+		return nil, err
+	}
+
+	return &entity.SaveTheaterResult{
+		TheaterID: theater.TheaterID,
+	}, nil
 }
 
 func (r *theaterRepositoryImpl) UpdateTheater(ctx context.Context, find *entity.FindOneTheater, update *entity.UpdateTheater) error {
@@ -131,7 +145,7 @@ func (r *theaterRepositoryImpl) FindOneTheater(ctx context.Context, find *entity
 	}
 
 	theater := &entity.Theater{}
-	result := r.database.DB.WithContext(ctx).Where(findMap).First(&theater)
+	result := r.database.DB.WithContext(ctx).Where(findMap).Select(selectTheaterQuery).First(&theater)
 	err = result.Error
 	if err != nil {
 		return nil, err
@@ -140,21 +154,76 @@ func (r *theaterRepositoryImpl) FindOneTheater(ctx context.Context, find *entity
 	return theater, err
 }
 
-func (r *theaterRepositoryImpl) FindManyTheaters(ctx context.Context, find *entity.FindManyTheaters) ([]*entity.Theater, error) {
+func (r *theaterRepositoryImpl) FindManyTheaters(ctx context.Context, find *entity.FindManyTheaters) (*entity.FindManyTheatersResult, error) {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, find)
-	if err != nil {
-		return nil, err
-	}
-
 	theaters := []*entity.Theater{}
-	result := r.database.DB.WithContext(ctx).Where(findMap).Find(&theaters)
-	err = result.Error
+	err := r.database.DB.
+		WithContext(ctx).
+		Scopes(
+			theaterKeywordFilter(find.Keyword.String),
+			theaterGeoFilter(find.Location),
+		).
+		Select(selectTheaterQuery).
+		Offset(buildOffset(find.Page, find.PageSize)).
+		Limit(int(find.PageSize)).
+		Find(&theaters).Error
 	if err != nil {
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
 		return nil, err
 	}
 
-	return theaters, err
+	// Count total results
+	var totalResults int64
+
+	err = r.database.DB.
+		WithContext(ctx).
+		Scopes(
+			theaterKeywordFilter(find.Keyword.String),
+			theaterGeoFilter(find.Location),
+		).
+		Model(&entity.Theater{}).
+		Count(&totalResults).Error
+	if err != nil {
+		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))
+		return nil, err
+	}
+
+	return &entity.FindManyTheatersResult{
+		Theaters: theaters,
+		Metadata: &entity.FindManyTheatersMetadata{
+			TotalResults: totalResults,
+		},
+	}, err
+}
+
+// theaterKeywordFilter applies a search filter if the keyword is provided.
+// It searches (for example) in the name, address, and email fields.
+func theaterKeywordFilter(keyword string) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if keyword == "" {
+			return db
+		}
+		likePattern := "%" + keyword + "%"
+		return db.Where("name LIKE ? OR address LIKE ? OR email LIKE ? OR website LIKE ?", likePattern, likePattern, likePattern, likePattern)
+	}
+}
+
+// theaterGeoFilter applies a geospatial filter if valid latitude, longitude and radius are provided.
+func theaterGeoFilter(loc *entity.FindManyTheatersLocation) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if loc == nil || loc.Latitude <= 0 || loc.Longitude <= 0 || loc.Radius <= 0 {
+			return db
+		}
+		// Note: MySQL POINT() takes (longitude, latitude)
+		return db.Where("ST_Distance_Sphere(location, POINT(?, ?)) <= ?", loc.Longitude, loc.Latitude, loc.Radius)
+	}
+}
+
+func buildOffset(page, pageSize uint32) int {
+	if page < 1 {
+		page = 1
+	}
+	return int((page - 1) * pageSize)
 }
