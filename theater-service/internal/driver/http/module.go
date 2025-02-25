@@ -5,6 +5,9 @@ import (
 	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	"github.com/harmonify/movie-reservation-system/theater-service/internal/driven/config"
 	health_rest "github.com/harmonify/movie-reservation-system/theater-service/internal/driver/http/health_check"
+	http_driver_shared "github.com/harmonify/movie-reservation-system/theater-service/internal/driver/http/shared"
+	showtime_rest "github.com/harmonify/movie-reservation-system/theater-service/internal/driver/http/showtime"
+	theater_rest "github.com/harmonify/movie-reservation-system/theater-service/internal/driver/http/theater"
 	"go.uber.org/fx"
 )
 
@@ -19,8 +22,11 @@ var (
 	HttpModule = fx.Module(
 		"http-driver",
 		http_pkg.HttpModule,
+		http_driver_shared.HttpMiddlewareModule,
 		fx.Provide(
 			health_rest.NewHealthCheckRestHandler,
+			theater_rest.NewAdminTheaterRestHandler,
+			showtime_rest.NewAdminShowtimeRestHandler,
 			func(p HttpServerParam, cfg *config.TheaterServiceConfig) (HttpServerResult, error) {
 				return NewHttpServer(p, &HttpServerConfig{
 					Env:                     cfg.Env,

@@ -24,6 +24,16 @@ func (*Showtime) TableName() string {
 	return "showtime"
 }
 
+func NewShowtime(save *SaveShowtime) *Showtime {
+	return &Showtime{
+		TraceID:   save.TraceID,
+		RoomID:    save.RoomID,
+		MovieID:   save.MovieID,
+		StartTime: time.Time(save.StartTime),
+		EndTime:   time.Time(save.EndTime),
+	}
+}
+
 type FindOneShowtime struct {
 	ShowtimeID sql.NullString
 	TraceID    sql.NullString
@@ -35,6 +45,25 @@ type FindManyShowtimes struct {
 	MovieID      sql.NullString
 	StartTimeGte sql.NullTime
 	StartTimeLte sql.NullTime
+	SortBy       ShowtimeSortBy
+	Page         uint32
+	PageSize     uint32
+}
+
+type ShowtimeSortBy string
+
+const (
+	ShowtimeSortByLatest ShowtimeSortBy = "latest"
+	ShowtimeSortByOldest ShowtimeSortBy = "oldest"
+)
+
+type FindManyShowtimesResult struct {
+	Showtimes []*Showtime
+	Metadata  FindManyShowtimesMeta
+}
+
+type FindManyShowtimesMeta struct {
+	TotalResults int64
 }
 
 type CountShowtimeTicket struct {
@@ -46,8 +75,12 @@ type SaveShowtime struct {
 	TraceID   string
 	RoomID    string
 	MovieID   string
-	StartTime string
-	EndTime   string
+	StartTime time.Time
+	EndTime   time.Time
+}
+
+type SaveShowtimeResult struct {
+	ShowtimeID string
 }
 
 type UpdateShowtime struct {
@@ -55,6 +88,6 @@ type UpdateShowtime struct {
 	TraceID    sql.NullString
 	RoomID     sql.NullString
 	MovieID    sql.NullString
-	StartTime  sql.NullString
-	EndTime    sql.NullString
+	StartTime  sql.NullTime
+	EndTime    sql.NullTime
 }

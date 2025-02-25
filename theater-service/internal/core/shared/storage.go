@@ -10,11 +10,15 @@ import (
 type (
 	TheaterStorage interface {
 		WithTx(tx *database.Transaction) TheaterStorage
-		SaveTheater(ctx context.Context, createModel *entity.SaveTheater) error
+		SaveTheater(ctx context.Context, createModel *entity.SaveTheater) (*entity.SaveTheaterResult, error)
 		UpdateTheater(ctx context.Context, findModel *entity.FindOneTheater, updateModel *entity.UpdateTheater) error
 		SoftDeleteTheater(ctx context.Context, findModel *entity.FindOneTheater) error
 		FindOneTheater(ctx context.Context, findModel *entity.FindOneTheater) (*entity.Theater, error)
-		FindManyTheaters(ctx context.Context, findModel *entity.FindManyTheaters) ([]*entity.Theater, error)
+		FindManyTheaters(ctx context.Context, findModel *entity.FindManyTheaters) (*entity.FindManyTheatersResult, error)
+	}
+
+	FindManyTheatersMeta struct {
+		TotalResults uint32
 	}
 
 	RoomStorage interface {
@@ -37,11 +41,11 @@ type (
 
 	ShowtimeStorage interface {
 		WithTx(tx *database.Transaction) ShowtimeStorage
-		SaveShowtime(ctx context.Context, createModel *entity.SaveShowtime) error
+		SaveShowtime(ctx context.Context, createModel *entity.SaveShowtime) (*entity.SaveShowtimeResult, error)
 		UpdateShowtime(ctx context.Context, findModel *entity.FindOneShowtime, updateModel *entity.UpdateShowtime) error
 		SoftDeleteShowtime(ctx context.Context, findModel *entity.FindOneShowtime) error
 		FindOneShowtime(ctx context.Context, findModel *entity.FindOneShowtime) (*entity.Showtime, error)
-		FindManyShowtimes(ctx context.Context, findModel *entity.FindManyShowtimes) ([]*entity.Showtime, error)
+		FindManyShowtimes(ctx context.Context, findModel *entity.FindManyShowtimes) (*entity.FindManyShowtimesResult, error)
 	}
 
 	TicketStorage interface {

@@ -8,7 +8,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
 	theater_proto "github.com/harmonify/movie-reservation-system/pkg/proto/theater"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
-	"github.com/harmonify/movie-reservation-system/theater-service/internal/core/services"
+	"github.com/harmonify/movie-reservation-system/theater-service/internal/core/service"
 	"go.uber.org/fx"
 )
 
@@ -21,10 +21,11 @@ func RegisterTheaterServiceServer(
 
 type TheaterServiceServerParam struct {
 	fx.In
-	Logger         logger.Logger
-	Tracer         tracer.Tracer
-	ErrorMapper    error_pkg.ErrorMapper
-	TheaterService services.TheaterService
+	Logger          logger.Logger
+	Tracer          tracer.Tracer
+	ErrorMapper     error_pkg.ErrorMapper
+	ShowtimeService service.ShowtimeService
+	SeatService     service.SeatService
 }
 
 type TheaterServiceServerImpl struct {
@@ -32,7 +33,8 @@ type TheaterServiceServerImpl struct {
 	logger                                          logger.Logger
 	tracer                                          tracer.Tracer
 	errorMapper                                     error_pkg.ErrorMapper
-	theaterService                                  services.TheaterService
+	showtimeService                                 service.ShowtimeService
+	seatService                                     service.SeatService
 }
 
 func NewTheaterServiceServer(
@@ -43,7 +45,8 @@ func NewTheaterServiceServer(
 		logger:                            p.Logger,
 		tracer:                            p.Tracer,
 		errorMapper:                       p.ErrorMapper,
-		theaterService:                    p.TheaterService,
+		showtimeService:                   p.ShowtimeService,
+		seatService:                       p.SeatService,
 	}
 }
 
@@ -51,7 +54,7 @@ func (s *TheaterServiceServerImpl) GetActiveMovies(ctx context.Context, req *the
 	ctx, span := s.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	res, err := s.theaterService.GetActiveMovies(ctx, req)
+	res, err := s.showtimeService.GetActiveMovies(ctx, req)
 	if err != nil {
 		return nil, s.errorMapper.ToGrpcError(err)
 	}
@@ -63,7 +66,7 @@ func (s *TheaterServiceServerImpl) GetActiveShowtimes(ctx context.Context, req *
 	ctx, span := s.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	res, err := s.theaterService.GetActiveShowtimes(ctx, req)
+	res, err := s.showtimeService.GetActiveShowtimes(ctx, req)
 	if err != nil {
 		return nil, s.errorMapper.ToGrpcError(err)
 	}
@@ -75,7 +78,7 @@ func (s *TheaterServiceServerImpl) GetAvailableSeats(ctx context.Context, req *t
 	ctx, span := s.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
-	res, err := s.theaterService.GetAvailableSeats(ctx, req)
+	res, err := s.seatService.GetAvailableSeats(ctx, req)
 	if err != nil {
 		return nil, s.errorMapper.ToGrpcError(err)
 	}

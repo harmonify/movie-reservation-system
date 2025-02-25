@@ -8,12 +8,11 @@ import (
 	"github.com/harmonify/movie-reservation-system/pkg/database"
 	error_pkg "github.com/harmonify/movie-reservation-system/pkg/error"
 	"github.com/harmonify/movie-reservation-system/pkg/logger"
-	"github.com/harmonify/movie-reservation-system/pkg/metrics"
 	"github.com/harmonify/movie-reservation-system/pkg/tracer"
 	"github.com/harmonify/movie-reservation-system/pkg/util"
 	"github.com/harmonify/movie-reservation-system/pkg/util/encryption"
 	jwt_util "github.com/harmonify/movie-reservation-system/pkg/util/jwt"
-	"github.com/harmonify/movie-reservation-system/theater-service/internal/core/services"
+	"github.com/harmonify/movie-reservation-system/theater-service/internal/core/service"
 	"github.com/harmonify/movie-reservation-system/theater-service/internal/driven"
 	"github.com/harmonify/movie-reservation-system/theater-service/internal/driven/config"
 	grpc_driver "github.com/harmonify/movie-reservation-system/theater-service/internal/driver/grpc"
@@ -37,7 +36,7 @@ func StartApp() error {
 	return nil
 }
 
-// This is a function to initialize all services and invoke their functions.
+// This is a function to initialize all service and invoke their functions.
 func NewApp(p ...fx.Option) *fx.App {
 	options := []fx.Option{
 		driven.DrivenModule,
@@ -102,10 +101,9 @@ func NewApp(p ...fx.Option) *fx.App {
 		),
 		error_pkg.ErrorModule,
 		util.UtilModule,
-		metrics.MetricsModule,
 
 		// CORE
-		services.ServiceModule,
+		service.ServiceModule,
 
 		// API (DRIVER)
 		http_driver.HttpModule,

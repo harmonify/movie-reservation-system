@@ -1,4 +1,4 @@
-package reservation
+package policies.reservation.ticket_reservation
 
 import rego.v1
 
