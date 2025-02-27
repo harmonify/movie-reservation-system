@@ -1,4 +1,4 @@
-package showtime_rest
+package admin_showtime_rest
 
 type (
 	AdminSearchShowtimeRequestQuery struct {

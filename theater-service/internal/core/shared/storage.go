@@ -2,8 +2,10 @@ package shared
 
 import (
 	"context"
+	"time"
 
 	"github.com/harmonify/movie-reservation-system/pkg/database"
+	movie_proto "github.com/harmonify/movie-reservation-system/pkg/proto/movie"
 	"github.com/harmonify/movie-reservation-system/theater-service/internal/core/entity"
 )
 
@@ -33,8 +35,9 @@ type (
 	SeatStorage interface {
 		WithTx(tx *database.Transaction) SeatStorage
 		SaveSeat(ctx context.Context, createModel *entity.SaveSeat) error
-		UpdateSeat(ctx context.Context, findModel *entity.FindSeat, updateModel *entity.UpdateSeat) error
-		SoftDeleteSeat(ctx context.Context, findModel *entity.FindSeat) error
+		UpdateSeat(ctx context.Context, findModel *entity.FindOneSeat, updateModel *entity.UpdateSeat) error
+		SoftDeleteSeat(ctx context.Context, findModel *entity.FindOneSeat) error
+		FindManySeats(ctx context.Context, findModel *entity.FindManySeats) ([]*entity.Seat, error)
 		CountRoomSeats(ctx context.Context, roomIds []string) ([]*entity.CountRoomSeats, error)
 		FindShowtimeAvailableSeats(ctx context.Context, findModel *entity.FindShowtimeAvailableSeats) ([]*entity.Seat, error)
 	}
@@ -56,5 +59,11 @@ type (
 		FindOneTicket(ctx context.Context, findModel *entity.FindOneTicket) (*entity.Ticket, error)
 		FindManyTickets(ctx context.Context, findModel *entity.FindManyTickets) ([]*entity.Ticket, error)
 		CountShowtimeTickets(ctx context.Context, showtimeIds []string) ([]*entity.CountShowtimeTicket, error)
+	}
+
+	MovieCache interface {
+		Set(ctx context.Context, movie *movie_proto.Movie, ttl time.Duration) error
+		Get(ctx context.Context, movieId string) (*movie_proto.Movie, error)
+		Delete(ctx context.Context, movieId string) error
 	}
 )
