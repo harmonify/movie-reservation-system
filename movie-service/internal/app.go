@@ -7,6 +7,7 @@ import (
 	"github.com/harmonify/movie-reservation-system/movie-service/internal/core/service"
 	"github.com/harmonify/movie-reservation-system/movie-service/internal/driven"
 	"github.com/harmonify/movie-reservation-system/movie-service/internal/driven/config"
+	grpc_driver "github.com/harmonify/movie-reservation-system/movie-service/internal/driver/grpc"
 	http_driver "github.com/harmonify/movie-reservation-system/movie-service/internal/driver/http"
 	"github.com/harmonify/movie-reservation-system/pkg/cache"
 	"github.com/harmonify/movie-reservation-system/pkg/database/mongo"
@@ -99,6 +100,7 @@ func NewApp(p ...fx.Option) *fx.App {
 
 		// API (DRIVER)
 		http_driver.HttpModule,
+		grpc_driver.GrpcModule,
 	}
 
 	// Override dependencies

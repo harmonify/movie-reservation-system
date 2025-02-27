@@ -27,6 +27,7 @@ type MovieServiceConfig struct {
 	RedisPort string `mapstructure:"REDIS_PORT" validate:"required,numeric"`
 	RedisPass string `mapstructure:"REDIS_PASS" validate:"required"`
 
+	GrpcPort              int    `mapstructure:"GRPC_PORT" validate:"required,numeric"`
 	GrpcAuthServiceUrl    string `mapstructure:"GRPC_AUTH_SERVICE_URL" validate:"required,url"`
 	GrpcTheaterServiceUrl string `mapstructure:"GRPC_THEATER_SERVICE_URL" validate:"required,url"`
 
