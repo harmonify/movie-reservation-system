@@ -7,6 +7,13 @@ import (
 	"gorm.io/gorm"
 )
 
+type SeatStatus string
+
+const (
+	SeatStatusAvailable SeatStatus = "available"
+	SeatStatusBooked    SeatStatus = "booked"
+)
+
 type Seat struct {
 	SeatID     string         `json:"seat_id"`
 	TraceID    string         `json:"trace_id"`
@@ -22,10 +29,13 @@ func (*Seat) TableName() string {
 	return "seat"
 }
 
-type FindSeat struct {
-	SeatID  sql.NullString
+type FindManySeats struct {
 	TraceID sql.NullString
 	RoomID  sql.NullString
+}
+
+type FindOneSeat struct {
+	SeatID sql.NullString
 }
 
 type CountRoomSeats struct {

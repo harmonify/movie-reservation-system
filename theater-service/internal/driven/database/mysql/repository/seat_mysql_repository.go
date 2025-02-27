@@ -57,7 +57,26 @@ func (r *seatRepositoryImpl) SaveSeat(ctx context.Context, create *entity.SaveSe
 	return result.Error
 }
 
-func (r *seatRepositoryImpl) FindSeat(ctx context.Context, find *entity.FindSeat) (*entity.Seat, error) {
+func (r *seatRepositoryImpl) FindManySeats(ctx context.Context, find *entity.FindManySeats) ([]*entity.Seat, error) {
+	ctx, span := r.tracer.StartSpanWithCaller(ctx)
+	defer span.End()
+
+	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, find)
+	if err != nil {
+		return nil, err
+	}
+
+	var seats []*entity.Seat
+	result := r.database.DB.WithContext(ctx).Where(findMap).Find(&seats)
+	err = result.Error
+	if err != nil {
+		return nil, err
+	}
+
+	return seats, err
+}
+
+func (r *seatRepositoryImpl) FindSeat(ctx context.Context, find *entity.FindManySeats) (*entity.Seat, error) {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -76,7 +95,7 @@ func (r *seatRepositoryImpl) FindSeat(ctx context.Context, find *entity.FindSeat
 	return seat, err
 }
 
-func (r *seatRepositoryImpl) UpdateSeat(ctx context.Context, find *entity.FindSeat, update *entity.UpdateSeat) error {
+func (r *seatRepositoryImpl) UpdateSeat(ctx context.Context, find *entity.FindOneSeat, update *entity.UpdateSeat) error {
 	ctx, span := r.tracer.StartSpanWithCaller(ctx)
 	defer span.End()
 
@@ -112,7 +131,7 @@ func (r *seatRepositoryImpl) UpdateSeat(ctx context.Context, find *entity.FindSe
 	return nil
 }
 
-func (r *seatRepositoryImpl) SoftDeleteSeat(ctx context.Context, find *entity.FindSeat) error {
+func (r *seatRepositoryImpl) SoftDeleteSeat(ctx context.Context, find *entity.FindOneSeat) error {
 	findMap, err := r.util.StructUtil.ConvertSqlStructToMap(ctx, find)
 	if err != nil {
 		r.logger.WithCtx(ctx).Error(err.Error(), zap.Error(err))

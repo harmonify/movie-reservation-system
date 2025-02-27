@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package harmonify.movie_reservation_system.movie;
+
+message Movie {
+    string movie_id = 1;
+    string title = 2;
+}
+
+// message Movie {
+//     string movie_id = 1;
+//     string title = 2;
+//     string trace_id = 3;
+//     string created_at = 4;
+//     string updated_at = 5;
+//     string description = 6;
+//     repeated string genres = 7;
+//     string poster_image_url = 8;
+//     repeated string photo_urls = 9;
+//     string trailer_url = 10;
+//     int64 runtime = 11;
+//     string release_date = 12;
+//     repeated ParentalGuidance parental_guidances = 13;
+//     Language dub = 14;
+//     repeated Language available_subtitles = 15;
+//     repeated People cast = 16;
+//     People director = 17;
+//     People writer = 18;
+//     string production_company = 19;
+// }
+
+// message Language {
+//     string name = 1;
+//     string code = 2;
+// }
+
+// message ParentalGuidance {
+//     string code = 1;
+//     string country_code = 2;
+// }
+
+// message People {
+//     string people_id = 1;
+//     string trace_id = 2;
+//     string created_at = 3;
+//     string updated_at = 4;
+//     string name = 5;
+//     string picture_url = 6;
+// }

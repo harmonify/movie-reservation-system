@@ -29,6 +29,8 @@ var (
 			health_rest.NewHealthCheckRestHandler,
 			admin_theater_rest.NewAdminTheaterRestHandler,
 			admin_showtime_rest.NewAdminShowtimeRestHandler,
+			theater_rest.NewTheaterRestHandler,
+			showtime_rest.NewShowtimeRestHandler,
 			func(p HttpServerParam, cfg *config.TheaterServiceConfig) (HttpServerResult, error) {
 				return NewHttpServer(p, &HttpServerConfig{
 					Env:                     cfg.Env,

@@ -35,8 +35,9 @@ type TheaterServiceConfig struct {
 	RedisPort string `mapstructure:"REDIS_PORT" validate:"required,numeric"`
 	RedisPass string `mapstructure:"REDIS_PASS" validate:"required"`
 
-	GrpcPort           int    `mapstructure:"GRPC_PORT" validate:"required,numeric,min=1024,max=65535"`
-	GrpcAuthServiceUrl string `mapstructure:"GRPC_AUTH_SERVICE_URL" validate:"required,url"`
+	GrpcPort            int    `mapstructure:"GRPC_PORT" validate:"required,numeric,min=1024,max=65535"`
+	GrpcAuthServiceUrl  string `mapstructure:"GRPC_AUTH_SERVICE_URL" validate:"required,url"`
+	GrpcMovieServiceUrl string `mapstructure:"GRPC_MOVIE_SERVICE_URL" validate:"required,url"`
 
 	KafkaBrokers               string `mapstructure:"KAFKA_BROKERS" validate:"required"`
 	KafkaVersion               string `mapstructure:"KAFKA_VERSION" validate:"required"`

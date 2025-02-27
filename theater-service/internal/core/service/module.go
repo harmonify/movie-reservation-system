@@ -7,8 +7,9 @@ import (
 var ServiceModule = fx.Module(
 	"service",
 	fx.Provide(
-		NewAdminShowtimeService,
 		NewAdminTheaterService,
+		NewAdminShowtimeService,
+		NewTheaterService,
 		NewShowtimeService,
 		NewSeatService,
 	),

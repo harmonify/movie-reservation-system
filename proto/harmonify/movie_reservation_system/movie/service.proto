@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package harmonify.movie_reservation_system.movie;
+
+import "movie/movie.proto";
+
+service MovieService {
+    rpc GetMovieByID(GetMovieByIDRequest) returns (GetMovieByIDResponse) {}
+}
+
+message GetMovieByIDRequest {
+    string movie_id = 1;
+}
+
+message GetMovieByIDResponse {
+    Movie movie = 1;
+}
