@@ -4,10 +4,12 @@ import (
 	config_pkg "github.com/harmonify/movie-reservation-system/pkg/config"
 	http_pkg "github.com/harmonify/movie-reservation-system/pkg/http"
 	"github.com/harmonify/movie-reservation-system/theater-service/internal/driven/config"
+	"github.com/harmonify/movie-reservation-system/theater-service/internal/driver/http/admin_showtime_rest"
+	"github.com/harmonify/movie-reservation-system/theater-service/internal/driver/http/admin_theater_rest"
 	health_rest "github.com/harmonify/movie-reservation-system/theater-service/internal/driver/http/health_check"
 	http_driver_shared "github.com/harmonify/movie-reservation-system/theater-service/internal/driver/http/shared"
-	showtime_rest "github.com/harmonify/movie-reservation-system/theater-service/internal/driver/http/showtime"
-	theater_rest "github.com/harmonify/movie-reservation-system/theater-service/internal/driver/http/theater"
+	"github.com/harmonify/movie-reservation-system/theater-service/internal/driver/http/showtime_rest"
+	"github.com/harmonify/movie-reservation-system/theater-service/internal/driver/http/theater_rest"
 	"go.uber.org/fx"
 )
 
@@ -25,8 +27,8 @@ var (
 		http_driver_shared.HttpMiddlewareModule,
 		fx.Provide(
 			health_rest.NewHealthCheckRestHandler,
-			theater_rest.NewAdminTheaterRestHandler,
-			showtime_rest.NewAdminShowtimeRestHandler,
+			admin_theater_rest.NewAdminTheaterRestHandler,
+			admin_showtime_rest.NewAdminShowtimeRestHandler,
 			func(p HttpServerParam, cfg *config.TheaterServiceConfig) (HttpServerResult, error) {
 				return NewHttpServer(p, &HttpServerConfig{
 					Env:                     cfg.Env,

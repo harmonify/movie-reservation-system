@@ -1,4 +1,4 @@
-package theater_rest
+package admin_theater_rest
 
 import (
 	"database/sql"
@@ -100,11 +100,6 @@ func (h *adminTheaterRestHandlerImpl) Register(g *gin.RouterGroup) error {
 		h.middleware.AuthV2.WithPolicy("policies.theater.manage.allow"),
 		h.getTheaterByID,
 	)
-	amg.GET(
-		":theaterId/seats",
-		h.middleware.AuthV2.WithPolicy("policies.theater.manage.allow"),
-		h.getTheaterByID,
-	)
 	amg.PUT(
 		":theaterId",
 		h.middleware.AuthV2.WithPolicy("policies.theater.manage.allow"),
@@ -142,9 +137,6 @@ func (h *adminTheaterRestHandlerImpl) searchTheaters(c *gin.Context) {
 
 	span.SetAttributes(
 		attribute.String("query.keyword", query.Keyword),
-		attribute.Float64("query.latitude", float64(query.Latitude)),
-		attribute.Float64("query.longitude", float64(query.Longitude)),
-		attribute.Float64("query.radius", float64(query.Radius)),
 		attribute.String("query.sort_by", query.SortBy),
 		attribute.Int("query.page", int(query.Page)),
 		attribute.Int("query.page_size", int(query.PageSize)),
@@ -163,12 +155,7 @@ func (h *adminTheaterRestHandlerImpl) searchTheaters(c *gin.Context) {
 	}
 
 	data, err := h.adminTheaterService.SearchTheaters(ctx, &entity.FindManyTheaters{
-		Keyword: sql.NullString{String: query.Keyword, Valid: query.Keyword != ""},
-		Location: &entity.FindManyTheatersLocation{
-			Latitude:  query.Latitude,
-			Longitude: query.Longitude,
-			Radius:    query.Radius,
-		},
+		Keyword:  sql.NullString{String: query.Keyword, Valid: query.Keyword != ""},
 		SortBy:   sortBy,
 		Page:     query.Page,
 		PageSize: query.PageSize,
